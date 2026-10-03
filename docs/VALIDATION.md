@@ -3,6 +3,84 @@
 Verified locally on October 3, 2026. This records what ran, not an assertion of
 formal STE certification or universal host compatibility.
 
+## Plugin-first v0.4.0
+
+The default installed workflow is now three native skills plus standalone
+HTML/SVG starters. It uses the host's existing authoring tools, not `quickstart.py`
+or a Python environment. The deterministic engine and media tools remain
+explicitly optional. This corrects the v0.3 runtime-first onboarding claim below.
+
+### Native installation, not just manifest discovery
+
+Fresh child processes used isolated `COPILOT_HOME`/`COPILOT_CACHE_HOME`,
+`CLAUDE_CONFIG_DIR`, or `CODEX_HOME` plus isolated home discovery. The normal
+user's config hashes remained unchanged.
+
+| Host version tested | Actual local-marketplace evidence |
+| --- | --- |
+| Copilot 1.0.90-0 | Native persistent install; fresh list reports three-skill plugin enabled; disable/enable; update reports live source; uninstall disables that live source |
+| Claude Code 2.1.288 | Native user-scoped install; fresh list and details show v0.4.0 and three skills; disable/enable; update check; uninstall leaves empty installed list |
+| Codex CLI 0.147.0 | Native `plugin add`; fresh process reports installed/enabled v0.4.0 and cache path; `plugin remove` leaves empty installed list |
+
+These were actual plugin-manager operations, not `--plugin-dir` discovery.
+They did not invoke a paid model or prove every host's model-driven behavior.
+Codex desktop UI installation/toggling remains separate from these CLI checks.
+
+Local raw-repository installation exposed an important distribution difference:
+some hosts copied ignored workstation files into their local cache. They were
+not uploaded. The documented consumer path therefore uses the tagged remote;
+local installation should use the whitelisted source bundle, not a dirty
+checkout. Release lifecycle tests inspect the tagged cache, version, skills,
+templates, and subsequent removal in separate profiles.
+
+The **public `v0.4.0` tag** was then tested through the exact README commands
+against GitHub—not a local source alias:
+
+- All three hosts downloaded, installed, and exposed v0.4.0 in a fresh process.
+  Installed skills/templates matched the tag bytes; no local memory, artifacts,
+  environment, or orchestration files entered those release caches.
+- Copilot and Claude passed update-at-the-pinned-version, disable/enable, and
+  uninstall. Codex passed marketplace upgrade, persistent installed discovery,
+  and removal. All three installed-plugin lists were empty after removal.
+- The three examples executed directly from each installed copy: retry counts,
+  rate/zero-baseline behavior, and release-answer disclosure passed without
+  Python or outgoing HTTP(S) runtime requests.
+- Normal user config hashes stayed unchanged. Tests used installed CLI versions
+  from the table above; no live model invocation or Codex desktop UI test occurred.
+- Source plugin: **84 files** compared with commit
+  `1b50fb0fed3bfa4f9f7c783280b0979c54fe06b3`.
+  **353 local tests**, lint/typechecks, three skill validators, and Windows/Ubuntu
+  CI run **37158472362** passed on that source.
+
+The [v0.4.0 release](https://github.com/shyamsridhar123/STE-Pro-Max/releases/tag/v0.4.0)
+contains the plugin ZIP, eight-file standalone example ZIP, source hashes, and
+the native lifecycle receipt. Anonymous downloads matched the local SHA-256
+values. The immutable tag was not moved after testing.
+
+### Real examples and concise README
+
+- Retry lab: **60 browser checks**, including exact stage/counter transitions,
+  play/pause/reset, keyboard, responsive layout, print, no-JavaScript and no
+  outgoing runtime requests.
+- Release brief and rate lab: **112 checks**, including default/changed/invalid
+  rates, zero baseline, source disclosures, reader answer, keyboard, narrow
+  layouts, print/no-JavaScript and no outgoing requests.
+- Three static screenshots and a seven-frame GIF were captured from actual
+  example HTML. The GIF repeats once; a static preview is linked. These are not
+  generated product mockups or live-production measurements.
+- The short README defines Simplified Technical English, links Karpathy's exact
+  post, distinguishes inspiration from certification, and presents native
+  installation. Detailed setup moved to `PLUGINS.md`.
+- A local GFM-compatible preview passed at 1280/375/320 pixels: four visible
+  images, all install disclosures, and 16 local links/anchors. No horizontal
+  page overflow or external runtime requests.
+
+Source, test, native lifecycle, and image evidence is under
+`artifacts/plugin-first-20261003/`. The release's source/plugin and examples
+archives are assembled from the verified tagged source. Source ZIP immutability,
+native renderer regressions, lint, typechecks, and all three skill validators
+remain required; authoring templates do not claim engine checks that never ran.
+
 ## UX and identity refresh v0.3.0
 
 ### New first-use behavior

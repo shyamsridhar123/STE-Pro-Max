@@ -13,5 +13,8 @@
       },
       "category": "Productivity"
     }
-  ]
+  ],
+  "interface": {
+    "displayName": "STE-Pro Max"
+  }
 }

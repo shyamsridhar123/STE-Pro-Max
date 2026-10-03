@@ -1,11 +1,18 @@
 {
   "name": "ste-pro-max",
-  "version": "0.3.0",
-  "description": "Turn source material into clear writing, diagrams, evidence-linked stories, and local narrated explanations. One native engine, three focused skills.",
+  "version": "0.4.0",
+  "description": "Simplified Technical English-inspired writing, visual explanations, and evidence-linked stories. Native skills and standalone templates; no Python required for authoring.",
   "author": {
     "name": "Shyam Sridhar"
   },
   "repository": "https://github.com/shyamsridhar123/STE-Pro-Max",
   "license": "Apache-2.0",
-  "keywords": ["writing", "documentation", "diagrams", "charts", "storytelling", "education", "html", "narration"]
+  "keywords": [
+    "simplified-technical-english",
+    "writing",
+    "documentation",
+    "diagrams",
+    "storytelling",
+    "agent-skills"
+  ]
 }

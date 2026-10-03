@@ -21,7 +21,7 @@ TREES = {
     "ste_promax": {".py", ".j2", ".md", ".ps1", ".json"},
     "skills": {".md", ".yaml", ".yml", ".json", ".py", ".ps1", ".sh"},
     "examples": {".md", ".json", ".py", ".ps1", ".html", ".css", ".js", ".svg", ".txt"},
-    "docs": {".md", ".txt", ".svg", ".png", ".webp"},
+    "docs": {".md", ".txt", ".svg", ".png", ".webp", ".gif"},
     "ste-promax": {".md", ".yaml", ".yml"},
 }
 REQUIRED_PAYLOAD = (
@@ -36,6 +36,10 @@ REQUIRED_PAYLOAD = (
     "docs/AUTHORING.md", "ste_promax/onboarding.py", "ste_promax/data/quickstart.json",
     "ste_promax/input_validation.py",
     "docs/assets/hero.png", "docs/assets/showcase.webp",
+    "examples/showcase/README.md", "examples/showcase/retry-lab.html",
+    "examples/showcase/release-brief.html", "examples/showcase/rate-lab.html",
+    "docs/assets/retry-lab.gif", "docs/assets/retry-lab.png",
+    "docs/assets/release-brief.png", "docs/assets/rate-lab.png",
 )
 EXCLUDED_NAMES = {
     "artifacts", "tests", "node_modules", "venv", "__pycache__", "omx_wiki", "memory.md",

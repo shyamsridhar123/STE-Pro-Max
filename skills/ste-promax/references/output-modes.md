@@ -1,11 +1,13 @@
 # Output modes
 
-Choose the smallest medium that answers the user's question. These modes share
-one native engine; none authorizes publication or proves that a reader learned.
-For input shapes, worked commands, and review checks, read
+Choose the smallest medium that answers the user's question. Ordinary installed
+skills use the host's tools and [standalone starters](../../../examples/showcase/README.md);
+there is no Python prerequisite. None of these modes authorizes publication or
+proves that a reader learned. The following commands describe the **optional
+deterministic engine**, not plugin installation. For input shapes and checks, read
 [Authoring](../../../docs/AUTHORING.md).
 
-## Resolve the engine before running it
+## Optional: resolve the engine when explicitly selected
 
 Starting from the loaded skill's absolute path, find the nearest ancestor with
 both `ste_promax/` and root `__main__.py`. Use `python "<bundle-root>" ...` from

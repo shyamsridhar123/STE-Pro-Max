@@ -1,17 +1,17 @@
 ---
 name: ste-storytelling
-description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with the STE-Pro Max native story engine. Use for reader-controlled beats and consistent prose, visual, storyboard, and draft-narration companions; not for a short prose rewrite or automatic video export."
+description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with reader control. Uses the host's native tools and standalone templates; no Python required for ordinary authoring. Not for a short prose rewrite or automatic video export."
 ---
 
 # STE storytelling
 
-Use one reviewed story source and the bundle's native engine. A story is a way
+Use one reviewed story source and the host's native authoring tools. A story is a way
 to organize evidence, not a reason to invent a dramatic arc or stronger conclusion.
 
 ## Author the source
 
-Read [Authoring](../../docs/AUTHORING.md) for the exact shapes, examples, and
-review gaps. Apply [STE-ProMAX](../ste-promax/SKILL.md) writing priorities:
+Read [the example guide](../../examples/showcase/README.md) for starting points.
+Apply [STE-ProMAX](../ste-promax/SKILL.md) writing priorities:
 fidelity, requested scope/format, clarity, then style.
 
 Choose the audience, one question, and a purpose:
@@ -43,21 +43,14 @@ Let readers choose guided progress or all content. Add a question when it tests
 a specific likely misunderstanding. Supply a supported answer or leave it open;
 do not invent feedback or call a click evidence of learning.
 
-## Run from the user's workspace
+## Author from the installed plugin
 
-Resolve this loaded skill's absolute path and walk upward to the nearest
-directory containing both `ste_promax/` and root `__main__.py`. Use that bundle
-root rather than the host's current directory or a global installation.
-
-```text
-python "<bundle-root>" schema story
-python "<bundle-root>" start "<absolute-story.json>" --json
-```
-
-Replace angle-bracket paths with resolved paths. Keep source and output in the
-user's workspace. `start` chooses a fresh directory under `artifacts/`; it does
-not write into the bundle cache. From the repository root, `python -m ste_promax` reaches the same
-engine. If help lacks a command, report the bundle gap; do not invent a wrapper.
+Read the [showcase guide](../../examples/showcase/README.md) and use the
+release-brief or retry-lab starter for the appropriate structure. Resolve the
+plugin root from this skill's location, not the user's working directory.
+Adapt the starter with the host's file-editing tools into a new workspace
+`artifacts/` directory. No Python, pip, uv, build step, or server is required.
+Never overwrite the installed plugin or execute untrusted source markup.
 
 Use [the shared low-friction workflow](../ste-promax/references/low-friction-workflow.md).
 Infer a reasonable purpose and audience from the request; briefly name a material
@@ -65,14 +58,21 @@ assumption rather than launching an intake form. Do not ask for an output folder
 theme, or choice among media the user did not request. Ask only when missing
 evidence or a consequential choice would change the result.
 
-Inspect the HTML/design/metadata triple, gallery, manifest, saved source, and
-normalized input. Review all four story companions: `story.md`, `storyboard.json`,
-`narration.json`, and `evidence.json`. Draft narration is not approved speech,
-and a complete manifest is not a semantic review.
+Keep the original source, source/claim register, and material qualifications
+with the output. Review the story in its actual HTML form and provide a readable
+prose equivalent. Only generate additional companions when requested or useful.
+
+For explicitly requested deterministic story compilation or batch workflows,
+the [optional engine](../../docs/AUTHORING.md) produces HTML, prose, storyboard,
+narration, and evidence companions. Its validations are not implied for
+host-authored output. A complete manifest is not a semantic review.
 
 ## Prepare narration only when requested
 
-Review the script before generating or pairing audio. Run `narrate` with the
+Narration requires a separately available media capability; native plugin
+installation does not install voices or encoders. Review the script before
+generating or pairing audio. If the optional Python engine is available and
+selected for this request, run `narrate` with the
 original story JSON in a different fresh output directory. Select one route:
 
 ```text
