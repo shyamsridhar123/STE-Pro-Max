@@ -7,9 +7,13 @@ formal STE certification or universal host compatibility.
 
 ### Code, skills, and source preservation
 
-- Full local run: **279 tests passed**, no skips, after the final video-directory
-  separation. Evidence: `artifacts/suite-tests-20261003-final3.log`.
-- Ruff passed; Pyright reported **0 errors and 0 warnings**.
+- Final local run: **279 tests passed**, no skips, including the real Windows
+  speech tests. Evidence: `artifacts/test-typing-closeout-20261003/`.
+- Ruff passed across the package, tests, builder, entry point, and examples.
+  Pyright on those same surfaces reported **0 errors and 0 warnings**.
+  The earlier production-only check did not cover tests; a broader pass exposed
+  100 test-fixture diagnostics. Explicit fixture types and assertion narrowing
+  resolved them without changing production code or removing test assertions.
 - All three working skill manifests passed the installed skill validator.
 - Real bundle tests run `schema`, story/SVG rendering, and provided-PCM media
   preparation from a separate workspace. Preparation does not emit an MP4.
@@ -23,7 +27,7 @@ formal STE certification or universal host compatibility.
 
 ### Native browser and print evidence
 
-`tools/verify_browser.mjs` exercised **42 Chromium scenarios** across the five
+`tools/verify_browser.mjs` recorded **42 passing Chromium scenarios** across the five
 suite examples plus dense-visual and tall-sequence fixtures:
 
 - 1280px, 375px and 320px layouts without page-level horizontal overflow.
@@ -39,8 +43,12 @@ Evidence: `artifacts/suite-verify-20261003-c/browser/`. Dense diagrams may span
 printed pages. Screen-reader coverage and complete WCAG conformance are not
 claimed. The explanatory and source/data equivalents remain part of delivery;
 do not detach an SVG from its material qualifications.
+Three scenario records mark story controls not applicable to non-story
+documents; these are not 42 independent interaction tests. An independent
+closeout inspection matched all 69 manifest-referenced files across the seven
+fixtures and their seven source hashes.
 
-### Narrated story and the remaining export gate
+### Approved narrated story and verified local MP4
 
 Actual local System.Speech audio for the retry example totals
 **34.73804988662132 seconds**: 15.22185941043084 and 19.516190476190477 seconds.
@@ -63,10 +71,46 @@ HyperFrames **0.7.103** checked the final composition at
 - Representative frames were inspected. Motion-sidecar assertions were not
   enabled; no separate motion-verifier result is claimed.
 
-**No MP4 export or manual listening approval is claimed.** The final Studio
-preview is open and shows **0 errors, 1 warning**; export approval was requested.
-The preview/export gate remains open. A prepared timeline, a successful browser
-check, and nonconstant PCM do not establish a finished, reviewed movie.
+The user approved the final Studio preview on October 3, 2026. That approval was
+used only for a local export. The actual encoded movie is
+`artifacts/retry-export-20261003-b/retry-explanation.mp4`:
+
+| Property | Verified result |
+| --- | --- |
+| Picture | H.264, 1920 × 1080, 24 fps; all **834 frames** decoded |
+| Duration | **34.750 seconds**, 0.011951 seconds longer than the source audio; within one frame |
+| Sound | AAC, 48 kHz stereo; both original speech clips retained |
+| Size | 1,642,732 bytes |
+| SHA-256 | `b93e910e8d43f61d5905325be60c84789becaef5729f84c2885c0caedf25f2b4` |
+
+The entire file decoded without errors. Both decoded speech segments were
+non-silent, had no clipped PCM samples, and retained their non-silent tails.
+Normalized waveform correlation against the source WAVs was **0.988 / 0.981**,
+with measured codec delays of about **21.3 / 21.5 ms**, less than one video frame.
+These are signal-integrity checks, not manual listening or pronunciation review.
+
+Ten decoded frames, including the first and last, were inspected as a contact
+sheet; individual sequence and chart frames were also inspected. The five messages
+remain in order, the comparison retains **2 requests / 1 stored record**, both
+whole-beat captions fit, and the fictional/sequential qualifications remain visible.
+This is sampled picture review, not manual inspection of every frame.
+
+The installed CLI rejected its newer skill documentation's `delivery` alias.
+The successful invocation used the installed **`--quality high --fps 24 --strict
+--no-best-effort`** options instead. Logs report three workers, hardware browser
+GPU, drawElement capture, and eight successful capture self-checks. HyperFrames
+also reported fetching/caching Inter fonts; local encoding is not a claim of
+network-free execution. Telemetry was disabled and no media was uploaded.
+
+Evidence, exact inputs, commands, probe output, decoded samples, failed initial
+diagnostics, and picture review remain under `artifacts/retry-export-20261003-b/`.
+The unchanged approved preparation still says `prepared_not_rendered`; the
+export evidence is separate. A self-contained viewing folder with the MP4,
+transcript, captions, source, and review page is
+`artifacts/retry-delivery-20261003/`.
+
+**Manual listening, speech-to-message alignment, and measured event timing are
+not claimed.** No publication or global installation followed the approval.
 
 ### Host-specific evidence
 
@@ -79,14 +123,39 @@ check, and nonconstant PCM do not establish a finished, reviewed movie.
   installation or model invocation was needed for that check.
 - Codex's descriptor/catalog and shared bundle are structurally checked.
   **Codex desktop plugin installation and host-driven execution remain untested.**
-- The wheel was built using existing bundled build tools after the ordinary
-  Python environment lacked its build backend. No package was installed or
-  fetched to make the build pass.
+- The final wheel was built offline from the saved source bundle using existing
+  bundled build tools. No package was installed or fetched to make the build pass.
 
 Schema/discovery evidence is under `artifacts/plugin-schema-20261003/` and
-`artifacts/plugin-host-checks-20261003/`. See `SUITE_AUDIT.md` for the remaining
-payload, CI, and media gates. Generated evidence is workstation-local and excluded
-from the distributable plugin.
+`artifacts/plugin-host-checks-20261003/`.
+
+### Saved payload, extracted execution, and CI
+
+The saved v0.2 plugin ZIP was checked against both committed source
+`a75814102aa2bbd28adb05c3d5dc4d9173837293` and the checkout:
+**65 payload files matched exactly**. The wheel retained all **18 native runtime
+files**, including the single canonical narration helper, and all **24 hashed
+wheel RECORD entries** verified. Evidence:
+`artifacts/suite-release-check-20261003/verification-b/result.json`.
+
+Both actual archives were extracted into new directories. From unrelated
+working directories, each returned version **0.2.0**, exposed the story schema,
+rendered a story with two SVGs and 12 checked output files, and prepared the
+34.738-second narration with five sequence stages. Input/audio bytes were
+preserved. This is real package execution, not a claim of model-driven execution
+inside all three hosts.
+
+GitHub run **37149381447** passed both Ubuntu and Windows jobs on that exact
+implementation SHA. After test-only typing cleanup, run **37150962561** also
+passed both jobs on **`958462dfe605d6930e3582efb1f4e7cba832e6d5`**.
+The final delivery snapshot repeats the byte comparison and extracted execution
+after documentation closeout; its exact source commit, hashes, and final CI
+result are recorded under `artifacts/suite-release-20261003/` and
+`artifacts/suite-final-github-20261003/`. Do not substitute an older ZIP or wheel.
+
+Generated media, verification logs, local memory, and orchestration state are
+workstation-local and excluded from the distributable plugin and Git history.
+See `SUITE_AUDIT.md` for the complete requirements audit and bounded claims.
 
 ## Foundation v0.1.0 (historical)
 

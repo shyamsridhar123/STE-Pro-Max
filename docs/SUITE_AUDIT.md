@@ -3,9 +3,10 @@
 **Objective:** implement the Karpathy-inspired STE, visual-documentation, and
 storytelling suite with relevant deep research.
 
-**Audit date:** October 3, 2026. **State: active, not complete.**
-The original scope in `SUITE_PLAN.md` remains unchanged. The remaining media
-review/export gate is not replaced by a narrower “preparation passed” claim.
+**Audit date:** October 3, 2026. **State: requirements verified within the tested scope.**
+The original scope in `SUITE_PLAN.md` remains unchanged. The user-approved local
+MP4 now has encoded-picture and audio evidence; preparation is not substituted
+for export. Final delivery must use the exact-commit payload/CI checks below.
 
 | Requirement | Current evidence | Status / remaining work |
 | --- | --- | --- |
@@ -14,13 +15,13 @@ review/export gate is not replaced by a narrower “preparation passed” claim.
 | R3 — First-class technical diagrams | Native flow/component and sequence schemas, feedback/self-links, ordered text equivalents, standalone SVG exports, real fixture rendering | Implemented; dense/tall cases included in browser and print checks |
 | R4 — Faithful quantitative documentation | Bar and categorical line charts, units, nulls, source-provided bounds, domain validation, noncolor encodings, exact tables | Implemented; lossy literal JSON numbers are rejected before output |
 | R5 — Evidence-backed storytelling | Four distinct purposes and fixtures; audience/question/summary; typed claims with source IDs, scope, attribution, basis, uncertainty | Implemented; structural linkage is not proof of entailment or truth |
-| R6 — Author/reader control | Guided/all-content views, outline/history navigation, native answer disclosure, print-only answer equivalents, no-JavaScript reading | 42 browser scenarios passed; no blanket WCAG or screen-reader claim |
+| R6 — Author/reader control | Guided/all-content views, outline/history navigation, native answer disclosure, print-only answer equivalents, no-JavaScript reading | 42 passing browser records, including three not-applicable story-control cases for non-story documents; no blanket WCAG or screen-reader claim |
 | R7 — Cross-format continuity | One input produces HTML, SVGs, readable prose, complete evidence/storyboard/narration companions; hashes and tamper checks | Implemented and tested; free-form narration still requires semantic review |
-| R8 — Topic-specific narrated explanation | Reusable local speech/provided-PCM preparation; measured timing; sequence-message stages; real 34.738-second example; final `video/` project and Studio show zero errors | **Open:** preview/export approval requested; then inspect an actual encoded movie and audio |
+| R8 — Topic-specific narrated explanation | Reusable speech/provided-PCM preparation; approved final Studio preview; actual 34.750-second 1080p/24-fps MP4; all 834 frames decoded; ten sampled pictures inspected; both audio clips compared with source | Verified local export, not merely preparation; manual listening and word alignment remain unclaimed |
 | R9 — Agent usability | Three validated focused skills; `schema`, `check`, `render`, `narrate`; authoring guide and cross-directory invocation | Implemented; commands and structured examples exercised |
-| R10 — Copilot/Claude/Codex delivery | Shared v0.2 source bundle and wheel resources; three skills; Agent Plugins 1.0 schema; strict Claude descriptors; Copilot session-only discovery | Packaging and local discovery checked; final saved bundle comparison still required. No persistent installs or Codex desktop runtime acceptance claimed |
-| R11 — Complete verification | Full 279-test post-separation run; lint/typecheck; seven rendered fixtures, 42 browser scenarios, seven PDFs, source hashes, independent review | **Open:** final saved-package comparison and pushed-commit CI |
-| R12 — Honest final audit | This requirement-by-requirement record, validation report, explicit open gates | Audit exists; update against final current evidence before claiming the objective complete |
+| R10 — Copilot/Claude/Codex delivery | Three skills; Agent Plugins 1.0 schema; strict Claude descriptors; Copilot session-only discovery; 65 saved plugin files and 18 wheel runtime files match source; both extracted packages execute | Verified package and bounded host discovery; no persistent installs or Codex desktop runtime acceptance claimed |
+| R11 — Complete verification | 279 tests; all-surface Ruff/Pyright; seven rendered fixtures, browser/print evidence, source hashes, independent review, saved-package execution; Ubuntu/Windows CI on implementation and test-closeout commits | Verified; delivery snapshot must repeat exact-commit package and CI checks rather than reuse stale artifacts |
+| R12 — Honest final audit | This requirements record, `VALIDATION.md`, export approval/input hashes, decoded-video evidence, package verification, exact-SHA CI, explicit untested surfaces | All requirements have concrete scoped evidence; release record ties final delivery to its commit |
 
 ## Independent defects found and repaired
 
@@ -39,6 +40,9 @@ review/export gate is not replaced by a narrower “preparation passed” claim.
   HyperFrames check caught it. The root now declares zero explicitly.
 - Legacy host pipe encodings could fail after rendering Unicode content.
   Machine JSON uses ASCII escapes while source/artifact files remain UTF-8.
+- Broad typechecking exposed 100 diagnostics in test fixtures missed by the
+  previous production-only pass. Types and assertion narrowing fixed them;
+  all 279 tests and the broader static-analysis scope now pass.
 
 The ordinary evidence-review page now stays outside the `video/` project.
 Studio's broad HTML lint pass exposed that packaging boundary; it was corrected
@@ -54,8 +58,20 @@ skills/plugins, configure paid providers, or publish generated artifacts.
 SCUBACRAZY has a pending write-access invitation; an invitation is not accepted
 collaborator access. The repository remains private.
 
-## Stop condition
+## Delivery evidence and stop condition
 
-Do not mark the goal complete while R8, R10's final payload comparison, or R11's
-final verification are open. Follow the installed HyperFrames preview/export
-approval gate. Preserve this audit and the full objective across continuation.
+- Local movie and technical/picture review:
+  `artifacts/retry-export-20261003-b/`.
+- Self-contained MP4/source/transcript/review delivery:
+  `artifacts/retry-delivery-20261003/`.
+- Final source plugin, wheel, commit/hash comparison, and extracted executions:
+  `artifacts/suite-release-20261003/`.
+- Exact-commit GitHub job evidence:
+  `artifacts/suite-final-github-20261003/`.
+
+The final release record must name the same source SHA as the pushed branch and
+successful CI. Do not declare delivery complete if that comparison fails.
+Runtime acceptance in every host, full WCAG/screen-reader certification, learning
+outcome studies, manual audio listening, word alignment, and an OKF exporter are
+explicitly not established by this audit. They are not silently reported as passed.
+The private PR remains unmerged; generated media stays local.

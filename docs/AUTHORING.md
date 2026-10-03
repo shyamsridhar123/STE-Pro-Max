@@ -307,6 +307,21 @@ HyperFrames check, browser preview, listening review, or encoded movie.
 or overwrite it for a retry. A requested MP4 needs a separate available export
 workflow and inspection of the actual picture, audio, duration, and final frame.
 
+After a user approves the final Studio preview, an installed HyperFrames 0.7.103
+export can use the following command. The parent of the new MP4 path must already
+exist; do not overwrite an earlier export:
+
+```powershell
+hyperframes render artifacts/retry-media/video --output artifacts/retry-explanation.mp4 --quality high --fps 24 --strict --no-best-effort
+ffprobe -v error -count_frames -show_format -show_streams -of json artifacts/retry-explanation.mp4
+```
+
+Check the installed CLI's help before choosing quality names: 0.7.103 accepts
+`draft`, `standard`, and `high`, but rejected the newer documentation's `delivery`
+alias. Run against `video/`, not its evidence parent. Inspect decoded picture and
+audio, not only the exit code. Preserve the preparation manifest and record export
+verification separately. Export permission does not authorize uploading the movie.
+
 ## Delivery review and remaining gaps
 
 | Check | Evidence to record | What it does not prove |
