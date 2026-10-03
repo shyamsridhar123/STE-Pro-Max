@@ -75,7 +75,8 @@ that will establish artifact behavior. Those checks do not establish learning.
 Review the explanation before investing in richer media.
 Keep consequential judgments and unsupported source conflicts visible to the user.
 
-Use this repository's native renderer. Raw HTML is
+Use the host's native authoring tools and the shipped dependency-free templates.
+The deterministic renderer is available only as an optional advanced path. Raw HTML is
 executable: author it from reviewed facts; never paste arbitrary third-party HTML
 or scripts into a trusted artifact. Stay local unless publication is requested.
 
@@ -95,39 +96,29 @@ When a capability is missing, name the gap; do not call instructions a working t
 4. Return the requested deliverable without an editing diary. Briefly disclose
    limitations that materially affect its use.
 
-## Run the bundled engine
+## Use the installed plugin
 
-Resolve this loaded skill's absolute path. Its nearest ancestor containing both
-`ste_promax/` and root `__main__.py` is the bundle root. Do not infer it from the
-user's current directory. This directory entry point invokes the same engine as
-`python -m ste_promax` from the repository root; it is not an external renderer.
+The host's plugin manager installs these skills and templates. **Do not ask the
+user to run Python, pip, uv, clone a repo, or start a setup script for ordinary use.**
+A short rewrite belongs in the conversation. For a visual artifact, use the
+host's file-editing tools to author a self-contained HTML or SVG from the
+[shipped examples](../../examples/showcase/README.md).
 
-For ordinary artifact work, follow the [low-friction workflow](references/low-friction-workflow.md).
-Reuse the supplied source, audience, and requested format. Choose safe defaults
-without making the user select a schema, output folder, or visual theme. A short
-rewrite stays in the conversation; it does not need any installation.
+Resolve the plugin root from this loaded skill's location, not the user's current
+directory. Read the chosen example before adapting it. Never overwrite files in
+the plugin cache; create a fresh `artifacts/` directory in the user's workspace.
+Keep source material alongside the explanation and test the actual interaction.
+No build step, external font, application framework, provider key, or background
+service is needed by these starters.
 
-```text
-python "<bundle-root>" start "<absolute-source>" --json
-```
+Follow [the low-friction workflow](references/low-friction-workflow.md). Return
+the requested artifact and concise limits, not a mechanics diary. Authored output
+has not passed the optional Python engine's validators unless they actually ran.
 
-`start` chooses a fresh output directory under the caller's `artifacts/`.
-Use `doctor --json` when diagnosing setup, not as a mandatory ritual for every
-request. Use `schema` only for the shape being authored; it is not user homework.
-No argument to `start` produces a clearly fictional demonstration, not an
-interpretation of an absent user source.
-
-For prose, use `python "<bundle-root>" check "<absolute-source>" --profile relaxed --json`
-only when mechanical diagnostics help. The checker cannot verify facts, causality,
-learning, or standard compliance. It does not change the source.
-
-Use absolute input/output paths in the user's workspace. Keep generated files in
-a fresh `artifacts/` subdirectory, not the bundle cache; preserve the normalized
-input and original source. No global skill installation or publication is implied.
-Read [output modes](references/output-modes.md) for rendering and narration, and
-[the authoring guide](../../docs/AUTHORING.md) for suite shapes and runnable examples.
-If a command is missing, report the installed bundle's limitation instead of
-inventing flags or a replacement wrapper.
+For explicitly requested deterministic/schema-driven rendering or batch
+automation, use [the optional engine workflow](references/output-modes.md).
+Report missing prerequisites honestly; do not turn them into a mandatory step
+for using the installed authoring skills.
 
 See [source evidence](references/source-evidence.md) for the original post, the
 standard, and the boundary between them.

@@ -83,3 +83,11 @@ quickstart, lower-friction skill routing, generated hero, and real-output showca
 are tracked in `UX_PLAN.md`. Their new tests and fresh first-run/README evidence
 are recorded under the v0.3 section of `VALIDATION.md`, not inferred from the
 v0.2 media or packaging results above.
+
+## v0.4 plugin-first correction
+
+`PLUGIN_FIRST_PLAN.md` replaces the Python-first product entry with native
+persistent plugin installation and dependency-free host authoring. Real native
+lifecycle tests, standalone examples, and the short README are recorded in
+`VALIDATION.md`. The earlier runtime setup was not plugin installation. Optional
+engine guarantees do not automatically apply to host-authored HTML/SVG.

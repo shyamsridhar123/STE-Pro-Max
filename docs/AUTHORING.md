@@ -20,7 +20,17 @@ than force a lesson. An incident review need not end in resolution. These are
 authoring choices, not guaranteed learning outcomes. See the
 [source-to-design research note](research/VISUAL_LEARNING_AND_STORYTELLING.md).
 
-## The low-friction path
+## Optional engine, not plugin installation
+
+The installed plugin's default workflow uses the host's native file/model tools
+and [standalone HTML/SVG templates](../examples/showcase/README.md), with no Python
+prerequisite. Install it through [the native plugin manager](PLUGINS.md).
+
+The remainder of this guide describes the **optional deterministic engine** for
+structured compilation, schema validation, and batch automation. These stronger
+machine checks are not implied for host-authored artifacts.
+
+## Optional developer quickstart
 
 From a checkout, `python quickstart.py --open` creates a fictional example.
 With your own source, use `python quickstart.py notes.md --open`. The explicit

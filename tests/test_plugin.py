@@ -52,7 +52,7 @@ class PluginTests(unittest.TestCase):
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.3.0")
+            self.assertEqual(manifest["version"], "0.4.0")
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
@@ -70,7 +70,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.3.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.4.0", "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -113,6 +113,9 @@ class PluginTests(unittest.TestCase):
             "LICENSE", "NOTICE", "ste-promax/SKILL.md", "STE-ProMAX.zip", "docs/PLUGINS.md",
             "quickstart.py", "ste_promax/onboarding.py", "ste_promax/data/quickstart.json",
             "docs/assets/hero.png", "docs/assets/showcase.webp",
+            "examples/showcase/retry-lab.html", "examples/showcase/release-brief.html",
+            "examples/showcase/rate-lab.html", "docs/assets/retry-lab.gif",
+            "docs/assets/retry-lab.png", "docs/assets/release-brief.png", "docs/assets/rate-lab.png",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))
@@ -242,7 +245,7 @@ class PluginTests(unittest.TestCase):
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.3.0")
+        self.assertEqual(version.stdout.strip(), "0.4.0")
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)

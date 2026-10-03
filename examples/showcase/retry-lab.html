@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="A fictional, sequential retry trace. Follow two requests with the same key and one stored record.">
+  <title>One retry. One record. — STE-Pro Max</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #20211f;
+      --panel: #292b28;
+      --ivory: #f1ecdf;
+      --stone: #bdbbae;
+      --copper: #e0a47b;
+      --rule: #50534b;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: var(--ink);
+      color: var(--ivory);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button, summary, input { -webkit-tap-highlight-color: transparent; }
+    button, summary { cursor: pointer; }
+    button { min-height: 44px; border: 1px solid var(--rule); border-radius: 5px; padding: 9px 16px; background: transparent; color: var(--ivory); }
+    button:hover:not(:disabled) { background: #3a3c36; }
+    button:disabled { color: #929488; cursor: default; border-style: dashed; }
+    :focus-visible { outline: 3px solid var(--copper); outline-offset: 4px; }
+    [hidden] { display: none !important; }
+    main { width: min(1120px, calc(100% - 64px)); margin: 0 auto; padding: 25px 0 20px; }
+    .masthead { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--stone); }
+    .brand { color: var(--ivory); font-weight: 650; }
+    header { display: grid; grid-template-columns: 1.25fr 1fr; align-items: end; gap: 30px; margin: 24px 0; }
+    h1 { font-size: clamp(44px, 5vw, 60px); font-weight: 550; letter-spacing: -.065em; line-height: .99; margin: 0; }
+    h1 span { display: block; }
+    .intro { max-width: 34ch; margin: 0 0 3px; color: var(--stone); font-size: 18px; line-height: 1.5; }
+    .intro strong { color: var(--ivory); font-weight: 500; }
+    .lab { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); }
+    .lab-top { display: flex; gap: 14px; align-items: center; justify-content: space-between; padding: 15px 22px; border-bottom: 1px solid var(--rule); }
+    h2 { margin: 0; font-size: 16px; font-weight: 600; }
+    .step-status { color: var(--copper); font-size: 13px; white-space: nowrap; }
+    .workspace { display: grid; grid-template-columns: 1.6fr 1fr; }
+    .diagram-wrap { min-width: 0; padding: 12px 16px 10px; }
+    .diagram-scroll { overflow-x: auto; border-radius: 4px; }
+    svg { display: block; width: 100%; min-width: 490px; height: auto; max-height: 305px; }
+    .scroll-hint { display: none; }
+    svg text { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: var(--stone); font-size: 16px; }
+    svg .participant { fill: var(--ivory); font-size: 16px; font-weight: 600; }
+    svg .lane { stroke: var(--rule); stroke-dasharray: 3 5; }
+    svg .message-line { fill: none; stroke: var(--stone); stroke-width: 1.7; }
+    svg .row-background { fill: transparent; }
+    svg .step-number { font-family: Consolas, "Courier New", monospace; font-size: 15px; }
+    svg .row-state { font-size: 15px; }
+    svg .current .row-background { fill: #3c3830; }
+    svg .current text { fill: var(--copper); }
+    svg .current .message-line { stroke: var(--copper); stroke-width: 2.5; }
+    svg .done .message-line { stroke: var(--ivory); }
+    svg .done text { fill: var(--ivory); }
+    .register { border-left: 1px solid var(--rule); padding: 25px 25px 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 22px; }
+    .register-label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--stone); margin-bottom: 12px; }
+    .record { min-height: 121px; padding: 20px; border: 1px dashed #888a7e; border-radius: 6px; }
+    .record.stored { background: var(--ivory); border: 1px solid var(--ivory); color: var(--ink); }
+    .record-heading { font-size: 13px; margin: 0 0 12px; }
+    .record-values { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .record-values strong { font-family: Consolas, "Courier New", monospace; font-size: 30px; font-weight: 500; }
+    .record-values span { font-size: 13px; }
+    .record-note { color: var(--stone); font-size: 13px; margin: 12px 0 0; line-height: 1.4; min-height: 36px; }
+    .counters { display: flex; gap: 30px; }
+    .counter { display: flex; flex-direction: column; gap: 4px; }
+    .counter output { font: 42px/1 Consolas, "Courier New", monospace; letter-spacing: -.07em; }
+    .counter label { font-size: 13px; color: var(--stone); }
+    .controls { display: flex; gap: 12px; align-items: center; padding: 15px 22px; border-top: 1px solid var(--rule); flex-wrap: wrap; }
+    .scrubber { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 140px; }
+    .scrubber label { font-size: 13px; color: var(--stone); }
+    input[type="range"] { min-width: 70px; width: 100%; min-height: 44px; accent-color: var(--copper); cursor: pointer; }
+    #play { background: var(--copper); color: var(--ink); border-color: var(--copper); font-weight: 650; }
+    #play:hover { background: #efbb94; }
+    #reset { border-color: transparent; text-decoration: underline; text-underline-offset: 4px; }
+    .under { display: flex; justify-content: space-between; gap: 20px; margin: 15px 0 19px; align-items: baseline; }
+    #lesson { margin: 0; font-size: 19px; letter-spacing: -.025em; font-weight: 550; }
+    .timing { color: var(--stone); font-size: 12px; margin: 0; }
+    footer { padding-top: 15px; border-top: 1px solid var(--rule); color: var(--stone); font-size: 12px; line-height: 1.5; }
+    footer p { margin: 0; }
+    #source { margin-top: 6px; }
+    summary { min-height: 44px; padding: 13px 0; width: fit-content; color: var(--ivory); font-size: 13px; }
+    .source-content { max-width: 80ch; padding-bottom: 16px; }
+    .source-content p { margin: 0 0 12px; }
+    .source-content code { overflow-wrap: anywhere; }
+    table { border-collapse: collapse; width: 100%; color: var(--ivory); margin: 15px 0; font-size: 13px; }
+    caption { text-align: left; margin-bottom: 10px; font-weight: 600; }
+    th, td { text-align: left; padding: 10px 7px; border-bottom: 1px solid var(--rule); }
+    th:first-child, td:first-child { padding-left: 0; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; }
+    .fallback-note { padding: 12px 22px; margin: 0; border-top: 1px solid var(--rule); font-size: 14px; }
+    @media (max-width: 719px) {
+      main { width: calc(100% - 32px); padding-top: 20px; }
+      header { grid-template-columns: 1fr; gap: 18px; margin: 28px 0 24px; }
+      h1 { font-size: 54px; }
+      .intro { font-size: 16px; max-width: 34ch; }
+      .workspace { grid-template-columns: 1fr; }
+      .diagram-wrap { padding: 10px 12px; }
+      svg { max-height: none; }
+      .scroll-hint { display: block; margin: 3px 0 5px; font-size: 12px; color: var(--stone); }
+      .register { border-left: 0; border-top: 1px solid var(--rule); padding: 20px; gap: 20px; }
+      .record { min-height: 115px; }
+      .record-note { min-height: 0; }
+      .counters { gap: 40px; }
+      .lab-top { padding: 15px; align-items: start; }
+      .lab-top h2 { max-width: 20ch; line-height: 1.35; }
+      .controls { padding: 12px; gap: 8px; }
+      .scrubber { order: -1; flex-basis: 100%; }
+      .controls button { flex: 1; padding: 9px 11px; }
+      .under { flex-direction: column; gap: 8px; }
+      th, td { padding: 9px 4px; font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+    @media print {
+      :root { color-scheme: light; background: white; color: black; --ink: white; --ivory: black; --stone: #333; --copper: #333; --rule: #888; --panel: white; }
+      main { width: 100%; padding: 0; }
+      header { margin: 20px 0; }
+      h1 { font-size: 40px; }
+      .controls, .timing, .fallback-note, .scroll-hint { display: none !important; }
+      .workspace { grid-template-columns: 1.6fr 1fr; }
+      .register { border-left: 1px solid #888; border-top: 0; }
+      .record.stored { background: white; color: black; border-color: black; }
+      .diagram-scroll { overflow: visible; }
+      svg { min-width: 0; }
+      svg .row-background { fill: transparent !important; }
+      svg text { fill: black !important; }
+      svg .message-line { stroke: black !important; }
+      details::details-content { display: block !important; content-visibility: visible !important; }
+      details > :not(summary) { display: block !important; }
+      .source-content { max-width: none; }
+      .lab, table, tr { break-inside: avoid; }
+      pre { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="masthead"><span class="brand">STE-Pro Max</span><span>Retry lab / sequential trace</span></div>
+    <header>
+      <h1>One retry.<span>One record.</span></h1>
+      <p class="intro">Same key. Same receipt.<br><strong>Follow K7 through two requests.</strong><br>The second request adds no record.</p>
+    </header>
+    <section class="lab" aria-label="Interactive retry trace">
+      <div class="lab-top">
+        <h2 id="stage-title">Before the first request</h2>
+        <span class="step-status" id="step-status" role="status" aria-live="polite" aria-atomic="true">Step 0 of 5 · Ready</span>
+      </div>
+      <div class="workspace">
+        <div class="diagram-wrap">
+          <p class="scroll-hint">Scroll the trace to see both participants.</p>
+          <div class="diagram-scroll" role="region" aria-label="Client and register sequence; scroll horizontally on small screens" tabindex="0">
+            <svg viewBox="0 0 600 345" role="img" aria-labelledby="diagram-title diagram-desc">
+              <title id="diagram-title">Two requests, one stored record</title>
+              <desc id="diagram-desc">Planned fictional sequence: Client submits key K7. Register stores one record, then returns receipt R9. Client retries key K7. Register returns receipt R9 without another write. All five events are listed in the source and complete trace below.</desc>
+              <defs>
+                <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 8 4 L 0 8 Z" fill="context-stroke"/>
+                </marker>
+              </defs>
+              <text class="participant" x="118" y="27">Client</text>
+              <text class="participant" x="454" y="27">Register</text>
+              <path class="lane" d="M140 44V329 M485 44V329"/>
+              <g data-event="1">
+                <rect class="row-background" x="2" y="49" width="596" height="54" rx="5"/>
+                <text class="step-number" x="14" y="72">01</text><text class="row-state" x="14" y="89">Pending</text>
+                <text x="159" y="69">Submit key K7</text>
+                <path class="message-line" d="M140 85H485" marker-end="url(#arrow)"/>
+              </g>
+              <g data-event="2">
+                <rect class="row-background" x="2" y="106" width="596" height="54" rx="5"/>
+                <text class="step-number" x="14" y="129">02</text><text class="row-state" x="14" y="146">Pending</text>
+                <text x="300" y="127">Store one record</text>
+                <path class="message-line" d="M485 117H550V144H485" marker-end="url(#arrow)"/>
+              </g>
+              <g data-event="3">
+                <rect class="row-background" x="2" y="163" width="596" height="54" rx="5"/>
+                <text class="step-number" x="14" y="186">03</text><text class="row-state" x="14" y="203">Pending</text>
+                <text x="159" y="183">Receipt R9</text>
+                <path class="message-line" d="M485 199H140" marker-end="url(#arrow)"/>
+              </g>
+              <g data-event="4">
+                <rect class="row-background" x="2" y="220" width="596" height="54" rx="5"/>
+                <text class="step-number" x="14" y="243">04</text><text class="row-state" x="14" y="260">Pending</text>
+                <text x="159" y="240">Retry key K7</text>
+                <path class="message-line" d="M140 256H485" marker-end="url(#arrow)"/>
+              </g>
+              <g data-event="5">
+                <rect class="row-background" x="2" y="277" width="596" height="54" rx="5"/>
+                <text class="step-number" x="14" y="300">05</text><text class="row-state" x="14" y="317">Pending</text>
+                <text x="159" y="297">Return receipt R9</text>
+                <path class="message-line" d="M485 313H140" marker-end="url(#arrow)"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <aside class="register" aria-label="Register state at selected step">
+          <div>
+            <div class="register-label"><span>In-memory register</span><span id="record-status">Empty</span></div>
+            <div class="record" id="record">
+              <p class="record-heading" id="record-heading">No record yet</p>
+              <div class="record-values"><strong id="key-value">—</strong><span id="record-link">waiting for K7</span><strong id="receipt-value">—</strong></div>
+            </div>
+            <p class="record-note" id="record-note">Start with an empty register. Advance one event at a time.</p>
+          </div>
+          <div class="counters">
+            <div class="counter"><output id="requests" aria-label="Requests">0</output><label for="requests">Requests</label></div>
+            <div class="counter"><output id="records" aria-label="Stored records">0</output><label for="records">Stored records</label></div>
+          </div>
+        </aside>
+      </div>
+      <div class="controls" id="controls" hidden>
+        <button type="button" id="previous" disabled>Previous</button>
+        <button type="button" id="next">Next</button>
+        <div class="scrubber"><label for="step">Step</label><input id="step" type="range" min="0" max="5" step="1" value="0" aria-valuetext="0 of 5: Before the first request"></div>
+        <button type="button" id="play">Play trace</button>
+        <button type="button" id="reset">Reset</button>
+      </div>
+      <noscript><p class="fallback-note">Interactive controls need JavaScript. The complete five-event trace and counts are open below.</p></noscript>
+    </section>
+    <div class="under">
+      <p id="lesson">A repeat request is not a new record.</p>
+      <p class="timing">Play uses demo timing, not real latency.</p>
+    </div>
+    <footer>
+      <p>Fictional, sequential example. No crash, concurrency, or persistence proof.</p>
+      <details id="source" open>
+        <summary>Source &amp; complete trace</summary>
+        <div class="source-content">
+          <p>Source: <code>examples/suite/sources/retry-trace.json</code>. Authored input evidence for a local explanation exercise. No software was executed and no production events were measured.</p>
+          <p>In this invented register, a previously seen key returns its existing receipt without another write. Two sequential requests to an in-memory register. This does not establish crash safety or behavior under concurrent requests.</p>
+          <table>
+            <caption>Complete sequence · 2 requests ≠ 2 writes · 1 stored record</caption>
+            <thead><tr><th scope="col">Step</th><th scope="col">From → to / event</th><th scope="col">Requests</th><th scope="col">Records</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">0</th><td>Before the first request</td><td>0</td><td>0</td></tr>
+              <tr><th scope="row">1</th><td>Client → Register<br>Submit key K7</td><td>1</td><td>0</td></tr>
+              <tr><th scope="row">2</th><td>Register → Register<br>Store one record</td><td>1</td><td>1</td></tr>
+              <tr><th scope="row">3</th><td>Register → Client<br>Receipt R9</td><td>1</td><td>1</td></tr>
+              <tr><th scope="row">4</th><td>Client → Register<br>Retry key K7</td><td>2</td><td>1</td></tr>
+              <tr><th scope="row">5</th><td>Register → Client<br>Return receipt R9</td><td>2</td><td>1</td></tr>
+            </tbody>
+          </table>
+          <details id="raw-source">
+            <summary>Exact source JSON</summary>
+            <pre id="source-json">{
+  "id": "retry-log",
+  "title": "Fictional sequential retry trace",
+  "fictional": true,
+  "provenance": "Authored input evidence for a local explanation exercise. No software was executed and no production events were measured.",
+  "scope": "Two sequential requests to an in-memory register. No concurrency, crash or persistence test.",
+  "participants": [
+    {"id": "client", "label": "Client"},
+    {"id": "register", "label": "Register"}
+  ],
+  "events": [
+    {"from": "client", "to": "register", "label": "Submit key K7"},
+    {"from": "register", "to": "register", "label": "Store one record"},
+    {"from": "register", "to": "client", "label": "Receipt R9"},
+    {"from": "client", "to": "register", "label": "Retry key K7"},
+    {"from": "register", "to": "client", "label": "Return receipt R9"}
+  ],
+  "counts": {"requests": 2, "stored_records": 1},
+  "rule": "In this invented register, a previously seen key returns its existing receipt without another write.",
+  "qualification": "This sequential example does not establish crash safety or behavior under concurrent requests.",
+  "claim_support": {
+    "same-receipt": ["events", "rule"],
+    "one-write": ["counts"],
+    "bounded-lesson": ["rule", "scope", "qualification"]
+  }
+}</pre>
+          </details>
+        </div>
+      </details>
+    </footer>
+  </main>
+  <script>
+    'use strict';
+    (() => {
+      // Trusted authored data only; updates use textContent, never HTML parsing.
+      const source = JSON.parse(document.getElementById('source-json').textContent);
+      const byId = id => document.getElementById(id);
+      const notes = [
+        'Start with an empty register. Advance one event at a time.',
+        'K7 reaches the register. Nothing has been stored yet.',
+        'One record now exists for K7, with receipt R9.',
+        'The client receives R9. The stored record stays the same.',
+        'K7 arrives again. The existing record stays in place.',
+        'The client receives R9 again. No second write.'
+      ];
+      let step = 0;
+      let timer = null;
+      function stop() {
+        window.clearInterval(timer);
+        timer = null;
+        byId('play').textContent = 'Play trace';
+      }
+      function render() {
+        const title = step === 0 ? 'Before the first request' : source.events[step - 1].label;
+        const requests = step >= 4 ? source.counts.requests : step >= 1 ? 1 : 0;
+        const records = step >= 2 ? source.counts.stored_records : 0;
+        byId('stage-title').textContent = title;
+        byId('step-status').textContent = `Step ${step} of 5 · ${step === 0 ? 'Ready' : step === 5 ? 'Complete' : title}`;
+        byId('step').value = step;
+        byId('step').setAttribute('aria-valuetext', `${step} of 5: ${title}`);
+        byId('requests').textContent = requests;
+        byId('records').textContent = records;
+        byId('record').classList.toggle('stored', records > 0);
+        byId('record-status').textContent = records ? '1 record' : 'Empty';
+        byId('record-heading').textContent = records ? 'Key → receipt' : 'No record yet';
+        byId('key-value').textContent = records ? 'K7' : '—';
+        byId('receipt-value').textContent = records ? 'R9' : '—';
+        byId('record-link').textContent = records ? '→' : step === 1 ? 'K7 received' : 'waiting for K7';
+        byId('record-note').textContent = notes[step];
+        byId('lesson').textContent = step === 5 ? '2 requests ≠ 2 writes. One stored record.' : 'A repeat request is not a new record.';
+        byId('previous').disabled = step === 0;
+        byId('next').disabled = step === 5;
+        document.querySelectorAll('[data-event]').forEach(row => {
+          const number = Number(row.dataset.event);
+          row.classList.toggle('current', number === step);
+          row.classList.toggle('done', number < step);
+          row.querySelector('.row-state').textContent = number === step ? 'Current' : number < step ? 'Done' : 'Pending';
+        });
+        byId('diagram-desc').textContent = `Selected step ${step} of 5: ${title}. ${requests} requests, ${records} stored records. Complete planned sequence: Client submits key K7. Register stores one record, then returns receipt R9. Client retries key K7. Register returns receipt R9 without another write.`;
+      }
+      function select(value) {
+        stop();
+        step = Math.max(0, Math.min(5, value));
+        render();
+      }
+      byId('previous').addEventListener('click', () => select(step - 1));
+      byId('next').addEventListener('click', () => select(step + 1));
+      byId('reset').addEventListener('click', () => select(0));
+      byId('step').addEventListener('input', event => select(Number(event.target.value)));
+      byId('play').addEventListener('click', () => {
+        if (timer !== null) { stop(); return; }
+        if (step === 5) { step = 0; render(); }
+        byId('play').textContent = 'Pause trace';
+        // Deliberate reading intervals, not measured request latency. No tweening.
+        timer = window.setInterval(() => {
+          step += 1;
+          if (step === 5) stop();
+          render();
+        }, 1600);
+      });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+      let sourceWasOpen = false;
+      let rawWasOpen = false;
+      window.addEventListener('beforeprint', () => {
+        stop();
+        sourceWasOpen = byId('source').open;
+        rawWasOpen = byId('raw-source').open;
+        byId('source').open = true;
+        byId('raw-source').open = true;
+      });
+      window.addEventListener('afterprint', () => {
+        byId('source').open = sourceWasOpen;
+        byId('raw-source').open = rawWasOpen;
+      });
+      render();
+      byId('source').open = false;
+      byId('controls').hidden = false;
+    })();
+  </script>
+</body>
+</html>

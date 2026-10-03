@@ -6,7 +6,8 @@ lessons, and local explanation examples. `docs/SUITE_PLAN.md` defines the broade
 suite objective; the original Clarity Lab remains a regression example.
 Evidence: the original writing skill, Karpathy's October 1 Chicago-time post,
 the native renderer, and the owner's October 3 identity/onboarding brief.
-`docs/UX_PLAN.md` defines the current low-friction authoring and README refresh.
+`docs/PLUGIN_FIRST_PLAN.md` supersedes the earlier runtime-first onboarding
+in `docs/UX_PLAN.md`. The product entry is native plugin installation.
 
 ## Brand
 An explanatory notebook: precise, calm, and direct. Show evidence and limits.
@@ -19,17 +20,18 @@ technical relationships, quantitative evidence, and coherent stories through rea
 reusable workflows. Do not build a hosted platform. Success means readers can
 inspect the evidence, follow the explanation, and distinguish observations,
 attributed explanations, inferences, and proposals.
-First-use success: one documented command produces a useful local example;
-routine requests require no output-folder naming or repeated preference interview.
+First-use success: register/install through the selected host's plugin manager,
+then ask for an explanation. Routine requests need no Python installation,
+output-folder naming, schema choices, or repeated preference interview.
 
 ## Personas and jobs
 Technical and business readers need clear updates; learners need a concrete example
 they can inspect and manipulate. An agent author needs a repeatable local workflow.
 
 ## Information architecture
-The README leads with a generated editorial hero, a concise value proposition,
-one quickstart, real examples, copyable prompts, then progressively disclosed
-installation/format details. Focused skills route writing, visual documentation,
+The README leads with a generated editorial hero, what STE means and the
+Karpathy-inspired purpose, three real interactive examples, and native installation.
+Keep it short; lifecycle/developer detail belongs in linked docs. Focused skills route writing, visual documentation,
 storytelling, and media. A story presents its question and audience, an overview,
 ordered evidence-backed beats, and a source register. Guided and all-content views
 share the same facts. Source disclosures remain visible and printable.
@@ -78,6 +80,9 @@ Use the existing native engine, standard browser APIs, and standard-library help
 Keep the existing Jinja2/PyYAML dependencies; add no app framework. Save source inputs. Verify the rendered
 HTML in a real browser at desktop and mobile sizes, including invalid input.
 Narrated examples use a generic installed voice, not a cloned or imitated person.
+Default installed skills author with the host's own tools and dependency-free
+HTML/SVG starters. They must not silently bootstrap Python or claim optional
+engine validation when it did not run. No package manager is reimplemented.
 
 ## Open questions
 None blocking. Default language is English and all examples are local-only.

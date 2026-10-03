@@ -8,8 +8,8 @@
     {
       "name": "ste-pro-max",
       "source": "./",
-      "description": "Flexible STE-inspired writing and visual explanations with one native source engine.",
-      "version": "0.3.0"
+      "description": "Native writing, visual explanation, and storytelling skills. No Python prerequisite for authoring.",
+      "version": "0.4.0"
     }
   ]
 }

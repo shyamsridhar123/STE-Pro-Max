@@ -1,0 +1,27 @@
+# What good looks like
+
+Three working, single-file examples. Open an HTML file in a browser: no Python,
+package installation, server, external font, or build step is required.
+All data is explicitly fictional. These are reusable authoring starters, not
+evidence of a real system's safety or a measured learning outcome.
+
+| Example | Try it | What to preserve when adapting |
+| --- | --- | --- |
+| [One retry. One record.](retry-lab.html) | Step through K7/R9, play the trace, reset | Message order, 2 requests / 1 stored record, sequential-only scope |
+| [Checks passed. Release on hold.](release-brief.html) | Inspect the evidence and reveal the reader check | Test scope, pending authority, proposed versus executed action |
+| [A better number needs a better explanation.](rate-lab.html) | Change rates; try a zero baseline | Percentage points versus relative change, undefined comparisons, no invented cause |
+
+## Use from the installed plugin
+
+Ask the host to read the relevant template, preserve your source, and adapt it
+with its native file tools into a new `artifacts/` directory. Keep the installed
+copy unchanged. Replace fictional values only with supplied evidence, and test
+controls, keyboard use, mobile layout, no-JavaScript reading, and print output.
+
+The template route is host-authored HTML/SVG. It does not implicitly run the
+optional Python engine's schema validators or produce its hash manifest.
+For deterministic compilation, use the separate [engine guide](../../docs/AUTHORING.md).
+
+Source baselines: [retry trace](../suite/sources/retry-trace.json),
+[release records](../../ste_promax/data/quickstart.json), and
+[rate comparison](../clarity-lab/source.md).

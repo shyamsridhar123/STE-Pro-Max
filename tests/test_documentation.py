@@ -20,7 +20,7 @@ class ReadmeTests(unittest.TestCase):
     def test_local_readme_links_and_fragments_resolve(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         links = re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", readme)
-        self.assertGreater(len(links), 20)
+        self.assertGreaterEqual(len(links), 15)
         for href in links:
             with self.subTest(href=href):
                 parsed = urlsplit(href)
@@ -46,24 +46,42 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("GPT Image 2.5 Sunburst", provenance)
         self.assertIn("conceptual brand artwork", provenance)
 
-    def test_showcase_is_real_webp_and_not_only_referenced_remotely(self):
-        image = (ROOT / "docs/assets/showcase.webp").read_bytes()
-        self.assertEqual(image[:4], b"RIFF")
-        self.assertEqual(image[8:12], b"WEBP")
-        self.assertGreater(len(image), 10_000)
-        self.assertLess(len(image), 1_000_000)
+    def test_real_examples_have_local_previews_and_standalone_sources(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("](docs/assets/showcase.webp)", readme)
-        self.assertIn("Real rendered examples", readme)
+        for name in ("retry-lab", "release-brief", "rate-lab"):
+            with self.subTest(name=name):
+                image = (ROOT / f"docs/assets/{name}.png").read_bytes()
+                self.assertEqual(image[:8], b"\x89PNG\r\n\x1a\n")
+                self.assertLess(len(image), 1_000_000)
+                self.assertIn(f"examples/showcase/{name}.html", readme)
+                html = (ROOT / f"examples/showcase/{name}.html").read_text(encoding="utf-8")
+                self.assertNotRegex(html, r'(?i)(?:src|href)=["\']https?://')
+                self.assertNotRegex(html, r"(?i)\b(?:fetch|XMLHttpRequest|WebSocket|localStorage)\s*[\.(]")
+                self.assertIn("<noscript>", html)
+        gif = (ROOT / "docs/assets/retry-lab.gif").read_bytes()
+        self.assertIn(gif[:6], (b"GIF87a", b"GIF89a"))
+        self.assertLess(len(gif), 3_000_000)
+        self.assertIn("Real, working HTML", readme)
 
-    def test_quickstart_and_preview_branch_are_explicit(self):
+    def test_native_install_not_python_is_the_product_entry(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("python quickstart.py --open", readme)
-        self.assertIn("git clone --branch feat/comprehensive-suite", readme)
-        self.assertIn("--no-install", readme)
-        self.assertIn("First-time setup may download", readme)
+        for host, verb in (("copilot", "install"), ("claude", "install"), ("codex", "add")):
+            self.assertIn(f"{host} plugin {verb} ste-pro-max@ste-pro-max-plugins", readme)
+        self.assertIn("v0.4.0", readme)
+        self.assertNotIn("python quickstart.py", readme)
+        self.assertNotIn("git clone", readme)
+        self.assertNotIn("--plugin-dir", readme)
+        self.assertIn("not required by the installed authoring skills", readme)
         self.assertIn("not ASD-STE100 certification", readme)
         self.assertNotIn("pip install ste-pro-max", readme)
+
+    def test_readme_defines_ste_and_links_actual_karpathy_post_without_claiming_endorsement(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("STE means Simplified Technical English", readme)
+        self.assertIn("https://x.com/karpathy/status/2105819303471976479", readme)
+        self.assertIn("style preference, not a score", readme)
+        self.assertLessEqual(sum(bool(line.strip()) for line in readme.splitlines()), 150)
+        self.assertLess(len(readme.split()), 800)
 
 
 if __name__ == "__main__":

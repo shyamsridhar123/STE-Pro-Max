@@ -48,3 +48,16 @@ The screenshot/evidence record is retained with the local UX verification run.
 The README repeats important product meaning in text and supplies alt text for
 both images. Installation instructions and validation claims never depend on
 reading small text inside the artwork.
+
+## v0.4 interactive examples
+
+The concise README uses `retry-lab.gif`, `retry-lab.png`, `release-brief.png`,
+and `rate-lab.png`, all captured from the corresponding self-contained HTML
+files in `examples/showcase/`. No image model generated their UI.
+
+The seven-frame GIF records real step-button states, starts with a useful final
+state, and repeats once rather than looping forever. A static screenshot link
+is provided alongside it. Timing is presentation pacing, not measured latency.
+All screenshots are 1200 × 840; the GIF is resized to 960 × 672.
+The former `showcase.webp` remains historical artwork, not the current README's
+only proof of capability.

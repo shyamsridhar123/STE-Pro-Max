@@ -21,8 +21,12 @@ not a hosting service or an ASD-STE100 certification tool.
 - Keep generated files in a new subdirectory of `artifacts/`. Preserve the
   normalized source input and inspect the actual output, not just an exit code.
 - Local memory and `.omx/` state are intentionally not published in this repo.
-- Prefer the `start` workflow for routine artifacts: infer safe defaults,
-  automatically choose a fresh output directory, and return the useful result.
+- The installed plugin uses the host's native authoring/file/browser tools by
+  default. No Python, pip, or setup script is required for writing or HTML/SVG
+  authoring. Reuse the dependency-free starters in `examples/showcase/`.
+  The Python engine is an optional deterministic/developer path, not plugin install.
+- For routine artifacts, infer safe defaults, choose a fresh output directory,
+  and return the useful result.
   Do not ask the user to name folders, choose schemas, or repeat supplied context.
   Missing facts, explicit trust, external actions, and video approval remain gates.
 
