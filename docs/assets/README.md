@@ -49,9 +49,32 @@ The README repeats important product meaning in text and supplies alt text for
 both images. Installation instructions and validation claims never depend on
 reading small text inside the artwork.
 
-## v0.4 interactive examples
+## Current README: show, don't tell
 
-The concise README uses `retry-lab.gif`, `retry-lab.png`, `release-brief.png`,
+The README leads with actual outputs, not concept mockups:
+
+| Asset | Actual browser state |
+| --- | --- |
+| `brief-transformation.png` | Source note beside the transformed brief, no highlight selected; 1200 × 740 |
+| `retry-storm.png` | Four layers, three total attempts per layer, single-owner comparison visible; 1200 × 860 |
+| `retry-storm.gif` | Eight real control states from the retry model; 1200 × 860 |
+| `rate-lab.png` | The original 97.4% / 99.7% rate comparison; 1200 × 840 |
+
+The new PNGs and animation were captured from the corresponding standalone
+HTML in `examples/showcase/` on October 3, 2026. No image model generated the UI.
+The retry GIF is a browser-state recording encoded with FFmpeg: 9 encoded frames,
+14.64 seconds, 176,311 bytes, repeating once. A static alternative is linked
+beside it. Hold times are presentation pacing, not measured request latency.
+
+The source note is fictional. The retry visualization is an explicit
+persistent-failure arithmetic model, not real traffic or a benchmark. The
+examples preserve those labels inside the screenshots and in their source.
+Capture states, browser results, and hashes are retained in the local
+`artifacts/show-dont-tell-20261003/` verification directory.
+
+## Original v0.4 interactive examples
+
+The original showcase includes `retry-lab.gif`, `retry-lab.png`, `release-brief.png`,
 and `rate-lab.png`, all captured from the corresponding self-contained HTML
 files in `examples/showcase/`. No image model generated their UI.
 

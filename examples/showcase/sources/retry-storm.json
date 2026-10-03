@@ -1,0 +1,58 @@
+{
+  "title": "One request. 81 backend attempts.",
+  "classification": "Illustrative worst-case arithmetic model",
+  "provenance": {
+    "source": "Authored illustrative model for the STE-Pro Max showcase, October 3, 2026",
+    "observed_incident": false,
+    "production_telemetry": false,
+    "benchmark": false,
+    "empirical_data": []
+  },
+  "inputs": {
+    "original_requests": 1,
+    "serial_layers": { "default": 4, "minimum": 1, "maximum": 4, "step": 1 },
+    "total_attempts_per_retrying_layer_per_incoming_call": { "default": 3, "minimum": 1, "maximum": 4, "step": 1 },
+    "backend_failure": "persistent"
+  },
+  "definitions": {
+    "A": "Total attempts per retrying layer per incoming call, including the initial attempt",
+    "L": "Number of serial layers before the backend",
+    "retries_per_incoming_call": "A - 1",
+    "layer_i": "Layer 1 receives the original request; layer L calls the backend",
+    "attempt_mark": "One cumulative downstream call at the indicated boundary, not a simultaneous call",
+    "backend_attempts": "Only the final boundary count; not the sum of all boundary counts"
+  },
+  "assumptions": [
+    "Every backend attempt fails, and each failure propagates upstream after downstream attempts are exhausted.",
+    "All layers are serial and invoke one next layer, or the backend at the final layer.",
+    "Every retrying layer exhausts its total attempt budget for each incoming call.",
+    "An upstream retry starts the full downstream sequence again with fresh downstream attempt budgets.",
+    "There are no shared retry budgets, early exits, deadlines, cancellation, caching, circuit breakers, or deduplication.",
+    "In the single-owner comparison, layer 1 has the same attempt budget A; every other layer forwards each incoming call exactly once."
+  ],
+  "formulas": {
+    "nested_attempts_at_boundary_i": "A^i",
+    "nested_backend_attempts": "A^L",
+    "single_owner_attempts_at_every_boundary": "A",
+    "single_owner_backend_attempts": "A * 1^(L - 1) = A",
+    "additional_backend_calls_after_first": "A^L - 1"
+  },
+  "default_example": {
+    "retries_per_incoming_call": 2,
+    "nested_boundary_counts": [3, 9, 27, 81],
+    "single_owner_boundary_counts": [3, 3, 3, 3],
+    "nested_backend_attempts": 81,
+    "single_owner_backend_attempts": 3,
+    "additional_nested_backend_calls_after_first": 80
+  },
+  "boundary_examples": [
+    { "A": 1, "L": 4, "nested_backend_attempts": 1, "single_owner_backend_attempts": 1 },
+    { "A": 4, "L": 4, "nested_backend_attempts": 256, "single_owner_backend_attempts": 4 },
+    { "A": 4, "L": 1, "nested_backend_attempts": 4, "single_owner_backend_attempts": 4 }
+  ],
+  "limits": [
+    "No real network calls, artificial delays, storage, or automatic playback.",
+    "No estimate of elapsed time, concurrency, throughput, success probability, or production performance.",
+    "Reducing attempt counts is not a resilience guarantee or a production policy recommendation."
+  ]
+}

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>From project note to clear brief — STE-Pro Max</title>
+<style>
+:root{--coal:#252522;--ivory:#f6f3eb;--stone:#c2bfb5;--copper:#dfa77e;--ink:#242a30;--line:#62625a;--paper-line:#bdbbb2;--paper-muted:#515750;--focus:#88481c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--coal);color:var(--ivory);font:16px/1.5 "Segoe UI",Arial,sans-serif}
+main{max-width:1280px;margin:auto;padding:18px 32px 14px}
+h1,h2,h3,p,figure{margin:0}
+.masthead{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:13px;font-size:14px}
+.masthead span:last-child{color:var(--stone)}
+.intro{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:14px 0 12px}
+h1{font-size:clamp(26px,3vw,38px);line-height:1.16;letter-spacing:-.04em;font-weight:600}
+.intro p{font-size:13px;color:var(--stone);max-width:27ch}
+.inspection{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:17px;font-size:13px}
+.inspection[hidden]{display:none}
+.inspection-label{margin-right:6px;color:var(--stone)}
+button{font:inherit;min-height:40px;cursor:pointer;color:var(--ivory);background:transparent;border:1px solid var(--line);border-radius:4px;padding:7px 14px}
+button:hover{border-color:var(--copper)}
+button[aria-pressed="true"]{background:var(--copper);border-color:var(--copper);color:var(--coal)}
+#clear-highlights{border-color:transparent;text-decoration:underline;text-underline-offset:4px;color:var(--stone)}
+:focus-visible{outline:3px solid var(--copper);outline-offset:4px}
+.spread{display:grid;grid-template-columns:43% 57%;border:1px solid var(--line)}
+.source{padding:23px 27px 25px;min-width:0}
+.section-heading{display:flex;justify-content:space-between;gap:16px;font-size:13px;line-height:1.4;margin-bottom:17px}
+.section-heading h2{font-size:inherit;font-weight:600}
+.source .section-heading{color:var(--copper)}
+.source-text{font-size:15.5px;line-height:1.64;color:#e1ded5;max-width:65ch}
+.brief{background:var(--ivory);color:var(--ink);padding:23px 28px 25px;min-width:0}
+.brief .section-heading{color:var(--paper-muted);margin-bottom:13px}
+.takeaway{font-size:clamp(26px,3.1vw,39px);line-height:1.09;font-weight:600;letter-spacing:-.04em;margin-bottom:20px}
+.takeaway span{display:block}
+.outcome-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:9px}
+.outcome-heading h3{font-size:16px;font-weight:650}
+.outcome-heading p{font-size:12px;color:var(--paper-muted)}
+.count-strip{display:flex;width:100%;height:19px;overflow:hidden}
+.count-strip span:nth-child(1){width:77.5%;background:#405c51}
+.count-strip span:nth-child(2){width:15.8333333333%;background:#b47543}
+.count-strip span:nth-child(3){width:6.6666666667%;background:#333b43}
+.counts{display:grid;grid-template-columns:1.35fr 1fr .8fr;gap:10px;margin-top:8px}
+.counts p{font-size:12px;line-height:1.35;color:var(--paper-muted)}
+.counts strong{display:block;font:600 24px/1.2 "Segoe UI",Arial,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums}
+.counts .key{display:inline-block;width:7px;height:7px;margin-right:5px;background:var(--key)}
+.counts p:nth-child(1){--key:#405c51}.counts p:nth-child(2){--key:#b47543}.counts p:nth-child(3){--key:#333b43}
+.findings{display:grid;grid-template-columns:1fr 1.1fr;gap:24px;margin:20px 0 17px}
+.findings h3,.next h3{font-size:13px;font-weight:700;margin-bottom:5px}
+.findings p,.next p{font-size:14px;line-height:1.5}
+.scope{color:var(--paper-muted);margin-top:7px}
+.next{border-top:1px solid var(--paper-line);padding-top:12px;display:grid;grid-template-columns:92px 1fr;gap:12px}
+.next h3{margin:2px 0 0}
+.next p strong{font-weight:650}
+.next small{display:block;font-size:12px;color:var(--paper-muted);margin-top:3px}
+[data-evidence]{border-radius:2px}
+.source [data-evidence].is-highlighted{background:#594330;color:#fff8ed;outline:2px solid var(--copper);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.brief [data-evidence].is-highlighted{background:#f1dfbe;outline:2px solid var(--focus);outline-offset:4px}
+.provenance{padding-top:11px;color:var(--stone);font-size:12px}
+summary{cursor:pointer;min-height:40px;align-content:center;font-size:13px;color:var(--ivory);width:fit-content}
+summary::marker{color:var(--copper)}
+.source-details{max-width:92ch;padding:8px 0 15px;font-size:14px;line-height:1.6}
+.source-details p+p{margin-top:8px}
+code{font-size:12px;overflow-wrap:anywhere}
+a{color:inherit;text-underline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+noscript p{font-size:13px;color:var(--stone);margin:12px 0}
+@media(min-width:1100px){.source-text{font-size:16px}}
+@media(max-width:850px){main{padding:20px 24px}.source,.brief{padding:22px}.source-text{font-size:15px}.findings{gap:16px}.intro{display:block}.intro p{max-width:none;margin-top:8px}.takeaway{font-size:30px}}
+@media(max-width:719px){main{padding:18px 16px}.masthead{flex-wrap:wrap;gap:4px}.spread{grid-template-columns:1fr}.intro{margin:20px 0 15px}.intro p{font-size:14px}.inspection{gap:8px}.inspection-label{flex-basis:100%}.source,.brief{padding:22px 20px}.source-text{font-size:16px;line-height:1.65}.section-heading{margin-bottom:14px}.takeaway{font-size:32px}.findings{grid-template-columns:1fr;gap:16px}.outcome-heading{display:block}.outcome-heading p{margin-top:3px}.counts{grid-template-columns:1.25fr 1fr 1fr;gap:8px}.counts strong{font-size:23px}.next{grid-template-columns:1fr;gap:4px}.provenance{font-size:12px}.section-heading{flex-wrap:wrap;gap:5px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@page{size:A4;margin:13mm}
+@media print{
+body{background:white;color:#222;font-size:10pt}
+main{max-width:none;padding:0}
+.masthead{font-size:10pt;border-color:#888}.masthead span:last-child,.intro p,.provenance{color:#444}
+.intro{display:block;margin:14px 0}.intro p{max-width:none;margin-top:6px}
+h1{font-size:24pt}.inspection{display:none!important}
+.spread{display:block;border:0}
+.source,.brief{padding:12px 0;background:white;color:#222;break-inside:avoid}
+.source{border-bottom:1px solid #999}
+.source-text{color:#222;font-size:10pt;line-height:1.5;max-width:none}
+.source .section-heading,.brief .section-heading{color:#444;margin-bottom:7px}
+.takeaway{font-size:24pt;margin-bottom:12px}
+.count-strip{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.counts .key{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.findings{grid-template-columns:1fr 1fr;margin:12px 0;gap:24px}.findings p,.next p{font-size:10pt}
+.next{grid-template-columns:92px 1fr}
+.provenance summary{color:#222;font-size:10pt;min-height:26px}
+.source-details{display:block!important;font-size:9pt;max-width:none}
+details::details-content{content-visibility:visible!important;display:block!important}
+[data-evidence].is-highlighted{background:transparent!important;outline:none!important;color:inherit!important}
+noscript p{color:#444}
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="masthead"><span>STE-Pro Max / Note to brief</span><span>Northstar search · Fictional example</span></header>
+  <div class="intro">
+    <h1>A dense note. A clear next step.</h1>
+    <p>Pre-authored transformation.<br>The same facts, easier to use.</p>
+  </div>
+  <div class="inspection" id="evidence-controls" role="group" aria-label="Highlight matching evidence in source and brief" hidden>
+    <span class="inspection-label">Trace the evidence</span>
+    <button type="button" id="highlight-coverage" data-focus="coverage" aria-pressed="false" aria-controls="source-text brief">Coverage</button>
+    <button type="button" id="highlight-outcome" data-focus="outcome" aria-pressed="false" aria-controls="source-text brief">Outcome</button>
+    <button type="button" id="highlight-next" data-focus="next" aria-pressed="false" aria-controls="source-text brief">Next step</button>
+    <button type="button" id="clear-highlights">Clear highlights</button>
+  </div>
+  <p id="evidence-status" class="sr-only" role="status" aria-live="polite">All facts visible. No highlights.</p>
+  <div class="spread">
+    <section class="source" aria-labelledby="source-heading">
+      <div class="section-heading"><h2 id="source-heading">Source / Project note</h2><span>Before</span></div>
+      <p class="source-text" id="source-text">This fictional Northstar project note consolidates the search pilot assessment and the proposed continuation, with the qualification that <span data-evidence="coverage">coverage was limited to English-language internal support.</span> <span data-evidence="outcome">Of the 240 support questions assessed, 186 answers were accepted without changes, 38 required edits, and 16 questions remained unanswered,</span> leaving both revision needs and unresolved questions to consider alongside the accepted answers. The assessment included <span data-evidence="coverage">no comparison with the current workflow, no handling-time measurement, and no multilingual data, so these findings do not establish a speed gain or support a broader rollout.</span> In view of that bounded evidence, <span data-evidence="next">the team proposes a two-week shadow pilot, not a full rollout; the proposed pilot has not begun,</span> and the assessment should not be read as showing that the remaining gaps have been resolved.</p>
+    </section>
+    <section class="brief" id="brief" aria-labelledby="brief-heading">
+      <div class="section-heading"><h2 id="brief-heading">Brief / Proposal, not a decision</h2><span>After</span></div>
+      <p class="takeaway" data-evidence="next"><span>A shadow pilot.</span><span>Not a full rollout.</span></p>
+      <figure data-evidence="outcome" aria-labelledby="outcome-heading">
+        <div class="outcome-heading"><h3 id="outcome-heading">77.5% accepted without changes</h3><p>186 / 240 questions</p></div>
+        <div class="count-strip" aria-hidden="true"><span data-count="186"></span><span data-count="38"></span><span data-count="16"></span></div>
+        <figcaption class="counts">
+          <p><strong>186</strong><span class="key" aria-hidden="true"></span>Accepted unchanged</p>
+          <p><strong>38</strong><span class="key" aria-hidden="true"></span>Required edits</p>
+          <p><strong>16</strong><span class="key" aria-hidden="true"></span>Unanswered</p>
+        </figcaption>
+      </figure>
+      <div class="findings">
+        <section aria-labelledby="worked-heading">
+          <h3 id="worked-heading">What worked</h3>
+          <p data-evidence="outcome">186 answers were accepted as written. Not every question had a usable answer.</p>
+          <p class="scope" data-evidence="coverage">English-language internal support only.</p>
+        </section>
+        <section data-evidence="coverage" aria-labelledby="unknown-heading">
+          <h3 id="unknown-heading">What remains unknown</h3>
+          <p>No current-workflow comparison. No handling-time measurement. No multilingual data.</p>
+        </section>
+      </div>
+      <section class="next" data-evidence="next" aria-labelledby="next-heading">
+        <h3 id="next-heading">Proposed next</h3>
+        <p><strong>A two-week shadow pilot.</strong><small>It has not begun. No speed gain or broader rollout is established.</small></p>
+      </section>
+    </section>
+  </div>
+  <footer class="provenance">
+    <details id="source-model-details">
+      <summary id="source-model-toggle">Source, calculation &amp; model details</summary>
+      <div class="source-details">
+        <p><strong>Source:</strong> <a id="source-link" href="sources/launch-note.md">Read the original Markdown note</a> (<code>sources/launch-note.md</code>). The source paragraph above reproduces that file verbatim. Northstar and all numbers are fictional; this is not real customer data or empirical validation.</p>
+        <p><strong>Calculation:</strong> 186 + 38 + 16 = 240 questions. 186 ÷ 240 × 100 = 77.5%. Strip widths use the exact count proportions, in the same order as the labels. “Accepted” means accepted without changes in this fictional assessment, not a measured accuracy rate.</p>
+        <p><strong>Transformation:</strong> A pre-authored STE-inspired editorial example, not a live model output. No model runs in this page. Highlight buttons inspect fixed source-to-brief mappings; they do not generate or validate claims. No owner, date, cause, or approval is supplied. No external requests, storage, or automated actions.</p>
+      </div>
+    </details>
+    <p>Fictional source. Pre-authored brief. Evidence limits kept in view.</p>
+  </footer>
+  <noscript><p>JavaScript is off. Both documents, the count labels, and source details remain readable. Evidence highlighting is unavailable.</p></noscript>
+</main>
+<script>
+(() => {
+  const buttons = [...document.querySelectorAll('[data-focus]')];
+  const passages = [...document.querySelectorAll('[data-evidence]')];
+  const status = document.getElementById('evidence-status');
+  let selected = '';
+  function highlight(key) {
+    selected = key;
+    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.focus === key));
+    for (const passage of passages) passage.classList.toggle('is-highlighted', passage.dataset.evidence === key);
+    status.textContent = key
+      ? `${buttons.find(button => button.dataset.focus === key).textContent} evidence highlighted in both documents. All facts remain visible.`
+      : 'All facts visible. No highlights.';
+  }
+  for (const button of buttons) {
+    button.addEventListener('click', () => highlight(selected === button.dataset.focus ? '' : button.dataset.focus));
+  }
+  document.getElementById('clear-highlights').addEventListener('click', () => highlight(''));
+  document.getElementById('evidence-controls').hidden = false;
+})();
+</script>
+</body>
+</html>
