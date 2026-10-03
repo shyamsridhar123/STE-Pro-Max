@@ -6,8 +6,7 @@ description: "Create source-grounded technical visual documents with the STE-Pro
 # STE visual documentation
 
 Produce a focused explanation from reviewed facts, using this bundle's native
-engine. Do not require a separately installed PaperBoard CLI, new dependencies,
-a wrapper, or a hosted service.
+engine. Do not require another renderer, a wrapper, or a hosted service.
 
 ## Choose and ground the visual
 
@@ -42,7 +41,6 @@ root. Do not derive it from the current working directory or assume global
 installation. From the user's workspace, inspect:
 
 ```text
-python "<bundle-root>" --help
 python "<bundle-root>" schema diagram
 python "<bundle-root>" schema chart
 ```
@@ -51,15 +49,20 @@ Angle-bracket paths are substitutions, not literal filenames. Put reviewed
 source JSON in the user's workspace and invoke:
 
 ```text
-python "<bundle-root>" render "<absolute-source.json>" --output-dir "<absolute-new-output-dir>"
+python "<bundle-root>" start "<absolute-source.json>" --json
 ```
 
-Choose a fresh subdirectory of the user's `artifacts/`, never the plugin cache.
+`start` chooses a fresh subdirectory of the user's `artifacts/`, never the plugin cache.
 The repository-root equivalent is `python -m ste_promax`. Author structured
 `sections` with `kind: diagram` or `kind: chart`; consult `schema` for an existing
 section kind rather than guessing fields. For a single visual, use the same
 object at the root with an explicit `kind`. Structured visuals do not require
 `--trusted-html`.
+
+Follow [the shared low-friction workflow](../ste-promax/references/low-friction-workflow.md).
+Choose the simplest faithful visual yourself. Do not ask the user to choose
+internal schema names, file paths, themes, or renderer options. Preserve the
+requested medium, and ask only when a missing fact or ambiguity affects meaning.
 
 If the selected bundle lacks a command or rejects the shape, report the exact
 gap. Do not edit runtime code, silently use another engine, or claim support from

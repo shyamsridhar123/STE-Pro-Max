@@ -1,7 +1,7 @@
 # Plugin packaging
 
-One shared engine and three focused skills serve three target hosts. There is no
-installed-PaperBoard wrapper and no separately maintained renderer per host.
+One shared native engine and three focused skills serve three target hosts.
+There is no separately maintained renderer per host.
 
 ## Target surfaces
 
@@ -36,12 +36,13 @@ to be new; it never removes an earlier build.
 The builder uses an explicit payload list, refuses unsafe replacement, and excludes
 Git data, orchestration state, local memories, caches, and generated artifacts.
 
-`ste_promax/`, `skills/`, templates, design files, and examples come from the same
+`ste_promax/`, `skills/`, templates, design files, README images, and examples come from the same
 source used by local tests. `__main__.py` makes the bundle callable from another
-workspace without installing or resolving a separate `paperboard` executable:
+workspace without a separate renderer executable:
 
 ```powershell
 python "<absolute-plugin-root>" check "<workspace>/notes.md" --json
+python "<absolute-plugin-root>" start "<workspace>/notes.md" --json
 python "<absolute-plugin-root>" schema story
 python "<absolute-plugin-root>" render "<workspace>/notes.md" --output-dir "<workspace>/artifacts/new-report"
 python "<absolute-plugin-root>" narrate "<workspace>/story.json" --audio-dir "<workspace>/audio" --output-dir "<workspace>/artifacts/new-media"
@@ -56,6 +57,25 @@ user's workspace, not the plugin cache.
 Python 3.10+ is required. Prose checks use only the standard library. Native
 rendering additionally uses Jinja2 and PyYAML. Plugin installation is **not**
 evidence that these Python packages were installed.
+
+For a first result from a checkout or extracted bundle:
+
+```powershell
+python "<absolute-plugin-root>/quickstart.py" --open
+```
+
+Run it from the intended output workspace. The user-invoked launcher reuses a
+ready interpreter or prepares a private **`.ste-env` in that workspace**.
+First-time setup can download the declared Python packages. It never mutates
+global Python, replaces an unrelated environment, or writes build output into
+a shared plugin cache. Later ready runs do not reinstall dependencies.
+Use `--no-install` for ready-environment-only operation and `--no-open` for headless
+operation. Ordinary skill discovery does not trigger this launcher.
+
+`python "<absolute-plugin-root>" doctor --json` reports local readiness without
+installing packages or executing optional tools. Use the same interpreter for
+diagnostics and rendering. If quickstart created `.ste-env`, call its Python for
+later native commands, or keep using quickstart to select it.
 
 Rendering reports missing dependencies before creating output; it does not run pip.
 When setup is explicitly requested, use an isolated environment in the user's
@@ -81,13 +101,14 @@ performed by the build script**.
 
 ### Copilot CLI
 
-Install a local assembled plugin with `copilot plugin install <plugin-directory>`,
-or use the repository source when accessible:
+For session-only loading, use:
 
 ```text
-copilot plugin install shyamsridhar123/STE-Pro-Max
+copilot --plugin-dir "<absolute-plugin-root>"
 ```
 
+For persistent local installation:
+`copilot plugin install "<absolute-plugin-root>"`.
 The repository also supplies a Copilot marketplace catalog. A private repository
 requires appropriate GitHub access; the plugin does not create that access.
 
@@ -102,14 +123,29 @@ claude plugin validate <plugin-directory> --strict
 
 For session-only development, use `claude --plugin-dir <plugin-directory>`.
 For persistent installation, register the supplied marketplace and explicitly
-select the intended user/project scope. Do not mutate global installations while
+select the intended user/project scope:
+
+```text
+claude plugin marketplace add "<absolute-plugin-root>" --scope user
+claude plugin install ste-pro-max@ste-pro-max-plugins --scope user
+```
+
+Do not mutate global installations while
 merely building or testing a package.
 
 ### Codex CLI / desktop
 
-Use the documented local marketplace/plugin directory flow and the `/plugins`
-browser. The desktop Plugins Directory is the official local-authoring test
-surface. Start a fresh session after installing a plugin.
+Register the local marketplace:
+
+```text
+codex plugin marketplace add "<absolute-plugin-root>"
+codex
+```
+
+Inside Codex, use `/plugins`, select `ste-pro-max-plugins`, and install
+`ste-pro-max`. Start a fresh session afterward. The supported desktop Plugins
+Directory is an alternative local-authoring surface; older app versions may
+differ. These are documented paths, not a claim of a completed local installation.
 
 The repository's `.agents/plugins/marketplace.json` describes a local source at
 `./`. OpenAI defines that path relative to the marketplace's repository root,
@@ -117,8 +153,26 @@ not the catalog file's directory. This applies the documented containment rule
 to a repo-root plugin; host installation of that exact arrangement remains a
 separate check. The entry declares availability, not an automatic installation.
 
-Do not invent a `codex plugin validate` or `codex plugin install` command: those
-standalone commands were not established by the inspected official documentation.
+Do not invent a `codex plugin validate` or standalone `codex plugin install`
+command. The inspected documentation establishes marketplace registration plus
+the interactive plugin browser.
+
+### Select the preview branch, not an older default branch
+
+This preview remains on `feat/comprehensive-suite` until its PR is merged. A plain
+repository install can load older default-branch code. Prefer a local checkout
+of the preview branch or an explicitly ref-selected marketplace:
+
+```text
+copilot plugin marketplace add "shyamsridhar123/STE-Pro-Max#feat/comprehensive-suite"
+claude plugin marketplace add "shyamsridhar123/STE-Pro-Max#feat/comprehensive-suite" --scope user
+codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref feat/comprehensive-suite
+```
+
+Choose the one matching your host, then install the marketplace entry. Copilot
+and Claude use `ste-pro-max@ste-pro-max-plugins`; Codex uses `/plugins`.
+Existing private-repository credentials are required. These are alternatives
+to local registration, not three steps that every user should run.
 
 ## Evidence and references
 
@@ -130,6 +184,7 @@ Checked October 3, 2026:
 - [Claude plugin CLI reference](https://code.claude.com/docs/en/plugins/cli-reference)
 - [Claude dependency loading](https://code.claude.com/docs/en/plugins/loading#node-js-package-dependencies)
 - [OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins)
+- [OpenAI Codex plugins](https://developers.openai.com/codex/plugins)
 - [OpenAI plugin surface guide](https://learn.chatgpt.com/docs/plugins)
 
 Actual local checks and untested host behavior are recorded in `VALIDATION.md`.

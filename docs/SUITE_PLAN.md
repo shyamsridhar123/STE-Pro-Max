@@ -19,7 +19,7 @@ Git state confirms that foundation exists. It does not establish a comprehensive
 visual-documentation or storytelling suite.
 
 Changes continue on `feat/comprehensive-suite`. The imported ZIP, original skill,
-upstream PaperBoard checkout, unrelated work, and global host installations remain
+other source checkouts, unrelated work, and global host installations remain
 protected. A failed App worktree creation did not grant any additional authority;
 the clean current checkout was placed on an ordinary feature branch instead.
 

@@ -3,6 +3,58 @@
 Verified locally on October 3, 2026. This records what ran, not an assertion of
 formal STE certification or universal host compatibility.
 
+## UX and identity refresh v0.3.0
+
+### New first-use behavior
+
+- `start [source]` accepts a source or runs the packaged fictional example.
+  It chooses a fresh output directory and has opt-in `--open` and machine `--json`.
+- No-command help and read-only `doctor` make the next action discoverable.
+  Diagnostics check declared dependency versions without importing render
+  packages or invoking optional media tools.
+- The explicit `quickstart.py` reuses a ready interpreter or a private workspace
+  `.ste-env`; it never mutates global Python or another existing environment.
+  Setup installs only runtime requirements, not a second engine/build backend.
+- Full input validation, including nested sections, runs before setup. The
+  shared preflight imports with `python -S`, with no third-party packages.
+- Legacy output encoding no longer prevents a successfully rendered Unicode
+  path from reaching the requested browser-open step. Exact file paths and
+  JSON remain unchanged.
+
+### Local checks
+
+**351 tests passed**, including original preservation tests and new onboarding,
+bootstrap, Unicode, and README contracts. Ruff and all-surface Pyright passed;
+all three skills validated in UTF-8 mode. Evidence:
+`artifacts/ux-refresh-20261003/final/`.
+
+The five suite examples were rendered again under the standalone identity.
+**30 browser scenario records passed** at 1280, 375, and 320 pixels, with
+keyboard/history, no-JavaScript, print, and no-outbound-request checks.
+Six of those records cover each artifact; the non-story control record is
+explicitly not applicable, not an interaction test. A separate onboarding
+browser pass checked the built-in demo. These are bounded Chromium checks,
+not full accessibility certification.
+
+The README was rendered locally with GitHub-flavored Markdown semantics at the
+same three widths. Both raster assets loaded; disclosures expanded; all **25**
+local links/anchors resolved; there was no page-level horizontal overflow.
+This is a GFM-compatible preview, not a pixel-identical GitHub rendering claim.
+Evidence: `artifacts/ux-refresh-20261003/readme/`.
+
+The requested hero was generated with **GPT Image 2.5 Sunburst**, inspected, and
+saved into `docs/assets/hero.png`. The showcase is assembled from actual output
+captures, not generated screenshots. See `docs/assets/README.md`.
+All current tracked source and new outputs use the standalone product identity;
+historical Git commits and previous local evidence were not rewritten.
+
+Ready-interpreter quickstart executions succeeded and preserved artifact hashes.
+Two fresh-environment local attempts encountered a Python package-server TLS
+handshake failure. The command failed visibly, retained partial evidence, and
+did not disable TLS checks. A real clean-interpreter first-run/reuse check is
+included in the Ubuntu/Windows CI workflow; its actual result must be recorded
+separately before claiming network setup passed.
+
 ## Suite v0.2.0
 
 ### Code, skills, and source preservation
@@ -186,7 +238,7 @@ The installed skill-creator validator reported `Skill is valid!` for
 
 The actual CLI rendered the reviewed HTML into
 `artifacts/clarity-lab-final/`, including the HTML/design/metadata triple, gallery,
-original source, normalized input, and hash manifest. No installed PaperBoard
+original source, normalized input, and hash manifest. No external renderer
 command or source-checkout fallback was used. Local design-token lint passed.
 
 Real browser checks covered:
@@ -254,7 +306,7 @@ An independent code review found two issues, both fixed with regressions:
 ### Preservation and remaining boundaries
 
 The original ZIP and both extracted source files retain the SHA-256 hashes in
-`PROVENANCE.md`. The original PaperBoard checkout remains unchanged. Workstation
+`PROVENANCE.md`. Other source checkouts remain unchanged. Workstation
 memories and orchestration state are excluded from distribution.
 
 Optional paid narration, hosted publishing, formal ASD-STE100 conformance, and

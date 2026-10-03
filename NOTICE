@@ -1,22 +1,12 @@
 STE-Pro Max
+Copyright (c) 2026 Shyam Sridhar and contributors.
 
-The native renderer, gallery, templates, and bundled design are derived from
-ATV-PaperBoard by All The Vibes:
-https://github.com/All-The-Vibes/ATV-PaperBoard
-Upstream revision: 4b068bcab8e4dc105f0ef975ee224564f5d63383
+Licensed under the Apache License, Version 2.0.
+A copy is included in LICENSE.
 
-Copyright (c) 2026 All-The-Vibes / atv-paperboard contributors
+The owner has authorized this repository's standalone product identity.
+The native engine, templates, and design resources are maintained in this project.
 
-ATV-PaperBoard is distributed under the Apache License, Version 2.0.
-A copy is included in LICENSE. Modified files are marked at their source.
-
-STE-Pro Max changes include a repo-native CLI, flexible writing diagnostics,
-offline default typography, explicit trust for authored HTML, local design
-validation, source-preserving artifact manifests, and narrated explanation examples.
-
-Karpathy's post is referenced as the source of output-workflow ideas, not copied
-software, an endorsement, or a specification of ASD-STE100 compliance.
+Referenced research informs the writing and explanation workflows. References
+do not imply endorsement, source verification, or ASD-STE100 certification.
 The original STE-ProMAX archive and extracted writing skill are preserved imports.
-
-The upstream NOTICE.md also credits pbakaus/impeccable for files under
-core/designs/impeccable-context/. Those files are not included in this derivative.

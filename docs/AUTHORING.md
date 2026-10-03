@@ -20,6 +20,37 @@ than force a lesson. An incident review need not end in resolution. These are
 authoring choices, not guaranteed learning outcomes. See the
 [source-to-design research note](research/VISUAL_LEARNING_AND_STORYTELLING.md).
 
+## The low-friction path
+
+From a checkout, `python quickstart.py --open` creates a fictional example.
+With your own source, use `python quickstart.py notes.md --open`. The explicit
+launcher reuses a ready interpreter or prepares a private workspace `.ste-env`,
+installing only the declared runtime requirements. It does not build or install
+another copy of the engine, alter global Python, or replace an unrelated environment.
+Initial setup needs access to the Python package index; TLS failures remain
+visible and are never bypassed. A ready-environment run needs no package download.
+
+With dependencies already available, run:
+
+```powershell
+python -m ste_promax start notes.md --open
+python -m ste_promax start examples/suite/retry-explanation.json --json
+python -m ste_promax doctor --json
+```
+
+`start` chooses a fresh folder under the caller's `artifacts/`, preserves the
+input, and returns the result path. It accepts the same title, design, and explicit
+HTML trust options as `render`. Add `--output-dir` only for a required destination;
+the target must be new. `doctor` is read-only discovery, not proof of successful
+rendering or media availability.
+
+For a brief rewrite, let the assistant write the requested prose directly.
+For an artifact, the assistant authors the shape and runs the command; users
+should not have to choose schema names or construct JSON. The CLI itself is a
+deterministic renderer, not a model that invents or rewrites a source.
+See [the low-friction workflow](../skills/ste-promax/references/low-friction-workflow.md)
+for the default choices and retained review gates.
+
 ## Inspect the installed shapes
 
 Run these commands from the repository root with an existing Python environment
@@ -61,7 +92,7 @@ python "$bundle" render "$source" --output-dir (Join-Path $run 'document')
 ```
 
 This calls the same engine as `python -m ste_promax`, without a wrapper or a
-PaperBoard installation. Keep absolute source/output paths in the user's
+external renderer installation. Keep absolute source/output paths in the user's
 workspace. Keep the full bundle together; copying only a skill file omits the
 engine and shared authoring guidance.
 

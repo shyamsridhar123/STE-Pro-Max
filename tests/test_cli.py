@@ -285,7 +285,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual((self.output / "example.html").read_text(), self.html)
 
     def test_removed_wrapper_options_are_rejected(self):
-        for option in ("--paperboard", "--paperboard-source", "--offline-fonts"):
+        for option in ("--external-renderer", "--renderer-source", "--offline-fonts"):
             with self.subTest(option=option), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as error:
                     cli.main(["render", str(self.source), "--output-dir", str(self.output), option])
@@ -293,11 +293,11 @@ class RenderTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_version(self):
-        self.assertEqual(__version__, "0.2.0")
+        self.assertEqual(__version__, "0.3.0")
         with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as error:
             cli.main(["--version"])
         self.assertEqual(error.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "0.2.0")
+        self.assertEqual(output.getvalue().strip(), "0.3.0")
 
 
 class NativeIntegrationTests(unittest.TestCase):

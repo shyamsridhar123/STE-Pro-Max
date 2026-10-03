@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ste-pro-max"
-version = "0.2.0"
-description = "Evidence-first writing, visual explanations, and a native PaperBoard-derived artifact renderer."
+version = "0.3.0"
+description = "Clear writing, visual documentation, and evidence-linked stories with a low-friction local workflow."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
@@ -21,7 +21,7 @@ Repository = "https://github.com/shyamsridhar123/STE-Pro-Max"
 include = ["ste_promax*"]
 
 [tool.setuptools.package-data]
-ste_promax = ["templates/*.j2", "designs/*.DESIGN.md", "scripts/*.ps1"]
+ste_promax = ["templates/*.j2", "designs/*.DESIGN.md", "scripts/*.ps1", "data/*.json"]
 
 [tool.ruff]
 line-length = 110

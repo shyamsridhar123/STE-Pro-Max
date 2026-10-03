@@ -14,22 +14,18 @@ browser session data, and credentials are not included in this repository.
 The original contains editorial references. It is preserved byte-for-byte rather
 than retroactively rewritten. The separate working skill supplies the new behavior.
 
-## PaperBoard source
+## Native engine and identity
 
-- Repository: `https://github.com/All-The-Vibes/ATV-PaperBoard`
-- Revision: `4b068bcab8e4dc105f0ef975ee224564f5d63383`
-- Source package version at that revision: `0.1.4`
-- License: Apache-2.0; the upstream license is copied into `LICENSE`.
-- The user explicitly authorized copying and modifying their PaperBoard code.
+STE-Pro Max is maintained as a standalone product by Shyam Sridhar. On October 3,
+2026, the owner authorized an independent product identity across the engine,
+templates, documentation, and generated artifacts. Copyright and Apache-2.0
+licensing remain in `NOTICE`, source headers, and `LICENSE`.
 
-The native renderer and gallery are adapted from `core/render.py`,
-`core/gallery.py`, their templates, and the bundled PaperBoard design.
-Modified copies carry notices. The original checkout remains untouched.
-
-The new code does not import the installed PaperBoard package or launch its CLI.
-It retains its two Python libraries, Jinja2 and PyYAML, while dropping unrelated
-harness installation, server lifecycle, and Node-bridge responsibilities.
-The default template uses local CSS and system fonts.
+The `ste_promax/` package owns rendering, design parsing, gallery generation,
+writing checks, structured visuals, stories, and narration preparation. It runs
+directly rather than delegating to another installed renderer. Jinja2 and PyYAML
+are its two declared runtime dependencies. The default template uses local CSS
+and system fonts. Other checkouts and the original writing import remain unchanged.
 
 ## Output ideas and standard
 

@@ -1,9 +1,9 @@
-"""Native offline renderer, modified for STE-Pro-Max from ATV-PaperBoard.
+"""Native offline renderer for STE-Pro-Max.
 
-Copyright (c) 2026 All-The-Vibes / atv-paperboard contributors.
+Copyright (c) 2026 Shyam Sridhar and contributors.
 SPDX-License-Identifier: Apache-2.0
 Source: core/render.py at 4b068bcab8e4dc105f0ef975ee224564f5d63383.
-Modified: offline ATV only, local DESIGN validation, escaped metadata/sections,
+Modified: offline STE only, local DESIGN validation, escaped metadata/sections,
 safer Markdown, exclusive artifact triples. No Node, harness, server or browser.
 Only explicit body_html is caller-trusted; it is not sanitized here.
 """
@@ -21,137 +21,16 @@ from urllib.parse import urlsplit
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
-from .charts import render_chart, validate_chart
-from .diagrams import render_diagram, validate_diagram
-from .section_schema import SECTION_SCHEMA
-from .stories import render_story, validate_story
+from .charts import render_chart
+from .diagrams import render_diagram
+from .stories import render_story
+from .input_validation import validate_input, _validate_color
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
-_DEFAULT_DESIGN = Path(__file__).parent / "designs" / "paperboard.DESIGN.md"
-_GENERATOR = "ste-promax/native-atv"
+_DEFAULT_DESIGN = Path(__file__).parent / "designs" / "ste.DESIGN.md"
+_GENERATOR = "ste-promax/native"
 _LINT_ENGINE = "ste-promax.local-design-v1"
 _TRIPLE_SUFFIXES = (".html", ".DESIGN.md", ".meta.yaml")
-
-
-def validate_input(input_data: dict[str, Any]) -> None:
-    """Pure preflight: raise ValueError with an input location, without any I/O.
-
-    Validate every supplied rendering field, including nested sections, before
-    dispatch can discard unknown content. Optional fields and normal input-mode
-    precedence remain supported; arbitrary top-level data can still use the
-    JSON fallback. Section field names come from the existing section schema.
-    """
-    def record(value: Any, where: str, allowed=None) -> dict:
-        if not isinstance(value, dict):
-            raise ValueError(f"{where}: expected a mapping")
-        for key in value:
-            if not isinstance(key, str):
-                raise ValueError(f"{where}: field names must be strings")
-            if allowed is not None and key not in allowed:
-                raise ValueError(f"{where}.{key}: unsupported field; content would not be rendered")
-        return value
-
-    def sequence(value: Any, where: str) -> list:
-        if not isinstance(value, list):
-            raise ValueError(f"{where}: expected a list")
-        return value
-
-    def text(value: Any, where: str, key: str = "") -> None:
-        if key == "num" and type(value) is int:
-            return
-        if key in ("default", "value") and (value is None or type(value) in (int, float, bool)):
-            return
-        if not isinstance(value, str):
-            expected = "a string or integer" if key == "num" else "a string"
-            raise ValueError(f"{where}: expected {expected}")
-
-    def row_list(value: Any, where: str, allowed=None) -> None:
-        rows = sequence(value, where)
-        for index, row in enumerate(rows):
-            location = f"{where}[{index}]"
-            record(row, location, allowed)
-            if allowed is None:
-                # Tables take their columns from the first row. Reject later
-                # extra columns rather than silently losing their cell values.
-                record(row, location, rows[0])
-                for key, cell in row.items():
-                    if cell is not None and not isinstance(cell, (str, int, float, bool)):
-                        raise ValueError(f"{location}.{key}: expected a scalar table cell")
-            else:
-                for key, cell in row.items():
-                    text(cell, f"{location}.{key}", key)
-
-    active_sections: set[int] = set()
-
-    def sections(value: Any, where: str) -> None:
-        for index, section in enumerate(sequence(value, where)):
-            location = f"{where}[{index}]"
-            record(section, location)
-            kind = section.get("kind")
-            if not isinstance(kind, str) or kind not in SECTION_SCHEMA or kind not in _SECTION_EMITTERS:
-                raise ValueError(f"{location}.kind: unknown section kind {kind!r}")
-            if kind == "diagram":
-                validate_diagram(section, location)
-                continue
-            if kind == "chart":
-                validate_chart(section, location)
-                continue
-            record(section, location, {"kind", *SECTION_SCHEMA[kind]["fields"]})
-            if id(section) in active_sections:
-                raise ValueError(f"{location}: cyclic section nesting")
-            active_sections.add(id(section))
-            try:
-                for key, item in section.items():
-                    field = f"{location}.{key}"
-                    if key == "kind":
-                        continue
-                    if kind == "sec" and key == "body":
-                        sections(item, field)
-                    elif key == "rows":
-                        row_list(item, field, SECTION_SCHEMA[kind].get("row_fields"))
-                    elif key in ("meta", "colors"):
-                        allowed = ("label", "value") if key == "meta" else ("hex", "name", "role")
-                        row_list(item, field, allowed)
-                        if key == "colors":
-                            for n, color in enumerate(item):
-                                _validate_color(color.get("hex", "#000000"), f"{field}[{n}].hex")
-                    elif key in ("items", "headers"):
-                        for n, entry in enumerate(sequence(item, field)):
-                            entry_path = f"{field}[{n}]"
-                            if kind == "fit-row" and isinstance(entry, dict):
-                                record(entry, entry_path, ("label", "avoid"))
-                                if "label" in entry:
-                                    text(entry["label"], f"{entry_path}.label")
-                                if "avoid" in entry and type(entry["avoid"]) is not bool:
-                                    raise ValueError(f"{entry_path}.avoid: expected a boolean")
-                            else:
-                                text(entry, entry_path)
-                    elif key in ("zebra", "tight"):
-                        if type(item) is not bool:
-                            raise ValueError(f"{field}: expected a boolean")
-                    else:
-                        text(item, field, key)
-            finally:
-                active_sections.remove(id(section))
-
-    record(input_data, "input")
-    kind = input_data.get("kind")
-    if kind == "story":
-        validate_story(input_data)
-        return
-    if kind == "diagram":
-        validate_diagram(input_data, "input")
-        return
-    if kind == "chart":
-        validate_chart(input_data, "input")
-        return
-    for key in ("title", "subtitle", "brand", "breadcrumb", "status_tag", "body_md", "body_html"):
-        if key in input_data:
-            text(input_data[key], f"input.{key}")
-    if "sections" in input_data:
-        sections(input_data["sections"], "input.sections")
-    if "rows" in input_data:
-        row_list(input_data["rows"], "input.rows")
 
 
 def render_artifact(
@@ -174,7 +53,7 @@ def render_artifact(
     slug = _unique_slug(_slugify(title), output_dir)
     paths = [output_dir / f"{slug}{suffix}" for suffix in _TRIPLE_SUFFIXES]
     env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
-    html_content = env.get_template("atv-tier.html.j2").render(
+    html_content = env.get_template("document.html.j2").render(
         title=title, tokens=tokens, body_html=_default_body_html(input_data),
         design_md_path=paths[1].name,
         brand=str(input_data.get("brand", "STE-Pro-Max")),
@@ -186,7 +65,7 @@ def render_artifact(
         "generator": _GENERATOR,
         "title": title,
         "design": paths[1].name,
-        "tier": "atv",
+        "tier": "ste",
         "slug": slug,
         "lint_passed": True,
         "lint_engine": _LINT_ENGINE,
@@ -209,12 +88,6 @@ def render_artifact(
             path.unlink()
         raise
     return dict(zip(("html_path", "design_path", "meta_path"), paths), slug=slug)
-
-
-def _validate_color(value: Any, field: str) -> str:
-    if not isinstance(value, str) or not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})", value):
-        raise ValueError(f"{field}: expected a hexadecimal CSS color")
-    return value
 
 
 def _design_tokens(text: str) -> dict[str, str]:
@@ -300,7 +173,7 @@ def _default_body_html(input_data: dict[str, Any]) -> str:
 
     Explicit story, diagram, and chart documents use their native validated
     renderer. Otherwise preserve the ordinary input-mode priority:
-      1. sections   — rich atv-tier section graph, including diagrams and charts
+      1. sections   — rich ste-tier section graph, including diagrams and charts
       2. body_html  — returned as-is.
       3. body_md    — converted via tiny built-in markdown converter.
       4. rows       — rendered as an HTML <table>.
@@ -318,7 +191,7 @@ def _default_body_html(input_data: dict[str, Any]) -> str:
         return f'<h1>{_html_lib.escape(input_data["title"])}</h1>\n{visual}'
     parts: list[str] = []
 
-    # Rich section graph (atv tier)
+    # Rich section graph (ste tier)
     sections = input_data.get("sections")
     if sections:
         for section in sections:
@@ -353,7 +226,7 @@ def _default_body_html(input_data: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-# ── Section emitters for the atv tier ─────��──────────────────────────────────
+# ── Section emitters for the ste tier ─────��──────────────────────────────────
 
 
 def _e(s: Any) -> str:
@@ -733,7 +606,7 @@ def _md_to_html(md: str) -> str:
     * Bare http(s) URL auto-linking
     * Raw HTML is escaped; only the explicit body_html input is trusted.
 
-    Output is wrapped in ``<div class="prose">`` so the atv tier's prose
+    Output is wrapped in ``<div class="prose">`` so the ste tier's prose
     stylesheet can style it without colliding with section-based renders.
     """
     lines = md.replace("\x00", "\ufffd").split("\n")

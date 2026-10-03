@@ -1,12 +1,12 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ste-pro-max",
-  "version": "0.2.0",
-  "description": "Evidence-first writing, native diagrams and charts, reader-controlled stories, and local narration with one shared engine.",
+  "version": "0.3.0",
+  "description": "Turn source material into clear writing, diagrams, evidence-linked stories, and local narrated explanations. One native engine, three focused skills.",
   "author": {
     "name": "Shyam Sridhar"
   },
   "repository": "https://github.com/shyamsridhar123/STE-Pro-Max",
   "license": "Apache-2.0",
-  "keywords": ["writing", "explanations", "diagrams", "html", "narration"]
+  "keywords": ["writing", "documentation", "diagrams", "charts", "storytelling", "education", "html", "narration"]
 }

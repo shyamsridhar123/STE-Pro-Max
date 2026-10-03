@@ -242,7 +242,18 @@ def render(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="ste-promax", description=__doc__)
     parser.add_argument("--version", action="version", version=__version__)
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command")
+    starter = commands.add_parser("start", help="Make a local artifact from a source or the fictional demo.")
+    starter.add_argument("input", nargs="?", help="Local .md, .json, or reviewed .html source.")
+    starter.add_argument("--output-dir", help="New directory; defaults to a fresh folder under ./artifacts/.")
+    starter.add_argument("--title")
+    starter.add_argument("--design", help="Local design file, archived with the input.")
+    starter.add_argument("--trusted-html", action="store_true",
+                         help="Explicitly trust reviewed authored HTML; never inferred.")
+    starter.add_argument("--json", action="store_true", help="Print the unmodified render manifest.")
+    starter.add_argument("--open", action="store_true", help="Open the result only after successful rendering.")
+    doctor = commands.add_parser("doctor", help="Read-only local dependency and platform diagnostics.")
+    doctor.add_argument("--json", action="store_true")
     check = commands.add_parser("check", help="Advisory prose-length diagnostics; no certification.")
     check.add_argument("input")
     check.add_argument("--profile", choices=LIMITS, default="relaxed")
@@ -264,8 +275,16 @@ def main(argv=None):
     audio_source.add_argument("--voice", help="Installed Windows System.Speech voice.")
     audio_source.add_argument("--audio-dir", type=Path, help="Local directory of <beat-id>.wav files.")
     args = parser.parse_args(argv)
+    if args.command is None:
+        parser.print_help()
+        print("\nFirst result: start          Environment check: doctor\n"
+              "Local files only; no API or model calls. Browser opens only with start --open.")
+        return 0
     try:
         # ASCII-escaped JSON survives legacy host pipes; artifact files remain UTF-8.
+        if args.command in {"start", "doctor"}:
+            from ste_promax.onboarding import run
+            return run(args)
         if args.command == "schema":
             from ste_promax.section_schema import SECTION_SCHEMA
             from ste_promax.stories import STORY_SCHEMA

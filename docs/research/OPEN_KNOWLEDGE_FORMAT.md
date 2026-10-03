@@ -125,7 +125,7 @@ host-specific acceptance checks.
 The upstream reference-agent package brings Google ADK, BigQuery, and other
 dependencies and requires Python 3.11+. Its viewer references CDN-hosted
 JavaScript. Neither is needed for STE's local deterministic file export; retain
-the native PaperBoard-derived renderer and current dependency boundary. [S7, S8]
+the native renderer and current dependency boundary. [S7, S8]
 
 An STE interoperability profile should:
 

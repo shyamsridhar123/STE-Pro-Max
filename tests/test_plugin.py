@@ -31,7 +31,7 @@ class PluginTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.source = self.root / "source"
         self.source.mkdir()
-        files = ("__main__.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
+        files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
                  ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
                  ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip")
         for relative in files:
@@ -52,7 +52,7 @@ class PluginTests(unittest.TestCase):
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.2.0")
+            self.assertEqual(manifest["version"], "0.3.0")
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
@@ -70,7 +70,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.2.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.3.0", "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -103,14 +103,16 @@ class PluginTests(unittest.TestCase):
         required = {
             "plugin.json", ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
             ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "ste_promax/render.py",
-            "ste_promax/templates/atv-tier.html.j2", "ste_promax/templates/gallery.html.j2",
-            "ste_promax/designs/paperboard.DESIGN.md", "skills/ste-promax/SKILL.md",
+            "ste_promax/templates/document.html.j2", "ste_promax/templates/gallery.html.j2",
+            "ste_promax/designs/ste.DESIGN.md", "skills/ste-promax/SKILL.md",
             "ste_promax/scripts/narrate.ps1", "__main__.py", "pyproject.toml",
             "ste_promax/diagrams.py", "ste_promax/charts.py", "ste_promax/stories.py", "ste_promax/media.py",
             "ste_promax/section_schema.py", "ste_promax/templates/story.html.j2",
             "ste_promax/templates/story-video.html.j2", "skills/ste-visual-docs/SKILL.md",
             "skills/ste-storytelling/SKILL.md", "docs/AUTHORING.md",
             "LICENSE", "NOTICE", "ste-promax/SKILL.md", "STE-ProMAX.zip", "docs/PLUGINS.md",
+            "quickstart.py", "ste_promax/onboarding.py", "ste_promax/data/quickstart.json",
+            "docs/assets/hero.png", "docs/assets/showcase.webp",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))
@@ -163,7 +165,7 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), "KEEP")
 
     def test_missing_source_fails_before_output_writes(self):
-        (self.source / "ste_promax/templates/atv-tier.html.j2").unlink()
+        (self.source / "ste_promax/templates/document.html.j2").unlink()
         with self.assertRaisesRegex(ValueError, "Missing required"):
             self.build()
         self.assertFalse(self.output.exists())
@@ -237,11 +239,10 @@ class PluginTests(unittest.TestCase):
         env.pop("PYTHONPATH", None)
         env["PATH"] = str(workspace)
         env["PYTHONDONTWRITEBYTECODE"] = "1"
-        self.assertIsNone(shutil.which("paperboard", path=env["PATH"]))
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.2.0")
+        self.assertEqual(version.stdout.strip(), "0.3.0")
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)

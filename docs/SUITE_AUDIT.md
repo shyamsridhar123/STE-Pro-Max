@@ -52,7 +52,7 @@ attributes on the latter.
 ## Preserved boundaries
 
 The original archive and extracted source remain byte-identical. This work does
-not modify the PaperBoard checkout, add application dependencies, install global
+not modify unrelated source checkouts, add application dependencies, install global
 skills/plugins, configure paid providers, or publish generated artifacts.
 
 SCUBACRAZY has a pending write-access invitation; an invitation is not accepted
@@ -75,3 +75,11 @@ Runtime acceptance in every host, full WCAG/screen-reader certification, learnin
 outcome studies, manual audio listening, word alignment, and an OKF exporter are
 explicitly not established by this audit. They are not silently reported as passed.
 The private PR remains unmerged; generated media stays local.
+
+## v0.3 UX extension
+
+The owner-requested standalone identity, `start`, `doctor`, explicit isolated
+quickstart, lower-friction skill routing, generated hero, and real-output showcase
+are tracked in `UX_PLAN.md`. Their new tests and fresh first-run/README evidence
+are recorded under the v0.3 section of `VALIDATION.md`, not inferred from the
+v0.2 media or packaging results above.

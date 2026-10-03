@@ -1,0 +1,87 @@
+{
+  "kind": "story",
+  "version": 1,
+  "title": "A check is not an approval",
+  "audience": "A delivery team deciding whether to release",
+  "question": "Can the team release the fictional Atlas update?",
+  "purpose": "decision-brief",
+  "summary": "The checks passed. Release approval is still pending. Keep the release on hold.",
+  "context": "Fictional teaching example. Atlas, its records, and all events below are invented; no live system was checked or changed.",
+  "sources": [
+    {
+      "id": "check-record",
+      "title": "Fictional Atlas validation record",
+      "locator": "Build A17, summary",
+      "note": "The defined checks passed for build A17 in the test environment. Production behavior was not tested."
+    },
+    {
+      "id": "release-record",
+      "title": "Fictional Atlas release decision record",
+      "locator": "Build A17, release gate",
+      "note": "A release requires the release owner's recorded approval. That approval is pending; no decision date is recorded."
+    }
+  ],
+  "claims": [
+    {
+      "id": "checks-passed",
+      "type": "observation",
+      "text": "The defined validation checks passed for build A17.",
+      "source_ids": ["check-record"],
+      "scope": "The test environment and defined checks only; not production readiness."
+    },
+    {
+      "id": "approval-pending",
+      "type": "observation",
+      "text": "The required release-owner approval is pending.",
+      "source_ids": ["release-record"],
+      "uncertainty": "The record supplies no approval date or eventual decision."
+    },
+    {
+      "id": "hold-release",
+      "type": "proposal",
+      "text": "Keep the release on hold and request the release owner's decision.",
+      "source_ids": ["check-record", "release-record"],
+      "scope": "A proposed next step, not an approval or an executed action."
+    }
+  ],
+  "beats": [
+    {
+      "id": "evidence",
+      "title": "Separate the evidence from the authority",
+      "role": "What the records establish",
+      "text": "A passing check answers a bounded technical question. It does not grant the authority to release.",
+      "claim_ids": ["checks-passed", "approval-pending"],
+      "visual": {
+        "kind": "diagram",
+        "type": "flow",
+        "direction": "LR",
+        "title": "Evidence reaches a gate — it does not open it",
+        "description": "The passed validation record is evidence for the release owner's decision. The required approval remains pending.",
+        "nodes": [
+          {"id": "checks", "label": "Checks passed", "detail": "Build A17 · test environment only"},
+          {"id": "decision", "label": "Approval pending", "detail": "Release owner must decide"}
+        ],
+        "edges": [
+          {"from": "checks", "to": "decision", "label": "Evidence for review, not permission"}
+        ],
+        "caption": "Fictional Atlas records. The arrow shows a review relationship, not an approval or automated release."
+      }
+    },
+    {
+      "id": "decision",
+      "title": "Keep the gate visible",
+      "role": "Proposed next step",
+      "text": "Send the evidence to the release owner. Keep the release on hold while the required approval is pending.",
+      "claim_ids": ["approval-pending", "hold-release"],
+      "question": {
+        "prompt": "A teammate says, “The checks passed, so we can release.” What is missing?",
+        "answer": "The release owner's recorded approval. Passing checks provide evidence; they do not replace that decision."
+      }
+    }
+  ],
+  "limitations": [
+    "This fictional brief proves nothing about a real build, organization, or release.",
+    "Source links and structural checks do not establish factual truth or adequate evidence.",
+    "No approval, deployment, API call, or model call is performed."
+  ]
+}

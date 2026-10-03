@@ -75,7 +75,7 @@ that will establish artifact behavior. Those checks do not establish learning.
 Review the explanation before investing in richer media.
 Keep consequential judgments and unsupported source conflicts visible to the user.
 
-Use this repository's native renderer, adapted directly from PaperBoard. Raw HTML is
+Use this repository's native renderer. Raw HTML is
 executable: author it from reviewed facts; never paste arbitrary third-party HTML
 or scripts into a trusted artifact. Stay local unless publication is requested.
 
@@ -99,9 +99,23 @@ When a capability is missing, name the gap; do not call instructions a working t
 
 Resolve this loaded skill's absolute path. Its nearest ancestor containing both
 `ste_promax/` and root `__main__.py` is the bundle root. Do not infer it from the
-user's current directory. Run `python "<bundle-root>" --help` to inspect the
-available commands. This directory entry point invokes the same engine as
+user's current directory. This directory entry point invokes the same engine as
 `python -m ste_promax` from the repository root; it is not an external renderer.
+
+For ordinary artifact work, follow the [low-friction workflow](references/low-friction-workflow.md).
+Reuse the supplied source, audience, and requested format. Choose safe defaults
+without making the user select a schema, output folder, or visual theme. A short
+rewrite stays in the conversation; it does not need any installation.
+
+```text
+python "<bundle-root>" start "<absolute-source>" --json
+```
+
+`start` chooses a fresh output directory under the caller's `artifacts/`.
+Use `doctor --json` when diagnosing setup, not as a mandatory ritual for every
+request. Use `schema` only for the shape being authored; it is not user homework.
+No argument to `start` produces a clearly fictional demonstration, not an
+interpretation of an absent user source.
 
 For prose, use `python "<bundle-root>" check "<absolute-source>" --profile relaxed --json`
 only when mechanical diagnostics help. The checker cannot verify facts, causality,

@@ -27,9 +27,8 @@ too much to justify.
 ### Implementation boundary
 
 The post proposes richer output options, not a requirement to emit every format
-for every answer. It specifies no renderer or hosting service and does not mention
-PaperBoard. The repo's native PaperBoard adaptation follows the user's separate
-choice and explicit permission. Third-party replies naming other tools are not
+for every answer. It specifies no renderer or hosting service. The repo's native
+implementation follows the user's separate product choice. Third-party replies naming other tools are not
 treated as Karpathy's requirements.
 
 ## The standard is a separate source
@@ -46,8 +45,8 @@ with the full standard.
 
 ## Technical implementation evidence
 
-- PaperBoard baseline: `All-The-Vibes/ATV-PaperBoard` at
-  `4b068bcab8e4dc105f0ef975ee224564f5d63383`; see `docs/PROVENANCE.md` in the repo.
+- Native engine, license, and preserved writing import:
+  see `docs/PROVENANCE.md` in the repo.
 - [HyperFrames WAAPI adapter](https://github.com/heygen-com/hyperframes/blob/main/skills/hyperframes-animation/adapters/waapi.md):
   native finite animations can be paused and deterministically sought without GSAP.
 - [HyperFrames HTML schema](https://github.com/heygen-com/hyperframes/blob/main/docs/reference/html-schema.mdx):

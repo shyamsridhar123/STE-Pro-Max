@@ -50,15 +50,20 @@ directory containing both `ste_promax/` and root `__main__.py`. Use that bundle
 root rather than the host's current directory or a global installation.
 
 ```text
-python "<bundle-root>" --help
 python "<bundle-root>" schema story
-python "<bundle-root>" render "<absolute-story.json>" --output-dir "<absolute-new-output-dir>"
+python "<bundle-root>" start "<absolute-story.json>" --json
 ```
 
 Replace angle-bracket paths with resolved paths. Keep source and output in the
-user's workspace, with a fresh output directory under `artifacts/`, not in the
-bundle cache. From the repository root, `python -m ste_promax` reaches the same
+user's workspace. `start` chooses a fresh directory under `artifacts/`; it does
+not write into the bundle cache. From the repository root, `python -m ste_promax` reaches the same
 engine. If help lacks a command, report the bundle gap; do not invent a wrapper.
+
+Use [the shared low-friction workflow](../ste-promax/references/low-friction-workflow.md).
+Infer a reasonable purpose and audience from the request; briefly name a material
+assumption rather than launching an intake form. Do not ask for an output folder,
+theme, or choice among media the user did not request. Ask only when missing
+evidence or a consequential choice would change the result.
 
 Inspect the HTML/design/metadata triple, gallery, manifest, saved source, and
 normalized input. Review all four story companions: `story.md`, `storyboard.json`,
