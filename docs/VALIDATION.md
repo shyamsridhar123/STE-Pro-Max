@@ -33,6 +33,30 @@ local installation should use the whitelisted source bundle, not a dirty
 checkout. Release lifecycle tests inspect the tagged cache, version, skills,
 templates, and subsequent removal in separate profiles.
 
+The **public `v0.4.0` tag** was then tested through the exact README commands
+against GitHub—not a local source alias:
+
+- All three hosts downloaded, installed, and exposed v0.4.0 in a fresh process.
+  Installed skills/templates matched the tag bytes; no local memory, artifacts,
+  environment, or orchestration files entered those release caches.
+- Copilot and Claude passed update-at-the-pinned-version, disable/enable, and
+  uninstall. Codex passed marketplace upgrade, persistent installed discovery,
+  and removal. All three installed-plugin lists were empty after removal.
+- The three examples executed directly from each installed copy: retry counts,
+  rate/zero-baseline behavior, and release-answer disclosure passed without
+  Python or outgoing HTTP(S) runtime requests.
+- Normal user config hashes stayed unchanged. Tests used installed CLI versions
+  from the table above; no live model invocation or Codex desktop UI test occurred.
+- Source plugin: **84 files** compared with commit
+  `1b50fb0fed3bfa4f9f7c783280b0979c54fe06b3`.
+  **353 local tests**, lint/typechecks, three skill validators, and Windows/Ubuntu
+  CI run **37158472362** passed on that source.
+
+The [v0.4.0 release](https://github.com/shyamsridhar123/STE-Pro-Max/releases/tag/v0.4.0)
+contains the plugin ZIP, eight-file standalone example ZIP, source hashes, and
+the native lifecycle receipt. Anonymous downloads matched the local SHA-256
+values. The immutable tag was not moved after testing.
+
 ### Real examples and concise README
 
 - Retry lab: **60 browser checks**, including exact stage/counter transitions,

@@ -31,7 +31,8 @@ native host authoring has the optional renderer's schema-validation guarantees.
 5. Put readable screenshots/animation and concise prompts in a README with
    a hard budget of 150 nonblank lines. Move lifecycle/reference detail to docs.
 6. Publish a versioned source tag only after verification, so native installs do
-   not depend on an unmerged default branch. Keep the existing PR unmerged.
+   not depend on an older default branch. Do not merge a PR without the user's
+   request. The user independently merged the earlier v0.3 PR; v0.4 is a follow-up.
 
 ## Verification
 
