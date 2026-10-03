@@ -1,0 +1,11 @@
+{
+  "name": "ste-pro-max",
+  "version": "0.1.0",
+  "description": "Flexible STE-inspired writing, diagrams, interactive HTML, and narrated explanations with one native source engine.",
+  "author": {
+    "name": "Shyam Sridhar"
+  },
+  "repository": "https://github.com/shyamsridhar123/STE-Pro-Max",
+  "license": "Apache-2.0",
+  "keywords": ["writing", "explanations", "diagrams", "html", "narration"]
+}

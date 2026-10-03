@@ -1,0 +1,27 @@
+# Workstation-local memory and orchestration state stay on this machine.
+/.omx/
+/omx_wiki/
+/MEMORY.md
+
+# Generated artifacts are reproducible from the checked-in examples.
+/artifacts/
+**/renders/
+**/.hyperframes/
+**/.media/
+**/node_modules/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+.venv/
+.ste-env/
+build/
+dist/
+*.egg-info/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db

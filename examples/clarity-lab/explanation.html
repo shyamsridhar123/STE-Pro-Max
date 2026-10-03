@@ -1,0 +1,159 @@
+<style>
+.ste-lab{--ink:#eeeae3;--muted:#b6b0a7;--accent:#efa276;--line:#39332e;color:var(--ink);font-family:system-ui,sans-serif;max-width:1100px;margin:auto}
+.ste-lab *{box-sizing:border-box}
+.ste-lab .eyebrow{font:600 11px/1.5 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.ste-lab .intro{font-size:clamp(24px,4.2vw,46px);line-height:1.14;max-width:850px;letter-spacing:-.025em;margin:16px 0}
+.ste-lab p{line-height:1.65;color:var(--muted)}
+.ste-lab .deck{max-width:720px;font-size:17px}
+.ste-lab .layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:36px;border-top:1px solid var(--line);margin-top:36px;padding-top:28px}
+.ste-lab h2{font-size:19px;letter-spacing:-.02em;margin:0 0 20px;color:var(--ink)}
+.ste-lab label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.ste-lab input[type=number]{width:100%;background:#1b1917;color:var(--ink);border:1px solid #74675c;border-radius:4px;padding:12px;font:500 22px ui-monospace,monospace}
+.ste-lab input[type=range]{width:100%;accent-color:var(--accent);margin:16px 0}
+.ste-lab .field{margin:0 0 22px}
+.ste-lab .hint{font-size:12px;margin:8px 0 0}
+.ste-lab button{cursor:pointer;font:600 12px system-ui,sans-serif;color:var(--ink);border:1px solid #74675c;background:transparent;border-radius:4px;padding:11px 13px;min-height:44px}
+.ste-lab button:hover{background:#342c26}
+.ste-lab :focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.ste-lab [aria-invalid=true]{border-color:#ffb4a5}
+.ste-lab .chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ste-lab .chart-head h2{margin:0}
+.ste-lab svg{width:100%;height:auto;display:block;margin-top:14px;overflow:visible}
+.ste-lab svg text{font-family:ui-monospace,monospace;fill:var(--muted)}
+.ste-lab .bar{transition:width .3s ease}
+.ste-lab .readouts{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid var(--line);padding-top:24px;margin-top:12px}
+.ste-lab .metric-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ste-lab output{display:block;font:500 clamp(23px,3.6vw,40px)/1.3 ui-monospace,monospace;letter-spacing:-.04em;margin-top:8px;color:var(--ink)}
+.ste-lab .formula{font:12px/1.7 ui-monospace,monospace;overflow-wrap:anywhere;color:var(--muted)}
+.ste-lab .boundary{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:28px 0 8px}
+.ste-lab .boundary strong{display:block;color:var(--ink);font-size:16px}
+.ste-lab .boundary p{margin:7px 0;font-size:14px}
+.ste-lab .source{border-top:1px solid var(--line);margin-top:32px;padding-top:18px;font-size:12px}
+.ste-lab .source span{color:var(--accent)}
+.ste-lab #ste-error{color:#ffb4a5;border:1px solid #7a5147;padding:14px;border-radius:4px}
+.ste-lab [hidden]{display:none!important}
+@media(max-width:720px){.ste-lab .layout{grid-template-columns:1fr;gap:20px}.ste-lab .controls{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.ste-lab .controls h2,.ste-lab .controls button,.ste-lab .controls .hint{grid-column:1/-1}.ste-lab .readouts{gap:12px}.ste-lab .intro{font-size:30px}.ste-lab svg text{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.ste-lab .bar{transition:none}}
+@media print{.ste-lab .controls,.ste-lab button{display:none}.ste-lab .layout{display:block}}
+</style>
+<div class="ste-lab">
+  <div class="eyebrow">01 / An explanation you can test</div>
+  <p class="intro">The numbers changed.<br>What can we actually claim?</p>
+  <p class="deck">A percentage point is not a percent change. Change the example,
+    compare the two measures, and keep the cause separate from the observation.</p>
+  <div class="layout">
+    <section class="controls" aria-labelledby="ste-controls-title">
+      <h2 id="ste-controls-title">Set the example</h2>
+      <div class="field">
+        <label for="ste-before">Starting success rate (%)</label>
+        <input id="ste-before" type="number" min="0" max="100" step="0.1" value="97.4" inputmode="decimal" aria-describedby="ste-input-hint">
+      </div>
+      <div class="field">
+        <label for="ste-after">Final success rate (%)</label>
+        <input id="ste-after" type="number" min="0" max="100" step="0.1" value="99.7" inputmode="decimal" aria-describedby="ste-input-hint">
+        <label for="ste-after-range" class="hint">Explore the final rate</label>
+        <input id="ste-after-range" type="range" min="0" max="100" step="0.1" value="99.7">
+      </div>
+      <button id="ste-reset" type="button">Reset to the source example</button>
+      <p id="ste-input-hint" class="hint">Use rates from 0 to 100, in steps of 0.1. These are illustrative values, not live data.</p>
+    </section>
+    <section aria-labelledby="ste-compare-title">
+      <div class="chart-head">
+        <h2 id="ste-compare-title">Compare the rates</h2>
+        <button id="ste-zoom" type="button" aria-pressed="false">Zoom to 95–100%</button>
+      </div>
+      <p id="ste-error" role="alert" hidden></p>
+      <div id="ste-results" aria-live="polite" aria-atomic="true">
+        <svg viewBox="0 0 660 210" role="img" aria-labelledby="ste-chart-title ste-chart-desc">
+          <title id="ste-chart-title">Success rates: 97.4% before and 99.7% after</title>
+          <desc id="ste-chart-desc">Two bars use a shared axis from 0 to 100 percent. Values are also written next to each bar.</desc>
+          <text x="0" y="42" font-size="13">BEFORE</text>
+          <text x="0" y="115" font-size="13">AFTER</text>
+          <rect x="95" y="22" width="470" height="30" rx="3" fill="#2d2824"/>
+          <rect x="95" y="95" width="470" height="30" rx="3" fill="#2d2824"/>
+          <rect id="ste-before-bar" class="bar" x="95" y="22" width="457.78" height="30" rx="3" fill="#a79f95"/>
+          <rect id="ste-after-bar" class="bar" x="95" y="95" width="468.59" height="30" rx="3" fill="#efa276"/>
+          <text id="ste-before-label" x="578" y="43" font-size="15">97.4%</text>
+          <text id="ste-after-label" x="578" y="116" font-size="15">99.7%</text>
+          <line x1="95" x2="565" y1="151" y2="151" stroke="#74675c"/>
+          <text id="ste-axis-min" x="95" y="176" font-size="12">0%</text>
+          <text x="565" y="176" font-size="12" text-anchor="end">100%</text>
+          <text id="ste-axis-note" x="95" y="203" font-size="11">Full scale · shared baseline</text>
+        </svg>
+        <div class="readouts">
+          <div>
+            <div class="metric-label">Absolute change</div>
+            <output id="ste-points">+2.3 pp</output>
+            <div id="ste-points-formula" class="formula">99.7 − 97.4 = 2.3 percentage points</div>
+          </div>
+          <div>
+            <div class="metric-label">Relative change</div>
+            <output id="ste-relative">+2.36%</output>
+            <div id="ste-relative-formula" class="formula">2.3 ÷ 97.4 × 100 ≈ 2.36%</div>
+          </div>
+        </div>
+      </div>
+      <aside class="boundary">
+        <strong>Change is an observation. Cause needs evidence.</strong>
+        <p>No causal explanation is supplied. A chart, calculation, or animation
+          does not establish why the rate changed.</p>
+      </aside>
+    </section>
+  </div>
+  <p class="source"><span>SOURCE &amp; LIMITS</span> · Fictional example from the preserved
+    STE-ProMAX skill: success moves from 97.4% to 99.7%. Changed input values are
+    your own hypothetical scenario. Relative values are rounded to two decimals.
+    Runs locally; no values are stored or transmitted.</p>
+</div>
+<script>
+(() => {
+  "use strict";
+  const byId = id => document.getElementById(id);
+  const before = byId("ste-before"), after = byId("ste-after");
+  const range = byId("ste-after-range"), zoom = byId("ste-zoom");
+  let zoomed = false;
+  const fmt = n => Number(n.toFixed(2)).toLocaleString("en-US", {maximumFractionDigits: 2});
+  const signed = (n, suffix) => `${n > 0 ? "+" : ""}${fmt(n)}${suffix}`;
+  function update() {
+    const b = before.valueAsNumber, a = after.valueAsNumber;
+    const valid = input => Number.isFinite(input.valueAsNumber) && input.validity.valid;
+    before.setAttribute("aria-invalid", String(!valid(before)));
+    after.setAttribute("aria-invalid", String(!valid(after)));
+    const ok = valid(before) && valid(after);
+    byId("ste-error").hidden = ok;
+    byId("ste-error").textContent = ok ? "" : "Enter a rate from 0 to 100, in steps of 0.1, in both fields.";
+    byId("ste-results").hidden = !ok;
+    if (!ok) return;
+    range.value = String(a);
+    if (Math.min(a, b) < 95) zoomed = false;
+    zoom.disabled = Math.min(a, b) < 95;
+    zoom.setAttribute("aria-pressed", String(zoomed));
+    zoom.textContent = zoomed ? "Show the full 0–100% scale" : "Zoom to 95–100%";
+    const min = zoomed ? 95 : 0;
+    const width = value => 470 * (value - min) / (100 - min);
+    byId("ste-before-bar").setAttribute("width", width(b).toFixed(2));
+    byId("ste-after-bar").setAttribute("width", width(a).toFixed(2));
+    byId("ste-before-label").textContent = `${fmt(b)}%`;
+    byId("ste-after-label").textContent = `${fmt(a)}%`;
+    byId("ste-chart-title").textContent = `Success rates: ${fmt(b)}% before and ${fmt(a)}% after`;
+    byId("ste-chart-desc").textContent = `Two bars use a shared ${min} to 100 percent axis. ${zoomed ? "The axis is truncated." : "The axis starts at zero."}`;
+    byId("ste-axis-min").textContent = `${min}%`;
+    byId("ste-axis-note").textContent = zoomed ? "ZOOMED · truncated axis, 95–100%" : "Full scale · shared baseline";
+    const points = a - b;
+    byId("ste-points").textContent = signed(points, " pp");
+    byId("ste-points-formula").textContent = `${fmt(a)} − ${fmt(b)} = ${fmt(points)} percentage points`;
+    byId("ste-relative").textContent = b === 0 ? "Undefined" : signed(points / b * 100, "%");
+    byId("ste-relative-formula").textContent = b === 0
+      ? "Cannot divide by a starting rate of zero."
+      : `${fmt(points)} ÷ ${fmt(b)} × 100 ≈ ${fmt(points / b * 100)}%`;
+  }
+  before.addEventListener("input", update);
+  after.addEventListener("input", update);
+  range.addEventListener("input", () => { after.value = range.value; update(); });
+  zoom.addEventListener("click", () => { zoomed = !zoomed; update(); });
+  byId("ste-reset").addEventListener("click", () => {
+    before.value = "97.4"; after.value = "99.7"; zoomed = false; update();
+  });
+  update();
+})();
+</script>

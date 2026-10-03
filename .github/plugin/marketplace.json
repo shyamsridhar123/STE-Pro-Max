@@ -1,0 +1,14 @@
+{
+  "name": "ste-pro-max-plugins",
+  "owner": {
+    "name": "Shyam Sridhar"
+  },
+  "plugins": [
+    {
+      "name": "ste-pro-max",
+      "source": "./",
+      "description": "Flexible STE-inspired writing and visual explanations with one native source engine.",
+      "version": "0.1.0"
+    }
+  ]
+}

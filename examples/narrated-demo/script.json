@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Observe",
+    "text": "This is an illustrative example. The success rate changes from ninety-seven point four to ninety-nine point seven percent."
+  },
+  {
+    "label": "Subtract",
+    "text": "Subtract the starting rate from the final rate. The difference is two point three percentage points."
+  },
+  {
+    "label": "Compare",
+    "text": "Divide that difference by the starting rate, then multiply by one hundred. The relative increase is about two point three six percent."
+  },
+  {
+    "label": "Qualify",
+    "text": "These numbers describe what changed. They do not establish why it changed. Keep observations separate from explanations."
+  }
+]

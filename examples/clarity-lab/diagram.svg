@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="title desc">
+  <title id="title">Two measures of the same illustrative change</title>
+  <desc id="desc">A rate changes from 97.4 to 99.7 percent. The difference is 2.3 percentage points.
+  Dividing 2.3 by 97.4 and multiplying by 100 gives about 2.36 percent relative change.
+  No cause is established by these values.</desc>
+  <rect width="960" height="500" rx="12" fill="#171513"/>
+  <g font-family="system-ui,sans-serif" fill="#eeeae3">
+    <text x="48" y="52" font-size="12" fill="#efa276" letter-spacing="2">STE-PRO MAX / ILLUSTRATIVE EXAMPLE</text>
+    <text x="48" y="105" font-size="34" font-weight="600">Same change. Two different measures.</text>
+    <g font-family="monospace" font-size="42">
+      <text x="95" y="200">97.4%</text><text x="335" y="200">→</text><text x="430" y="200" fill="#efa276">99.7%</text>
+    </g>
+    <text x="95" y="228" font-size="13" fill="#b6b0a7">STARTING RATE</text>
+    <text x="430" y="228" font-size="13" fill="#b6b0a7">FINAL RATE</text>
+    <path d="M290 252v28H100v25m190-25h290v25" stroke="#74675c" stroke-width="2" fill="none"/>
+    <text x="75" y="344" font-size="30">+2.3 percentage points</text>
+    <text x="545" y="344" font-size="30">≈2.36% relative</text>
+    <text x="75" y="380" font-size="17" fill="#b6b0a7">99.7 − 97.4</text>
+    <text x="545" y="380" font-size="17" fill="#b6b0a7">(2.3 ÷ 97.4) × 100</text>
+    <line x1="48" y1="418" x2="912" y2="418" stroke="#39332e"/>
+    <text x="48" y="458" font-size="17" fill="#efa276">What this does not tell us: why the rate changed.</text>
+  </g>
+</svg>

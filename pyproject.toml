@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ste-pro-max"
+version = "0.1.0"
+description = "Evidence-first writing, visual explanations, and a native PaperBoard-derived artifact renderer."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = ["jinja2>=3.1.6,<4", "pyyaml>=6.0.3,<7"]
+
+[project.scripts]
+ste-promax = "ste_promax.cli:main"
+
+[project.urls]
+Repository = "https://github.com/shyamsridhar123/STE-Pro-Max"
+
+[tool.setuptools.packages.find]
+include = ["ste_promax*"]
+
+[tool.setuptools.package-data]
+ste_promax = ["templates/*.j2", "designs/*.DESIGN.md"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E701", "E702"]
