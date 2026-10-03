@@ -215,6 +215,10 @@ before exporting. No paid speech service is configured.
 
 ## Built to be checked
 
+**v0.3.0 verification:** 352 local regression tests passed, with clean lint and
+typechecks. Windows and Ubuntu CI also exercise a real first-time setup and a
+second run with installation disabled.
+
 - Original source bytes and artifact hashes are retained.
 - Duplicate JSON keys, lossy numbers, dangling references, and unsupported fields
   fail clearly instead of silently changing the story.

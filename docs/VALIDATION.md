@@ -23,7 +23,7 @@ formal STE certification or universal host compatibility.
 
 ### Local checks
 
-**351 tests passed**, including original preservation tests and new onboarding,
+**352 tests passed**, including original preservation tests and new onboarding,
 bootstrap, Unicode, and README contracts. Ruff and all-surface Pyright passed;
 all three skills validated in UTF-8 mode. Evidence:
 `artifacts/ux-refresh-20261003/final/`.
@@ -40,7 +40,7 @@ The README was rendered locally with GitHub-flavored Markdown semantics at the
 same three widths. Both raster assets loaded; disclosures expanded; all **25**
 local links/anchors resolved; there was no page-level horizontal overflow.
 This is a GFM-compatible preview, not a pixel-identical GitHub rendering claim.
-Evidence: `artifacts/ux-refresh-20261003/readme/`.
+Evidence: `artifacts/ux-refresh-20261003/readme-final/`.
 
 The requested hero was generated with **GPT Image 2.5 Sunburst**, inspected, and
 saved into `docs/assets/hero.png`. The showcase is assembled from actual output
@@ -51,9 +51,41 @@ historical Git commits and previous local evidence were not rewritten.
 Ready-interpreter quickstart executions succeeded and preserved artifact hashes.
 Two fresh-environment local attempts encountered a Python package-server TLS
 handshake failure. The command failed visibly, retained partial evidence, and
-did not disable TLS checks. A real clean-interpreter first-run/reuse check is
-included in the Ubuntu/Windows CI workflow; its actual result must be recorded
-separately before claiming network setup passed.
+did not disable TLS checks.
+
+### Real first-time setup and portable delivery
+
+GitHub run **37154588384** passed on
+`8251b027e4585f7b578011b8780ddbb692fed8ca` for **Windows and Ubuntu**.
+Both jobs created a clean interpreter with no render dependencies, ran the
+actual launcher to install into a private workspace environment, then rendered
+a supplied source with `--no-install`. Each checked **17 output hashes**,
+unchanged environment bytes on reuse, preserved source, and unchanged bundle.
+This is real setup evidence, separate from the workstation TLS failure.
+
+The first CI pass exposed a genuine isolated-interpreter import failure when
+preflighting a supplied source. The launcher now imports its shared preflight
+from the already-validated bundle root and restores its import path afterward.
+A real `-I -S` subprocess regression confirms that path without site packages.
+
+The source bundle includes both README images and the first-run helper. A saved
+v0.3 snapshot matched **74 files** to committed source; the wheel matched all
+**21 runtime files** and **27 hashed RECORD entries**. Both extracted archives
+executed `doctor`, no-input `start`, schema, story/SVG render, and provided-PCM
+narration from unrelated directories; the source plugin also ran quickstart
+with installation disabled. The final delivery repeats these comparisons after
+documentation closeout under `artifacts/ux-refresh-20261003/release/`.
+
+Strict Claude plugin and marketplace validation passed; Copilot session-only
+discovery reported the external v0.3.0 plugin. The portable descriptor passed
+its saved official schema. GitHub's actual README-render endpoint returned the
+new hero and showcase references. The repository description/topics now use the
+standalone identity. Visibility remains private, and no host was globally installed.
+
+Host evidence: `artifacts/ux-refresh-20261003/final/`.
+CI and repository evidence: `artifacts/ux-refresh-20261003/github/`.
+Codex Desktop runtime installation, full three-host model execution, and full
+accessibility certification remain untested; no such claim is made.
 
 ## Suite v0.2.0
 
