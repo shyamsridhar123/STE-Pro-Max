@@ -8,6 +8,7 @@ from pathlib import Path
 import struct
 import subprocess
 import tempfile
+from typing import Any
 import unittest
 from unittest.mock import patch
 import wave
@@ -413,7 +414,8 @@ class MediaTests(unittest.TestCase):
 
     def test_audio_and_voice_or_speaker_are_mutually_exclusive(self):
         self.save()
-        for kwargs in ({"voice": "voice"}, {"speaker": lambda *args: None}):
+        cases: tuple[dict[str, Any], ...] = ({"voice": "voice"}, {"speaker": lambda *args: None})
+        for kwargs in cases:
             with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, "Choose"):
                 media.prepare_story_media(self.source, self.output, audio_dir=self.audio, **kwargs)
         self.assertFalse(self.output.exists())

@@ -34,6 +34,7 @@ class NarrationTests(unittest.TestCase):
         )
 
     def run_script(self, *args):
+        assert self.powershell is not None
         return subprocess.run(
             [self.powershell, "-NoProfile", "-NonInteractive",
              "-File", str(SCRIPT), *map(str, args)],

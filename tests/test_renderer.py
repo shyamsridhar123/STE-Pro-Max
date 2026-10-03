@@ -514,8 +514,10 @@ class MarkdownRoundTripTests(unittest.TestCase):
     class Parsed(HTMLParser):
         def __init__(self, markup):
             super().__init__(convert_charrefs=True)
-            self.tags, self.text, self.rows = [], [], []
-            self.row, self.cell = None, None
+            self.tags, self.text = [], []
+            self.rows: list[list[str]] = []
+            self.row: list[str] | None = None
+            self.cell: str | None = None
             self.feed(markup)
 
         def handle_starttag(self, tag, attrs):
@@ -525,16 +527,19 @@ class MarkdownRoundTripTests(unittest.TestCase):
             if tag in ("th", "td"):
                 self.cell = ""
 
-        def handle_data(self, value):
-            self.text.append(value)
+        def handle_data(self, data):
+            self.text.append(data)
             if self.cell is not None:
-                self.cell += value
+                self.cell += data
 
         def handle_endtag(self, tag):
             if tag in ("th", "td"):
+                assert self.row is not None
+                assert self.cell is not None
                 self.row.append(self.cell)
                 self.cell = None
             if tag == "tr":
+                assert self.row is not None
                 self.rows.append(self.row)
                 self.row = None
 

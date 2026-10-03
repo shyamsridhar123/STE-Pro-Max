@@ -23,7 +23,9 @@ def example(chart_type="bar"):
 class TableReader(HTMLParser):
     def __init__(self, html):
         super().__init__()
-        self.rows, self.row, self.cell = [], None, None
+        self.rows: list[list[str]] = []
+        self.row: list[str] | None = None
+        self.cell: str | None = None
         self.tags = []
         self.feed(html)
 
@@ -40,9 +42,12 @@ class TableReader(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag in ("td", "th"):
+            assert self.row is not None
+            assert self.cell is not None
             self.row.append(self.cell)
             self.cell = None
         if tag == "tr":
+            assert self.row is not None
             self.rows.append(self.row)
             self.row = None
 
@@ -204,8 +209,12 @@ class ChartRenderingTests(unittest.TestCase):
         root = ET.fromstring(chart_svg(spec))
         self.assertEqual(root.attrib["role"], "img")
         self.assertEqual(root.attrib["aria-label"], spec["title"])
-        self.assertEqual(root.find("s:title", NS).text, spec["title"])
-        self.assertIn(spec["description"], root.find("s:desc", NS).text)
+        title = root.find("s:title", NS)
+        description = root.find("s:desc", NS)
+        assert title is not None
+        assert description is not None and description.text is not None
+        self.assertEqual(title.text, spec["title"])
+        self.assertIn(spec["description"], description.text)
         allowed = {"svg", "title", "desc", "rect", "text", "path", "g", "circle", "polygon"}
         for element in root.iter():
             self.assertIn(element.tag.split("}")[-1], allowed)
@@ -262,7 +271,9 @@ class ChartRenderingTests(unittest.TestCase):
         spec["categories"] = list("ABCDEFGH")
         spec["series"][0]["values"] = [None, 1, 2, None, 0, 4, None, 5]
         root = ET.fromstring(chart_svg(spec))
-        path = root.find(".//*[@class='chart-line']").attrib["d"]
+        line = root.find(".//*[@class='chart-line']")
+        assert line is not None
+        path = line.attrib["d"]
         self.assertEqual(path.count("M"), 3)
         self.assertEqual(path.count("L"), 2)
         self.assertEqual(len(root.findall(".//*[@class='chart-point']")), 5)
@@ -387,7 +398,9 @@ class ChartRenderingTests(unittest.TestCase):
             self.assertFalse(any(key.startswith("on") for key in attrs))
         self.assertEqual(parser.rows[1][0], hostile)
         self.assertEqual(parser.rows[1][1], "S1: " + hostile)
-        self.assertEqual(ET.fromstring(chart_svg(spec)).find("s:title", NS).text, hostile)
+        title = ET.fromstring(chart_svg(spec)).find("s:title", NS)
+        assert title is not None
+        self.assertEqual(title.text, hostile)
 
     def test_long_labels_wrap_without_dropping_content(self):
         spec = example()
@@ -417,7 +430,9 @@ class ChartRenderingTests(unittest.TestCase):
 
     def test_all_styles_are_scoped_and_no_duplicate_ids(self):
         result = render_chart(example())
-        stylesheet = re.search(r"<style>(.*?)</style>", result, re.S).group(1)
+        match = re.search(r"<style>(.*?)</style>", result, re.S)
+        assert match is not None
+        stylesheet = match.group(1)
         for rule in stylesheet.split("}"):
             if "{" in rule:
                 for selector in rule.split("{")[0].split(","):

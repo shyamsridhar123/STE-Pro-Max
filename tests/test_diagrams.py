@@ -1,6 +1,7 @@
 """Semantic, geometric, accessibility and hostile-input tests for native diagrams."""
 from copy import deepcopy
 import math
+from typing import Any
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -11,11 +12,11 @@ from ste_promax.diagrams import DIAGRAM_SCHEMA, diagram_svg, render_diagram, val
 NS = {"s": "http://www.w3.org/2000/svg"}
 
 
-def flow():
+def flow() -> dict[str, Any]:
     return deepcopy(DIAGRAM_SCHEMA["example"])
 
 
-def sequence():
+def sequence() -> dict[str, Any]:
     return {
         "type": "sequence", "title": "Commit sequence", "description": "Ordered protocol messages.",
         "participants": [{"id": "client", "label": "Client"}, {"id": "store", "label": "Store"}],
@@ -49,18 +50,26 @@ class DiagramTests(unittest.TestCase):
         svg = root.find("s:svg", NS)
         self.assertIsNone(svg)  # SVG is inside the scroll region, not an overflowing sibling.
         region = root.find("div")
+        assert region is not None
         self.assertEqual(region.get("role"), "region")
         self.assertEqual(region.get("tabindex"), "0")
-        self.assertIn("overflow:auto", region.get("style"))
-        self.assertIn("max-width:100%", region.get("style"))
+        self.assertIn("overflow:auto", region.attrib["style"])
+        self.assertIn("max-width:100%", region.attrib["style"])
         svg = region.find("s:svg", NS)
+        assert svg is not None
         self.assertEqual(svg.get("role"), "img")
         self.assertEqual(svg.get("aria-label"), spec["title"])
-        self.assertEqual(svg.find("s:title", NS).text, spec["title"])
-        self.assertEqual(svg.find("s:desc", NS).text, spec["description"])
-        self.assertIn(spec["caption"], "".join(root.find("figcaption").itertext()))
-        self.assertIn("min-width:", svg.get("style"))
-        self.assertIn("max-width:none", svg.get("style"))
+        title = svg.find("s:title", NS)
+        description = svg.find("s:desc", NS)
+        caption = root.find("figcaption")
+        assert title is not None
+        assert description is not None
+        assert caption is not None
+        self.assertEqual(title.text, spec["title"])
+        self.assertEqual(description.text, spec["description"])
+        self.assertIn(spec["caption"], "".join(caption.itertext()))
+        self.assertIn("min-width:", svg.attrib["style"])
+        self.assertIn("max-width:none", svg.attrib["style"])
 
     def test_flow_cycles_parallel_and_self_links_keep_every_edge(self):
         spec = flow()
@@ -81,8 +90,12 @@ class DiagramTests(unittest.TestCase):
                 self.assertEqual(group.get("data-edge"), str(index))
                 self.assertEqual(group.get("data-from"), edge["from"])
                 self.assertEqual(group.get("data-to"), edge["to"])
-                self.assertEqual(group.find("s:title", NS).text, edge["label"])
-                paths.append(group.find("s:polyline", NS).get("points"))
+                title = group.find("s:title", NS)
+                polyline = group.find("s:polyline", NS)
+                assert title is not None
+                assert polyline is not None
+                self.assertEqual(title.text, edge["label"])
+                paths.append(polyline.get("points"))
                 self.assertIsNotNone(group.find("s:polygon", NS))
             self.assertEqual(len(set(paths)), len(paths))
 
@@ -90,26 +103,37 @@ class DiagramTests(unittest.TestCase):
         spec = sequence()
         root = ET.fromstring(diagram_svg(spec))
         groups = root.findall("s:g[@data-edge]", NS)
-        self.assertEqual([g.find("s:title", NS).text for g in groups], ["Prepare", "Validate", "Commit"])
+        titles = []
+        for group in groups:
+            title = group.find("s:title", NS)
+            assert title is not None
+            titles.append(title.text)
+        self.assertEqual(titles, ["Prepare", "Validate", "Commit"])
         self.assertEqual(len(root.findall("s:line[@data-lifeline]", NS)), 2)
         first_y = []
         for group in groups:
-            points = group.find("s:polyline", NS).get("points").split()
+            polyline = group.find("s:polyline", NS)
+            assert polyline is not None
+            points = polyline.attrib["points"].split()
             first_y.append(float(points[0].split(",")[1]))
         self.assertEqual(first_y, sorted(set(first_y)))
-        self_points = groups[1].find("s:polyline", NS).get("points").split()
+        self_polyline = groups[1].find("s:polyline", NS)
+        assert self_polyline is not None
+        self_points = self_polyline.attrib["points"].split()
         self.assertEqual(len(self_points), 4)
         self.assertGreater(float(self_points[2].split(",")[1]), float(self_points[0].split(",")[1]))
-        self.assertIsNotNone(groups[1].find("s:polyline", NS).get("stroke-dasharray"))
+        self.assertIsNotNone(self_polyline.get("stroke-dasharray"))
 
     def test_visible_equivalent_retains_exact_text_and_order(self):
         for spec in (flow(), sequence()):
             entities = spec.get("nodes", spec.get("participants"))
             links = spec.get("edges", spec.get("messages"))
+            assert entities is not None and links is not None
             entities[0]["label"] = "Namespace::" + "TechnicalIdentifier" * 12
             links[0]["label"] = "Operation\nwith\ttabs\rand <exact> & punctuation"
             root = ET.fromstring(render_diagram(spec))
             equivalent = root.find("div[@class='ste-diagram-equivalent']")
+            assert equivalent is not None
             text = "".join(equivalent.itertext())
             for entity in entities:
                 self.assertIn(entity["label"], text)
@@ -130,7 +154,10 @@ class DiagramTests(unittest.TestCase):
         spec["edges"][0]["label"] = "first\nsecond\n" + "Q" * 200
         root = ET.fromstring(diagram_svg(spec))
         node = root.find("s:g[@data-entity='draft']", NS)
-        spans = node.find("s:text", NS).findall("s:tspan", NS)
+        assert node is not None
+        text = node.find("s:text", NS)
+        assert text is not None
+        spans = text.findall("s:tspan", NS)
         self.assertGreater(len(spans), 1)
         self.assertEqual("".join(s.text or "" for s in spans), label)
         self.assertTrue(all(len(s.text or "") <= 20 for s in spans))
@@ -150,6 +177,7 @@ class DiagramTests(unittest.TestCase):
             spec["title"] = spec["description"] = spec["caption"] = payload
             entities = spec.get("nodes", spec.get("participants"))
             links = spec.get("edges", spec.get("messages"))
+            assert entities is not None and links is not None
             entities[0]["label"] = payload
             old_id = entities[0]["id"]
             entities[0]["id"] = payload
@@ -175,13 +203,14 @@ class DiagramTests(unittest.TestCase):
     def test_coordinates_and_arrowheads_within_canvas_and_outside_nodes(self):
         for spec in (flow(), dict(flow(), direction="TB"), sequence()):
             root = ET.fromstring(diagram_svg(spec))
-            width, height = float(root.get("width")), float(root.get("height"))
+            width, height = float(root.attrib["width"]), float(root.attrib["height"])
             boxes = []
             for group in root.findall("s:g[@data-entity]", NS):
                 box = group.find("s:rect", NS)
-                boxes.append(tuple(float(box.get(k)) for k in ("x", "y", "width", "height")))
+                assert box is not None
+                boxes.append(tuple(float(box.attrib[k]) for k in ("x", "y", "width", "height")))
             for shape in root.findall(".//s:polyline", NS) + root.findall(".//s:polygon", NS):
-                points = [tuple(map(float, p.split(","))) for p in shape.get("points").split()]
+                points = [tuple(map(float, p.split(","))) for p in shape.attrib["points"].split()]
                 for x, y in points:
                     self.assertTrue(math.isfinite(x) and math.isfinite(y))
                     self.assertTrue(0 <= x <= width and 0 <= y <= height)
@@ -189,8 +218,8 @@ class DiagramTests(unittest.TestCase):
                         self.assertFalse(bx < x < bx + bw and by < y < by + bh)
             for rect in root.findall(".//s:rect", NS):
                 x, y = float(rect.get("x", "0")), float(rect.get("y", "0"))
-                self.assertLessEqual(x + float(rect.get("width")), width)
-                self.assertLessEqual(y + float(rect.get("height")), height)
+                self.assertLessEqual(x + float(rect.attrib["width"]), width)
+                self.assertLessEqual(y + float(rect.attrib["height"]), height)
 
     def test_zero_flow_edges_and_single_sequence_participant(self):
         spec = flow()
@@ -208,8 +237,11 @@ class DiagramTests(unittest.TestCase):
                      for g in root.findall("s:g[@data-entity]", NS)}
             for group in root.findall("s:g[@data-edge]", NS):
                 box = boxes[group.get("data-to")]
-                bx, by, bw, bh = [float(box.get(k)) for k in ("x", "y", "width", "height")]
-                tip = group.find("s:polygon", NS).get("points").split()[0]
+                assert box is not None
+                bx, by, bw, bh = [float(box.attrib[k]) for k in ("x", "y", "width", "height")]
+                polygon = group.find("s:polygon", NS)
+                assert polygon is not None
+                tip = polygon.attrib["points"].split()[0]
                 x, y = map(float, tip.split(","))
                 if spec["type"] == "sequence":
                     self.assertEqual(x, bx + bw / 2)
@@ -229,8 +261,12 @@ class DiagramTests(unittest.TestCase):
             root = ET.fromstring(diagram_svg(spec))
             ports = []
             for group in root.findall("s:g[@data-edge]", NS):
-                start = group.find("s:polyline", NS).get("points").split()[0]
-                end = group.find("s:polygon", NS).get("points").split()[0]
+                polyline = group.find("s:polyline", NS)
+                polygon = group.find("s:polygon", NS)
+                assert polyline is not None
+                assert polygon is not None
+                start = polyline.attrib["points"].split()[0]
+                end = polygon.attrib["points"].split()[0]
                 axis = 0 if direction == "LR" else 1
                 ports.extend(float(p.split(",")[axis]) for p in (start, end))
             ports.sort()
@@ -248,14 +284,14 @@ class DiagramTests(unittest.TestCase):
                            "label": "m" * 256, "note": "n" * 512} for i in range(32)]
         for value in (spec, dict(spec, direction="TB"), seq):
             root = ET.fromstring(diagram_svg(value))
-            self.assertLessEqual(int(root.get("width")), 32768)
-            self.assertLessEqual(int(root.get("height")), 32768)
+            self.assertLessEqual(int(root.attrib["width"]), 32768)
+            self.assertLessEqual(int(root.attrib["height"]), 32768)
             self.assertEqual(len(root.findall("s:g[@data-edge]", NS)), 32)
             for rect in root.findall(".//s:rect", NS):
-                self.assertLessEqual(float(rect.get("x", "0")) + float(rect.get("width")),
-                                     int(root.get("width")))
-                self.assertLessEqual(float(rect.get("y", "0")) + float(rect.get("height")),
-                                     int(root.get("height")))
+                self.assertLessEqual(float(rect.get("x", "0")) + float(rect.attrib["width"]),
+                                     int(root.attrib["width"]))
+                self.assertLessEqual(float(rect.get("y", "0")) + float(rect.attrib["height"]),
+                                     int(root.attrib["height"]))
 
     def test_style_is_only_presentation(self):
         spec = flow()
@@ -264,8 +300,11 @@ class DiagramTests(unittest.TestCase):
         self.assertIn("not evidence classifications", rendered)
         self.assertIn("[dashed line]", rendered)
         group = ET.fromstring(diagram_svg(spec)).find("s:g[@data-edge='1']", NS)
+        assert group is not None
         self.assertEqual(group.get("data-style"), "dashed")
-        self.assertEqual(group.find("s:polyline", NS).get("stroke-dasharray"), "7 5")
+        polyline = group.find("s:polyline", NS)
+        assert polyline is not None
+        self.assertEqual(polyline.get("stroke-dasharray"), "7 5")
 
 
 class InvalidDiagramTests(unittest.TestCase):
