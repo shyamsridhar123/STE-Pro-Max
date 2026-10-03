@@ -14,7 +14,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-NARRATOR = ROOT / "skills/ste-promax/scripts/narrate.ps1"
+NARRATOR = ROOT / "ste_promax/scripts/narrate.ps1"
 
 
 def synthesize(text_path: Path, audio_path: Path, voice: str | None) -> None:

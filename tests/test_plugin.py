@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import wave
 import zipfile
 
 
@@ -50,14 +51,15 @@ class PluginTests(unittest.TestCase):
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.1.0")
+            self.assertEqual(manifest["version"], "0.2.0")
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
             self.assertNotIn("skills", manifest)
             self.assertNotIn("mcpServers", manifest)
             self.assertNotIn("hooks", manifest)
-        self.assertTrue((self.source / "skills/ste-promax/SKILL.md").is_file())
+        for skill in ("ste-promax", "ste-visual-docs", "ste-storytelling"):
+            self.assertTrue((self.source / "skills" / skill / "SKILL.md").is_file())
         allowed = {"$schema", "name", "version", "description", "author", "homepage",
                    "repository", "license", "keywords", "extensions"}
         self.assertLessEqual(set(portable), allowed)
@@ -67,7 +69,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.1.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.2.0", "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -102,7 +104,11 @@ class PluginTests(unittest.TestCase):
             ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "ste_promax/render.py",
             "ste_promax/templates/atv-tier.html.j2", "ste_promax/templates/gallery.html.j2",
             "ste_promax/designs/paperboard.DESIGN.md", "skills/ste-promax/SKILL.md",
-            "skills/ste-promax/scripts/narrate.ps1", "__main__.py", "pyproject.toml",
+            "ste_promax/scripts/narrate.ps1", "__main__.py", "pyproject.toml",
+            "ste_promax/diagrams.py", "ste_promax/charts.py", "ste_promax/stories.py", "ste_promax/media.py",
+            "ste_promax/section_schema.py", "ste_promax/templates/story.html.j2",
+            "ste_promax/templates/story-video.html.j2", "skills/ste-visual-docs/SKILL.md",
+            "skills/ste-storytelling/SKILL.md", "docs/AUTHORING.md",
             "LICENSE", "NOTICE", "ste-promax/SKILL.md", "STE-ProMAX.zip", "docs/PLUGINS.md",
         }
         self.assertLessEqual(required, set(manifest["files"]))
@@ -234,7 +240,7 @@ class PluginTests(unittest.TestCase):
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.1.0")
+        self.assertEqual(version.stdout.strip(), "0.2.0")
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)
@@ -250,6 +256,44 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(source.read_bytes(), content)
         self.assertEqual((workspace / "artifact/source.md").read_bytes(), content)
         self.assertNotIn("fonts.googleapis.com", Path(manifest["files"]["html"]["path"]).read_text())
+
+    def test_extracted_bundle_runs_suite_commands_from_an_unrelated_workspace(self):
+        self.build()
+        extracted = self.root / "extracted-suite"
+        with zipfile.ZipFile(self.output / "ste-pro-max.zip") as archive:
+            archive.extractall(extracted)
+        bundle = extracted / "ste-pro-max"
+        workspace = self.root / "user-workspace"
+        workspace.mkdir()
+        source = workspace / "story.json"
+        shutil.copyfile(ROOT / "examples/suite/retry-explanation.json", source)
+        audio = workspace / "audio"
+        audio.mkdir()
+        for name, seconds in (("trace", 8), ("count", 2)):
+            with wave.open(str(audio / (name + ".wav")), "wb") as stream:
+                stream.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+                stream.writeframes(b"\xf0\xd8\x10\x27" * (4000 * seconds))
+
+        def run(*args):
+            process = subprocess.run([sys.executable, "-B", str(bundle), *map(str, args)],
+                                     cwd=workspace, capture_output=True, text=True, timeout=45)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            return json.loads(process.stdout)
+
+        self.assertIn("beats", run("schema", "story")["fields"])
+        artifact = run("render", source, "--output-dir", workspace / "story")
+        self.assertEqual(artifact["status"], "complete")
+        self.assertEqual(len(artifact["visuals"]), 2)
+        self.assertTrue((workspace / "story" / "evidence.json").is_file())
+        prepared = run("narrate", source, "--audio-dir", audio, "--output-dir", workspace / "media")
+        self.assertEqual(prepared["status"], "prepared_not_rendered")
+        self.assertEqual(prepared["narration"], "provided PCM")
+        self.assertEqual(prepared["duration_seconds"], 10)
+        timeline = json.loads((workspace / "media" / "timeline.json").read_bytes())
+        self.assertEqual(len(timeline["beats"][0]["stages"]), 5)
+        self.assertTrue((bundle / "ste_promax/scripts/narrate.ps1").is_file())
+        self.assertEqual((workspace / "media" / "source.json").read_bytes(), source.read_bytes())
+        self.assertFalse(list((workspace / "media").glob("*.mp4")))
 
     def test_cli_reports_failure_without_side_effects(self):
         self.output.mkdir()

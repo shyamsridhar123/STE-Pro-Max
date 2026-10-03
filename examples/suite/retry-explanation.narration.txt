@@ -1,0 +1,3 @@
+In this fictional trace, a client submits key K7. The register stores one record and returns receipt R9. The client then retries the same key. The register returns the same receipt without another write.
+
+Count the requests and records separately: two requests, one stored record. Does that prove crash safety or behavior under concurrent requests? No. This example covers sequential requests only. Its lesson is narrower: a repeated key can reuse a result.

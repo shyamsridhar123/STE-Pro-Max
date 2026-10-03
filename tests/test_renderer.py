@@ -78,9 +78,9 @@ class OrdinaryRenderingTests(unittest.TestCase):
         self.assertEqual(_slugify("Hello World! This is a Test 123"), "hello-world-this-is-a-test-123")
         self.assertEqual(_slugify("!!!"), "artifact")
 
-    def test_schema_matches_all_fifteen_emitters_and_examples_render(self):
+    def test_schema_matches_all_seventeen_emitters_and_examples_render(self):
         self.assertEqual(set(list_kinds()), set(_SECTION_EMITTERS))
-        self.assertEqual(len(_SECTION_EMITTERS), 15)
+        self.assertEqual(len(_SECTION_EMITTERS), 17)
         for kind, entry in SECTION_SCHEMA.items():
             with self.subTest(kind=kind):
                 rendered = _SECTION_EMITTERS[kind](entry["example"])
@@ -508,6 +508,297 @@ class EscapingTests(unittest.TestCase):
     def test_markdown_placeholder_content_cannot_spoof_internal_tokens(self):
         html = _md_to_html("\x00CODE9999\x00 \x00LINK99\x00 `safe`")
         self.assertIn("<code>safe</code>", html)
+
+
+class MarkdownRoundTripTests(unittest.TestCase):
+    class Parsed(HTMLParser):
+        def __init__(self, markup):
+            super().__init__(convert_charrefs=True)
+            self.tags, self.text, self.rows = [], [], []
+            self.row, self.cell = None, None
+            self.feed(markup)
+
+        def handle_starttag(self, tag, attrs):
+            self.tags.append((tag, dict(attrs)))
+            if tag == "tr":
+                self.row = []
+            if tag in ("th", "td"):
+                self.cell = ""
+
+        def handle_data(self, value):
+            self.text.append(value)
+            if self.cell is not None:
+                self.cell += value
+
+        def handle_endtag(self, tag):
+            if tag in ("th", "td"):
+                self.row.append(self.cell)
+                self.cell = None
+            if tag == "tr":
+                self.rows.append(self.row)
+                self.row = None
+
+    def story_markdown(self):
+        from ste_promax.stories import STORY_SCHEMA, story_companions
+        source = (
+            r'Literal [link](https://example.org/a?x=1&y=2) ![image](images/photo.png) '
+            r'**stars** _underscores_ `&mdash;` api_name \ | \| & &lt; &amp; '
+            r'<img src=x onerror="bad"> {value} #tag#'
+        )
+        story = deepcopy(STORY_SCHEMA["example"])
+        story["title"] = r"Title [literal] **stars** `code` & <tag> #"
+        story["summary"] = source
+        story["claims"][0]["uncertainty"] = source
+        story["beats"][0]["visual"] = deepcopy(SECTION_SCHEMA["chart"]["example"])
+        story["beats"][0]["visual"]["categories"][0] = r"Category [literal] | **stars** `tick` & <tag>"
+        before = deepcopy(story)
+        prose = story_companions(story)["story.md"]
+        self.assertEqual(story, before)
+        return story, source, prose
+
+    def test_actual_story_markdown_preserves_literal_text_and_structure(self):
+        story, source, prose = self.story_markdown()
+        markup = _md_to_html(prose)
+        parsed = self.Parsed(markup)
+        text = "".join(parsed.text)
+        self.assertEqual(text.count(source), 3)  # summary, narrative claim, complete ledger
+        self.assertIn(story["title"], text)
+        self.assertIn(story["beats"][0]["visual"]["categories"][0], text)
+        self.assertFalse({"a", "img", "em", "strong", "code", "script", "table"} &
+                         {tag for tag, _ in parsed.tags})
+        self.assertFalse(any(key.startswith("on") for _, attrs in parsed.tags for key in attrs))
+        self.assertEqual(_default_body_html({"body_md": prose}), markup)
+
+    def test_saved_story_markdown_round_trip_through_root_cli(self):
+        import json
+        import subprocess
+        import sys
+
+        story, source, prose = self.story_markdown()
+        with tempfile.TemporaryDirectory(prefix="ste-story-roundtrip-") as temp:
+            root = Path(__file__).resolve().parents[1]
+            source_path = Path(temp) / "story.md"
+            source_path.write_text(prose, encoding="utf-8")
+            original = source_path.read_bytes()
+            result = subprocess.run(
+                [sys.executable, "-X", "utf8", str(root), "render", str(source_path),
+                 "--output-dir", str(Path(temp) / "rendered")],
+                cwd=root, capture_output=True, text=True, encoding="utf-8", timeout=30, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads(result.stdout)
+            self.assertEqual(manifest["status"], "complete")
+            output = Path(manifest["files"]["html"]["path"])
+            parsed = self.Parsed(output.read_text(encoding="utf-8"))
+            text = "".join(parsed.text)
+            self.assertEqual(text.count(source), 3)
+            self.assertIn(story["title"], text)
+            self.assertNotIn("img", [tag for tag, _ in parsed.tags])
+            self.assertTrue(output.with_suffix(".DESIGN.md").is_file())
+            self.assertTrue(output.with_suffix(".meta.yaml").is_file())
+            self.assertTrue((output.parent / "gallery.html").is_file())
+            self.assertEqual(source_path.read_bytes(), original)
+
+    def test_escaped_literals_do_not_disable_intentional_formatting(self):
+        parsed = self.Parsed(_md_to_html(
+            r"\*literal\* **real** \_literal\_ _real_ \`literal\` `raw \* &amp;` "
+            r"\[literal\](https://example.org) [real](https://example.org) \q"
+        ))
+        self.assertEqual("".join(parsed.text).strip(),
+                         "*literal* real _literal_ real `literal` raw \\* &amp; "
+                         "[literal](https://example.org) real \\q")
+        tags = [tag for tag, _ in parsed.tags]
+        for tag in ("strong", "em", "code", "a"):
+            self.assertEqual(tags.count(tag), 1)
+
+    def test_story_raw_html_like_text_does_not_autolink_its_attribute_values(self):
+        from ste_promax.stories import STORY_SCHEMA, story_companions
+        story = deepcopy(STORY_SCHEMA["example"])
+        source = '<a href="https://example.org/?a=1&b=2"><img src="images/a.png">**literal**</a>'
+        story["summary"] = source
+        parsed = self.Parsed(_md_to_html(story_companions(story)["story.md"]))
+        self.assertIn(source, "".join(parsed.text))
+        self.assertFalse({"a", "img", "strong", "script"} & {tag for tag, _ in parsed.tags})
+
+    def test_literal_tags_inside_intentional_links_and_image_alt_do_not_leak_tokens(self):
+        parsed = self.Parsed(_md_to_html(
+            '[<label> `code`](https://example.org) ![<alt>](images/local.png)'
+        ))
+        self.assertIn("<label> code", "".join(parsed.text))
+        self.assertEqual(sum(tag == "a" for tag, _ in parsed.tags), 1)
+        self.assertEqual(sum(tag == "code" for tag, _ in parsed.tags), 1)
+        images = [attrs for tag, attrs in parsed.tags if tag == "img"]
+        self.assertEqual(images, [{"alt": "<alt>", "src": "images/local.png", "loading": "lazy"}])
+        self.assertNotIn("\x00", "".join(parsed.text))
+        self.assertFalse({"label", "alt"} & {tag for tag, _ in parsed.tags})
+
+    def test_even_and_odd_backslashes_before_delimiters(self):
+        for count in range(1, 5):
+            with self.subTest(count=count):
+                slashes = "\\" * count
+                parsed = self.Parsed(_md_to_html(slashes + "*word" + slashes + "*"))
+                visible_slashes = "\\" * (count // 2)
+                expected = (visible_slashes + "*word" + visible_slashes + "*" if count % 2
+                            else visible_slashes + "word" + visible_slashes)
+                self.assertEqual("".join(parsed.text).strip(), expected)
+                self.assertEqual(sum(tag == "em" for tag, _ in parsed.tags), 0 if count % 2 else 1)
+
+    def test_escaped_code_delimiters_keep_prose_entities_but_real_code_stays_literal(self):
+        parsed = self.Parsed(_md_to_html(r"\`&mdash;\` `&mdash; \* \[x\]` \&amp;"))
+        self.assertEqual("".join(parsed.text).strip(), "`—` &mdash; \\* \\[x\\] &amp;")
+        self.assertEqual(sum(tag == "code" for tag, _ in parsed.tags), 1)
+
+    def test_escaped_markers_at_block_boundaries_remain_text(self):
+        parsed = self.Parsed(_md_to_html(
+            "# Heading \\#\n\n\\# Not a heading\n\n\\* not a list\n\n"
+            "\\*\\*\\*\n\n\\`\\`\\`not a fence\\`\\`\\`"
+        ))
+        text = "".join(parsed.text)
+        for expected in ("Heading #", "# Not a heading", "* not a list", "***", "```not a fence```"):
+            self.assertIn(expected, text)
+        tags = [tag for tag, _ in parsed.tags]
+        self.assertEqual(tags.count("h1"), 1)
+        self.assertFalse({"ul", "hr", "code", "pre", "em", "strong"} & set(tags))
+
+    def test_table_escaped_pipes_and_backslash_parity_preserve_cells(self):
+        parsed = self.Parsed(_md_to_html(
+            "| Field \\| name | Meaning |\n| --- | --- |\n"
+            "| A\\|B | \\[ref\\] \\*literal\\* |\n"
+            "| slash\\\\| next |\n"
+            "| odd\\\\\\|pipe | tail\\| |"
+        ))
+        self.assertEqual(parsed.rows, [
+            ["Field | name", "Meaning"], ["A|B", "[ref] *literal*"],
+            ["slash\\", "next"], ["odd\\|pipe", "tail|"],
+        ])
+        self.assertFalse({"em", "strong", "a"} & {tag for tag, _ in parsed.tags})
+
+    def test_table_without_outer_borders_keeps_trailing_literal_pipe(self):
+        parsed = self.Parsed(_md_to_html("Head | Last\\|\n--- | ---\nvalue | end\\|"))
+        self.assertEqual(parsed.rows, [["Head", "Last|"], ["value", "end|"]])
+
+    def test_table_code_span_escaped_pipe_preserves_other_code_and_entities(self):
+        parsed = self.Parsed(_md_to_html(
+            "| Code | Literal |\n| --- | --- |\n"
+            "| `a\\|b \\* &amp;` | \\`not code\\` &amp; |\n"
+            "| | |"
+        ))
+        self.assertEqual(parsed.rows, [
+            ["Code", "Literal"], ["a|b \\* &amp;", "`not code` &"], ["", ""],
+        ])
+        self.assertEqual(sum(tag == "code" for tag, _ in parsed.tags), 1)
+
+    def test_escaped_pipe_alone_is_not_a_table_delimiter(self):
+        parsed = self.Parsed(_md_to_html("Only \\| literal\n| --- | --- |"))
+        self.assertEqual(parsed.rows, [])
+        self.assertIn("Only | literal", "".join(parsed.text))
+
+    def test_escape_processing_cannot_spoof_opaque_placeholders(self):
+        source = ("\x00CODE9999\x00 \x00LINK9999\x00 \x00ESC9999\x00 \x00LITERAL9999\x00 "
+                  r"\`CODE0\` `safe &amp;` &#0;CODE9999&#0; \[label\](https://example.org)")
+        parsed = self.Parsed(_md_to_html(source))
+        text = "".join(parsed.text)
+        self.assertIn("\ufffdCODE9999\ufffd", text)
+        self.assertIn("\ufffdLINK9999\ufffd", text)
+        self.assertIn("\ufffdLITERAL9999\ufffd", text)
+        self.assertIn("`CODE0`", text)
+        self.assertIn("safe &amp;", text)
+        self.assertIn("[label](https://example.org)", text)
+        self.assertEqual(sum(tag == "code" for tag, _ in parsed.tags), 1)
+        self.assertFalse(any(tag == "a" for tag, _ in parsed.tags))
+
+
+class OrdinaryTableScrollTests(unittest.TestCase):
+    def check_region(self, markup, label):
+        parsed = MarkdownRoundTripTests.Parsed(markup)
+        regions = [(index, attrs) for index, (tag, attrs) in enumerate(parsed.tags)
+                   if tag == "div" and attrs.get("class") == "table-scroll"]
+        self.assertEqual(len(regions), 1)
+        index, attrs = regions[0]
+        self.assertEqual(attrs, {"class": "table-scroll", "role": "region",
+                                 "tabindex": "0", "aria-label": label})
+        self.assertEqual(parsed.tags[index + 1][0], "table")
+        self.assertNotIn("role", parsed.tags[index + 1][1])
+        self.assertNotIn("tabindex", parsed.tags[index + 1][1])
+        self.assertFalse(any(key.startswith("on") for _, attributes in parsed.tags for key in attributes))
+        self.assertNotIn("img", [tag for tag, _ in parsed.tags])
+        return parsed
+
+    def test_props_table_scroll_region_uses_default_headers_and_keeps_cells(self):
+        parsed = self.check_region(_default_body_html({"sections": [{
+            "kind": "props-table", "rows": [
+                {"name": "a" * 200, "type": "string", "default": "None supplied", "notes": "Do not infer approval."},
+            ],
+        }]}), "Table: Prop, Type, Default, Notes")
+        self.assertEqual(parsed.rows, [
+            ["Prop", "Type", "Default", "Notes"],
+            ["a" * 200, "string", "None supplied", "Do not infer approval."],
+        ])
+
+    def test_props_custom_headers_are_escaped_in_region_name(self):
+        header = 'Notes " onfocus="bad"><img src=x> & scope'
+        parsed = self.check_region(_default_body_html({"sections": [{
+            "kind": "props-table", "headers": [header, "Type", "Default", "Qualification"],
+            "rows": [{"name": "Value", "notes": "<not approved>"}],
+        }]}), f"Table: {header}, Type, Default, Qualification")
+        self.assertEqual(parsed.rows[0][0], header)
+        self.assertEqual(parsed.rows[1][-1], "<not approved>")
+
+    def test_status_table_preserves_headers_order_badges_and_qualifications(self):
+        header = 'Locator "><img src=x> & reference'
+        rows = [
+            {header: "a/long/path/" * 30, "status": "PASS", "claim": "Do not deploy."},
+            {"claim": "Still requires review.", "status": "Pending", header: "second"},
+        ]
+        markup = _default_body_html({"sections": [{"kind": "status-table", "rows": rows}]})
+        parsed = self.check_region(markup, f"Table: {header}, status, claim")
+        self.assertEqual(parsed.rows, [
+            [header, "status", "claim"], [rows[0][header], "PASS", "Do not deploy."],
+            ["second", "Pending", "Still requires review."],
+        ])
+        self.assertIn('class="badge pass"', markup)
+
+    def test_top_level_rows_are_wrapped_but_raw_table_helper_is_unchanged(self):
+        header = '" onfocus="bad"> & data'
+        rows = [{header: "Source value", "Warning": "<not approved>"}, {"Warning": "Missing locator"}]
+        raw = _rows_to_table(rows)
+        self.assertTrue(raw.startswith("<table>"))
+        self.assertNotIn("table-scroll", raw)
+        markup = _default_body_html({"rows": rows})
+        self.assertIn(raw, markup)
+        parsed = self.check_region(markup, f"Table: {header}, Warning")
+        self.assertEqual(parsed.rows, [
+            [header, "Warning"], ["Source value", "<not approved>"], ["", "Missing locator"],
+        ])
+
+    def test_markdown_table_region_uses_visible_unescaped_headers(self):
+        markup = _md_to_html(
+            '| **Locator** \\| \\[literal\\] | "<img src=x>" &amp; scope |\n'
+            '| --- | --- |\n| long/path | Do not deploy. |\n| other | &lt;not approved&gt; |'
+        )
+        parsed = self.check_region(markup, 'Table: Locator | [literal], "<img src=x>" & scope')
+        self.assertEqual(parsed.rows, [
+            ["Locator | [literal]", '"<img src=x>" & scope'],
+            ["long/path", "Do not deploy."], ["other", "<not approved>"],
+        ])
+
+    def test_caption_documentation_has_wrapped_full_evidence_table(self):
+        import json
+        root = Path(__file__).resolve().parents[1]
+        data = json.loads((root / "examples/suite/caption-documentation.json").read_text(encoding="utf-8"))
+        markup = _default_body_html(data)
+        parsed = MarkdownRoundTripTests.Parsed(markup)
+        regions = [attrs for tag, attrs in parsed.tags if attrs.get("class") == "table-scroll"]
+        self.assertEqual(len(regions), 1)
+        self.assertEqual(regions[0]["aria-label"], "Table: source, locator, claims, status")
+        status = next(section for section in data["sections"] if section["kind"] == "status-table")
+        for row in status["rows"]:
+            self.assertIn(list(row.values()), parsed.rows)
+
+    def test_empty_headers_have_a_name_and_empty_status_has_no_empty_region(self):
+        parsed = self.check_region(_md_to_html("| | |\n| --- | --- |\n| A | B |"), "Table data")
+        self.assertEqual(parsed.rows, [["", ""], ["A", "B"]])
+        self.assertEqual(_default_body_html({"sections": [{"kind": "status-table", "rows": []}]}), "")
 
 
 if __name__ == "__main__":

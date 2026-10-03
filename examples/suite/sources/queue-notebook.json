@@ -1,0 +1,30 @@
+{
+  "id": "queue-notes",
+  "title": "Fictional queue incident notebook",
+  "fictional": true,
+  "provenance": "Invented tabletop incident evidence. No live service, telemetry system or production incident is represented.",
+  "scope": "Five scheduled one-minute snapshots in one tabletop exercise; queue depth counts waiting jobs, not completed jobs.",
+  "samples": [
+    {"minute": 0, "waiting_jobs": 2},
+    {"minute": 1, "waiting_jobs": 5},
+    {"minute": 2, "waiting_jobs": null},
+    {"minute": 3, "waiting_jobs": 4},
+    {"minute": 4, "waiting_jobs": 1}
+  ],
+  "missing_reason": "The minute 2 depth sample was not retained during a logger restart. Its value is unknown, not zero.",
+  "events": [
+    {"minute": 1, "event": "A new input burst and a retry-policy change were recorded in the same minute; their relative order is unknown."},
+    {"minute": 2, "event": "The logger restarted; only the depth sample is missing."},
+    {"minute": 3, "event": "The operator recorded a rollback to the previous retry policy."}
+  ],
+  "closure": "The final retained snapshot still has 1 waiting job. No completion counter, drained-queue check or later observation is supplied.",
+  "hypothesis": "The retry-policy change might have contributed to the larger queue. The input burst is an alternative explanation; these notes do not establish a cause.",
+  "proposal": "Retain event order and depth samples, add a completion counter, and compare isolated retry-policy changes in a separate rehearsal before declaring a cause or closure.",
+  "claim_support": {
+    "retained-depths": ["samples", "scope"],
+    "missing-is-unknown": ["samples", "missing_reason"],
+    "cause-not-established": ["events", "hypothesis"],
+    "closure-not-established": ["samples", "closure"],
+    "instrument-and-recheck": ["proposal"]
+  }
+}

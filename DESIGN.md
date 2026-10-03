@@ -1,7 +1,9 @@
 # Design
 
 ## Source of truth
-Active, October 3, 2026. Applies to local STE-Pro Max explanation examples.
+Active, October 3, 2026. Applies to STE-Pro Max visual documentation, stories,
+lessons, and local explanation examples. `docs/SUITE_PLAN.md` defines the broader
+suite objective; the original Clarity Lab remains a regression example.
 Evidence: the original writing skill, Karpathy's October 1 Chicago-time post, and
 ATV-PaperBoard's renderer source. No independent brand assets were supplied.
 
@@ -10,18 +12,21 @@ An explanatory notebook: precise, calm, and direct. Show evidence and limits.
 Avoid decorative dashboards, invented metrics, AI badges, and claims of certification.
 
 ## Product goals
-Make an explanation easier to understand without changing its meaning. Demonstrate
-each supported output mode with a small, reusable example. Do not build a platform.
-Success means the reader can distinguish absolute change, relative change, and cause.
+Make explanations easier to understand without changing their meaning. Support
+technical relationships, quantitative evidence, and coherent stories through real
+reusable workflows. Do not build a hosted platform. Success means readers can
+inspect the evidence, follow the explanation, and distinguish observations,
+attributed explanations, inferences, and proposals.
 
 ## Personas and jobs
 Technical and business readers need clear updates; learners need a concrete example
 they can inspect and manipulate. An agent author needs a repeatable local workflow.
 
 ## Information architecture
-The README is the entry point. The skill routes prose, diagrams, HTML, and video.
-The Clarity Lab artifact moves from source values to a visual comparison, calculation,
-and evidence boundary. Source disclosures remain visible.
+The README is the entry point. Focused skills route writing, visual documentation,
+storytelling, and media. A story presents its question and audience, an overview,
+ordered evidence-backed beats, and a source register. Guided and all-content views
+share the same facts. Source disclosures remain visible and printable.
 
 ## Design principles
 Show the concept before notation. Use movement to explain change, not decorate.
@@ -34,10 +39,10 @@ copper accent. System sans-serif for prose and monospace for values. Thin rules,
 generous whitespace, minimal elevation. Inline SVG for accurate, labeled diagrams.
 
 ## Components
-Labeled number inputs, accessible comparison bars, a calculation readout, a reset
-button, source notes, and an evidence-boundary callout. The example owns its scoped
-styles; the adapted native renderer owns the outer shell. Root tokens are recorded here, not in a
-second design-system package.
+Existing components include labeled inputs, comparison bars, calculation readouts,
+reset, source notes, and evidence callouts. New native figures need names, captions
+and equivalent text/data; story controls need an outline, progress and explicit
+navigation. Use the renderer's shell/tokens, not a new design-system dependency.
 
 ## Accessibility
 Target WCAG 2.2 AA behavior; do not claim conformance from a smoke test. Provide
@@ -46,7 +51,9 @@ transcripts. Never encode meaning by color alone. Respect reduced motion.
 
 ## Responsive behavior
 Two columns when space permits; stack below 720px. Controls remain usable at 375px.
-No horizontal scrolling or hover-only information.
+No page-level horizontal overflow or hover-only information. Complex figures may
+use a labeled, keyboard-focusable contained scroll region with a legible minimum
+size and a visible text/data equivalent; do not shrink labels into unreadability.
 
 ## Interaction states
 Show baseline-zero relative change as undefined, not zero or infinity. Reject

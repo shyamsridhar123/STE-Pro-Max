@@ -18,7 +18,7 @@ ROOT_FILES = (
 )
 # Runtime/source trees only; no tests, generated artifacts, or repository state.
 TREES = {
-    "ste_promax": {".py", ".j2", ".md"},
+    "ste_promax": {".py", ".j2", ".md", ".ps1"},
     "skills": {".md", ".yaml", ".yml", ".json", ".py", ".ps1", ".sh"},
     "examples": {".md", ".json", ".py", ".ps1", ".html", ".css", ".js", ".svg", ".txt"},
     "docs": {".md", ".txt", ".svg"},
@@ -27,9 +27,13 @@ TREES = {
 REQUIRED_PAYLOAD = (
     "ste_promax/__init__.py", "ste_promax/__main__.py", "ste_promax/cli.py",
     "ste_promax/render.py", "ste_promax/gallery.py", "ste_promax/writing.py",
+    "ste_promax/section_schema.py", "ste_promax/json_input.py", "ste_promax/diagrams.py", "ste_promax/charts.py",
+    "ste_promax/stories.py", "ste_promax/media.py", "ste_promax/scripts/narrate.ps1",
     "ste_promax/templates/atv-tier.html.j2", "ste_promax/templates/gallery.html.j2",
+    "ste_promax/templates/story.html.j2", "ste_promax/templates/story-video.html.j2",
     "ste_promax/designs/paperboard.DESIGN.md", "skills/ste-promax/SKILL.md",
-    "skills/ste-promax/scripts/narrate.ps1", "ste-promax/SKILL.md",
+    "skills/ste-visual-docs/SKILL.md", "skills/ste-storytelling/SKILL.md", "ste-promax/SKILL.md",
+    "docs/AUTHORING.md",
 )
 EXCLUDED_NAMES = {
     "artifacts", "tests", "node_modules", "venv", "__pycache__", "omx_wiki", "memory.md",

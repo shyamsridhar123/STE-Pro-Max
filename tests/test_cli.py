@@ -289,11 +289,11 @@ class RenderTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_version(self):
-        self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(__version__, "0.2.0")
         with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as error:
             cli.main(["--version"])
         self.assertEqual(error.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "0.1.0")
+        self.assertEqual(output.getvalue().strip(), "0.2.0")
 
 
 class NativeIntegrationTests(unittest.TestCase):

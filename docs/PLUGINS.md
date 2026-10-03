@@ -1,15 +1,18 @@
 # Plugin packaging
 
-One shared engine and one shared skill serve three target hosts. There is no
+One shared engine and three focused skills serve three target hosts. There is no
 installed-PaperBoard wrapper and no separately maintained renderer per host.
 
 ## Target surfaces
 
 | Target | Native descriptor | Skill discovery |
 | --- | --- | --- |
-| GitHub Copilot **CLI** | Root `plugin.json`, Agent Plugins 1.0 | `skills/ste-promax/SKILL.md` |
-| Claude **Code** | `.claude-plugin/plugin.json` | `skills/ste-promax/SKILL.md` |
-| Codex **CLI and desktop app** | Root `plugin.json`, Agent Plugins 1.0 | `skills/ste-promax/SKILL.md` |
+| GitHub Copilot **CLI** | Root `plugin.json`, Agent Plugins 1.0 | `skills/*/SKILL.md` |
+| Claude **Code** | `.claude-plugin/plugin.json` | `skills/*/SKILL.md` |
+| Codex **CLI and desktop app** | Root `plugin.json`, Agent Plugins 1.0 | `skills/*/SKILL.md` |
+
+The shared skills are `ste-promax`, `ste-visual-docs`, and `ste-storytelling`.
+They operate the same native engine; there are no per-host renderer implementations.
 
 This is a packaging target matrix, not a claim that the plugin has been installed
 or exercised in every host. GitHub.com, Copilot IDE integrations, generic Claude
@@ -39,7 +42,9 @@ workspace without installing or resolving a separate `paperboard` executable:
 
 ```powershell
 python "<absolute-plugin-root>" check "<workspace>/notes.md" --json
+python "<absolute-plugin-root>" schema story
 python "<absolute-plugin-root>" render "<workspace>/notes.md" --output-dir "<workspace>/artifacts/new-report"
+python "<absolute-plugin-root>" narrate "<workspace>/story.json" --audio-dir "<workspace>/audio" --output-dir "<workspace>/artifacts/new-media"
 ```
 
 Use the plugin root from the actual loaded skill location. Do not assume the
@@ -65,6 +70,9 @@ python -m venv .ste-env
 Use `.ste-env/bin/python` on macOS/Linux. Windows narration additionally needs
 Windows PowerShell 5.1 and a generic installed speech voice. HyperFrames and movie
 export requirements remain optional. Do not silently substitute a cloud provider.
+The canonical helper is a package resource at `ste_promax/scripts/narrate.ps1`,
+included in both source bundles and Python wheels. Supplied integer-PCM WAV files
+provide a separate, cross-platform `--audio-dir` route.
 
 ## Host loading
 

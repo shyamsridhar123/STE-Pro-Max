@@ -1,0 +1,67 @@
+{
+  "kind": "story",
+  "version": 1,
+  "title": "A lower median is not a general usability finding",
+  "audience": "Readers practicing critical interpretation of a small research notebook",
+  "question": "What can these fictional instruction-card walkthroughs support?",
+  "purpose": "research-digest",
+  "summary": "Icons has a lower median, 9 versus 12 seconds, but a wider observed range; these scripted walkthroughs do not establish a population effect.",
+  "context": "Explicitly fictional research-reading exercise. No real participants, study or published findings are represented.",
+  "sources": [
+    {"id": "walkthrough-notes", "title": "Fictional instruction-card walkthrough notebook", "locator": "examples/suite/sources/walkthrough-notes.json", "note": "Raw times, medians, ranges and the facilitator's qualification are supplied together."}
+  ],
+  "claims": [
+    {"id": "medians-and-ranges", "type": "observation", "text": "Text has median 12 seconds and range 10–14; Icons has median 9 seconds and range 8–16.", "source_ids": ["walkthrough-notes"], "scope": "Three scripted walkthroughs per card by the same fictional facilitator.", "uncertainty": "Bounds are the minimum and maximum of three fictional walkthrough times per card, not confidence intervals or population error estimates."},
+    {"id": "reported-pause", "type": "attribution", "text": "The slow Icons walkthrough included a pause at an unfamiliar symbol.", "source_ids": ["walkthrough-notes"], "attributed_to": "The fictional facilitator", "uncertainty": "The note does not isolate the symbol as the cause of the pause or of total task time."},
+    {"id": "not-a-general-effect", "type": "inference", "text": "These notes do not establish that Icons is faster for untrained readers.", "source_ids": ["walkthrough-notes"], "basis": "The same facilitator performed all scripted walkthroughs, order was not counterbalanced, and no untrained reader is represented.", "scope": "A limitation of this notebook, not a claim that Icons has no effect."},
+    {"id": "broaden-the-check", "type": "proposal", "text": "Repeat with untrained readers and counterbalanced order before choosing a format.", "source_ids": ["walkthrough-notes"], "scope": "A proposed follow-up exercise, not completed research."}
+  ],
+  "beats": [
+    {
+      "id": "distribution",
+      "title": "Read the center and the spread",
+      "role": "Attributed data",
+      "text": "Icons has the lower median, but its slowest scripted walkthrough is slower.",
+      "claim_ids": ["medians-and-ranges"],
+      "narration": "This fictional notebook gives three walkthroughs per card. Text has a median of twelve seconds and a range from ten to fourteen. Icons has a median of nine and a range from eight to sixteen. The bounds show observed minimum and maximum times, not confidence intervals.",
+      "visual": {
+        "kind": "chart", "type": "bar", "title": "Median time with supplied min–max bounds",
+        "description": "Three fictional walkthrough times per card. Icons has a lower median and a wider observed range.",
+        "categories": ["Text", "Icons"],
+        "series": [{"label": "Median walkthrough time", "values": [12, 9], "lower": [10, 8], "upper": [14, 16]}],
+        "y_label": "Walkthrough time (seconds)", "x_label": "Instruction card", "domain": [0, 18],
+        "uncertainty_label": "Bounds are the minimum and maximum of three fictional walkthrough times per card, not confidence intervals or population error estimates.",
+        "caption": "Source: walkthrough-notes, conditions and uncertainty_meaning. This is not a real research finding."
+      },
+      "question": {
+        "prompt": "Do these bounds estimate uncertainty in a population mean?",
+        "answer": "No. They are the supplied minimum and maximum of three fictional times per card."
+      }
+    },
+    {
+      "id": "interpretation",
+      "title": "Keep the note separate from the cause",
+      "role": "Attribution and limits",
+      "text": "A reported pause is an observation about a walkthrough, not an isolated causal effect.",
+      "claim_ids": ["reported-pause", "not-a-general-effect"],
+      "narration": "The fictional facilitator reports a pause at an unfamiliar symbol in the slow Icons walkthrough. The note does not isolate a cause. All walkthroughs use the same facilitator, without counterbalanced order or untrained readers. A lower median here is not a general usability finding."
+    },
+    {
+      "id": "follow-up",
+      "title": "Test the question that remains",
+      "role": "Implication, not conclusion",
+      "text": "Propose untrained readers and counterbalanced order.",
+      "claim_ids": ["broaden-the-check"],
+      "narration": "The proposed next step is to repeat with untrained readers and counterbalanced order before choosing a format. That follow-up has not happened in this fictional notebook.",
+      "question": {
+        "prompt": "Does insufficient evidence for a general benefit prove that Icons has no benefit?",
+        "answer": "No. The notebook cannot establish the general effect in either direction."
+      }
+    }
+  ],
+  "limitations": [
+    "All data and attributed notes are fictional and local to this exercise.",
+    "Observed min–max ranges are not confidence intervals.",
+    "The same facilitator, unbalanced order and missing untrained-reader evidence prevent a general usability conclusion."
+  ]
+}

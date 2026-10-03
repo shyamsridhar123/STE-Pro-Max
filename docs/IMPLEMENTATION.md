@@ -1,5 +1,9 @@
 # Implementation and acceptance plan
 
+This is the historical foundation plan. The broader active objective and its
+completion requirements are tracked in `SUITE_PLAN.md`; meeting this document
+alone does not complete the comprehensive-suite goal.
+
 This is a new repository in the existing STE workspace. The original import,
 existing PaperBoard checkout, local memories, and global skills remain unchanged.
 

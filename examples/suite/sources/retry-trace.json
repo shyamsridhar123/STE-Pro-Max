@@ -1,0 +1,26 @@
+{
+  "id": "retry-log",
+  "title": "Fictional sequential retry trace",
+  "fictional": true,
+  "provenance": "Authored input evidence for a local explanation exercise. No software was executed and no production events were measured.",
+  "scope": "Two sequential requests to an in-memory register. No concurrency, crash or persistence test.",
+  "participants": [
+    {"id": "client", "label": "Client"},
+    {"id": "register", "label": "Register"}
+  ],
+  "events": [
+    {"from": "client", "to": "register", "label": "Submit key K7"},
+    {"from": "register", "to": "register", "label": "Store one record"},
+    {"from": "register", "to": "client", "label": "Receipt R9"},
+    {"from": "client", "to": "register", "label": "Retry key K7"},
+    {"from": "register", "to": "client", "label": "Return receipt R9"}
+  ],
+  "counts": {"requests": 2, "stored_records": 1},
+  "rule": "In this invented register, a previously seen key returns its existing receipt without another write.",
+  "qualification": "This sequential example does not establish crash safety or behavior under concurrent requests.",
+  "claim_support": {
+    "same-receipt": ["events", "rule"],
+    "one-write": ["counts"],
+    "bounded-lesson": ["rule", "scope", "qualification"]
+  }
+}

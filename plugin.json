@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ste-pro-max",
-  "version": "0.1.0",
-  "description": "Flexible STE-inspired writing, diagrams, interactive HTML, and narrated explanations with one native source engine.",
+  "version": "0.2.0",
+  "description": "Evidence-first writing, native diagrams and charts, reader-controlled stories, and local narration with one shared engine.",
   "author": {
     "name": "Shyam Sridhar"
   },

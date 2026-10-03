@@ -12,6 +12,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from .charts import CHART_SCHEMA
+from .diagrams import DIAGRAM_SCHEMA
+
 SECTION_SCHEMA: dict[str, dict[str, Any]] = {
     "hero": {
         "description": (
@@ -28,11 +31,11 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
         "example": {
             "kind": "hero",
             "eyebrow": "Release report",
-            "title": "ATV tier renders artifacts as designed documents.",
-            "title_into": "not colored tables.",
-            "sub": "Six section kinds, one opinionated dark template, zero CDN dependencies.",
+            "title": "An illustrative release note.",
+            "title_into": "not a release approval.",
+            "sub": "Example content for a local document. Review its evidence and limitations before acting.",
             "meta": [
-                {"label": "Version", "value": "v0.2.0"},
+                {"label": "Example", "value": "Fictional"},
                 {"label": "Tier", "value": "atv"},
             ],
         },
@@ -313,6 +316,8 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
             ],
         },
     },
+    "diagram": DIAGRAM_SCHEMA,
+    "chart": CHART_SCHEMA,
 }
 
 

@@ -1,0 +1,67 @@
+{
+  "kind": "story",
+  "version": 1,
+  "title": "A smaller queue is not an incident closure",
+  "audience": "An incident-review facilitator practicing evidence discipline",
+  "question": "Do the retained snapshots establish a cause or a recovered queue?",
+  "purpose": "incident-review",
+  "summary": "Retained depths are 2, 5, unknown, 4 and 1 waiting jobs. The missing sample is not zero; neither cause nor closure is established.",
+  "context": "Explicitly fictional tabletop incident. No production telemetry or live recovery action is represented.",
+  "sources": [
+    {"id": "queue-notes", "title": "Fictional queue incident notebook", "locator": "examples/suite/sources/queue-notebook.json", "note": "Read the sample gap, same-minute event ambiguity, rollback record and missing closure evidence together."}
+  ],
+  "claims": [
+    {"id": "retained-depths", "type": "observation", "text": "The retained depths at minutes 0, 1, 3 and 4 are 2, 5, 4 and 1 waiting jobs.", "source_ids": ["queue-notes"], "scope": "Scheduled one-minute snapshots; depth is not a completion count."},
+    {"id": "missing-is-unknown", "type": "observation", "text": "The minute 2 sample was not retained during a logger restart.", "source_ids": ["queue-notes"], "uncertainty": "Its depth is unknown, not zero; do not interpolate a measurement."},
+    {"id": "cause-not-established", "type": "inference", "text": "A retry-policy effect is a hypothesis, not an established cause.", "source_ids": ["queue-notes"], "basis": "An input burst and retry-policy change share minute 1 with unknown relative order; a rollback is recorded at minute 3.", "uncertainty": "The input burst is an alternative explanation, and the minute 2 depth is missing."},
+    {"id": "closure-not-established", "type": "inference", "text": "The notebook does not establish that the queue recovered or drained.", "source_ids": ["queue-notes"], "basis": "The final retained depth is 1; no completion counter, drained-queue check or later observation is supplied."},
+    {"id": "instrument-and-recheck", "type": "proposal", "text": "Retain event order and depth samples, add a completion counter, and isolate retry-policy changes in another rehearsal.", "source_ids": ["queue-notes"], "scope": "A future test proposal; no corrective action or closure is asserted."}
+  ],
+  "beats": [
+    {
+      "id": "snapshots",
+      "title": "Keep the gap visible",
+      "role": "Observed sequence",
+      "text": "Unknown is not zero. Read the retained samples without filling the gap.",
+      "claim_ids": ["retained-depths", "missing-is-unknown"],
+      "narration": "In this fictional tabletop incident, depths across minutes zero through four are two, five, unknown, four and one waiting jobs. The minute two sample was not retained during a logger restart. The gap is not a zero, and the chart does not invent a measurement.",
+      "visual": {
+        "kind": "chart", "type": "line", "title": "Retained waiting-job snapshots",
+        "description": "Scheduled one-minute samples. Minute 2 is missing after a logger restart; null means unknown, not zero.",
+        "categories": ["Minute 0", "Minute 1", "Minute 2", "Minute 3", "Minute 4"],
+        "series": [{"label": "Waiting jobs", "values": [2, 5, null, 4, 1]}],
+        "y_label": "Waiting jobs (count)", "x_label": "Scheduled snapshot (one-minute spacing)", "domain": [0, 6],
+        "caption": "Source: queue-notes, samples and missing_reason. Equal category spacing matches the scheduled intervals; no continuous telemetry is implied."
+      },
+      "question": {
+        "prompt": "What queue depth may be assigned to minute 2?",
+        "answer": "None. The notebook supplies no retained depth for that minute; null is not zero."
+      }
+    },
+    {
+      "id": "cause",
+      "title": "Do not turn timing into causality",
+      "role": "Competing explanation",
+      "text": "The burst and policy change share a minute; their order is unknown.",
+      "claim_ids": ["cause-not-established"],
+      "narration": "An input burst and retry-policy change are both recorded at minute one, without their relative order. A rollback is recorded at minute three. A retry-policy effect is only a hypothesis; the burst is an alternative explanation. A smaller queue after rollback does not isolate a cause."
+    },
+    {
+      "id": "closure",
+      "title": "Name the evidence still needed",
+      "role": "Open review and proposal",
+      "text": "One job still waits in the final snapshot. No closure check is supplied.",
+      "claim_ids": ["closure-not-established", "instrument-and-recheck"],
+      "narration": "The final retained snapshot still has one waiting job. There is no completion counter, drained-queue check or later observation. Propose retaining event order and samples, adding a completion counter, and isolating policy changes in another rehearsal. These are next steps, not completed corrections.",
+      "question": {
+        "prompt": "Does the drop to 1 waiting job establish incident closure?",
+        "answer": "No. A positive final depth and no drained-queue or later check leave closure unestablished."
+      }
+    }
+  ],
+  "limitations": [
+    "This is fictional tabletop evidence, not a production incident.",
+    "The minute 2 depth and the ordering of the two minute 1 events are unknown.",
+    "No completion metric or closure check is supplied. A lower depth is not proof of cause or recovery."
+  ]
+}

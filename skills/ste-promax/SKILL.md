@@ -1,6 +1,6 @@
 ---
 name: ste-promax
-description: "Write or explain technical and executive material in STE-ProMAX, with optional diagrams, PaperBoard HTML, or narrated explanations. Use when STE-ProMAX or an STE-inspired explanation is requested; preserve an explicitly requested format."
+description: "Draft or revise technical and executive prose in the flexible STE-ProMAX house style. Use for STE-ProMAX or STE-inspired writing; preserve facts, qualifications, and the requested format. Route substantial visual documents or evidence-linked stories to the focused companion skills."
 ---
 
 # STE-ProMAX
@@ -58,28 +58,30 @@ based on what the reader needs to understand—not a quota of media types.
 | Need | Output |
 | --- | --- |
 | A finding, decision, short answer, or rewrite | Clear prose |
-| Relationships, architecture, a sequence, or a spatial comparison | Labeled diagram or image plus a short explanation |
-| A “what if,” parameter change, or step-by-step exploration | Local interactive HTML through the native PaperBoard-derived renderer |
-| A temporal mechanism best explained with synchronized visuals and speech | Bespoke narrated explainer, when requested or clearly useful |
+| Relationships, message order, or quantities | Native visual document through [ste-visual-docs](../ste-visual-docs/SKILL.md) |
+| An explanation, decision brief, research digest, or incident review with linked evidence | Reader-controlled story through [ste-storytelling](../ste-storytelling/SKILL.md) |
+| A “what if” or parameter change | Reviewed authored HTML when native shapes do not serve the request |
+| Requested speech or video | Reviewed story narration preparation; video export is a separate workflow |
 
-Do not generate all four for every request. A disposable, single-purpose example
+Do not generate every medium for each request. A disposable, single-purpose example
 is often better than a reusable application. Read
 [output modes](references/output-modes.md) only for the selected medium.
 
 ## Authoring and oversight
 
 Keep the source facts and assumptions inspectable. For a substantial artifact,
-state the question it answers, the reader's useful interaction, and the validation
-that will show it works. Review the explanation before investing in richer media.
+state the question it answers, the reader's useful interaction, and the checks
+that will establish artifact behavior. Those checks do not establish learning.
+Review the explanation before investing in richer media.
 Keep consequential judgments and unsupported source conflicts visible to the user.
 
 Use this repository's native renderer, adapted directly from PaperBoard. Raw HTML is
 executable: author it from reviewed facts; never paste arbitrary third-party HTML
 or scripts into a trusted artifact. Stay local unless publication is requested.
 
-For voice, use a generic installed local voice when that suffices. ElevenLabs is an
-optional alternative, not a requirement. Do not upload private narration, create
-credentials, incur charges, or clone someone's voice without the relevant authority.
+For requested voice, use the native story narration route with an installed local
+voice or supplied beat WAV files. Preparation is not an MP4 export or a factual
+review. Do not silently install dependencies, upload narration, or switch providers.
 When a capability is missing, name the gap; do not call instructions a working tool.
 
 ## Verify the deliverable
@@ -93,25 +95,25 @@ When a capability is missing, name the gap; do not call instructions a working t
 4. Return the requested deliverable without an editing diary. Briefly disclose
    limitations that materially affect its use.
 
-## Local helpers
+## Run the bundled engine
 
-- `python -m ste_promax check <file> --profile relaxed --json` performs read-only
-  writing diagnostics. It cannot verify facts, causality, or standard compliance.
-- `python -m ste_promax render <file> --output-dir <new-dir>`
-  renders reviewed Markdown or structured JSON with the repo-native engine.
-  Add `--trusted-html` only for reviewed authored HTML or JSON with raw HTML.
-- `powershell.exe -NoProfile -File scripts/narrate.ps1 -InputPath <text-file> -OutputPath <new.wav>`
-  creates local narration on Windows; use `-ListVoices` to inspect available voices.
+Resolve this loaded skill's absolute path. Its nearest ancestor containing both
+`ste_promax/` and root `__main__.py` is the bundle root. Do not infer it from the
+user's current directory. Run `python "<bundle-root>" --help` to inspect the
+available commands. This directory entry point invokes the same engine as
+`python -m ste_promax` from the repository root; it is not an external renderer.
 
-Run the Python commands from the repository root; the narration command is relative
-to this skill directory. The skill uses the repository's engine rather than a
-separately installed PaperBoard CLI. No helper installs providers or publishes
-output. See [source evidence](references/source-evidence.md) for the
-post, the standard, and the boundary between the two.
+For prose, use `python "<bundle-root>" check "<absolute-source>" --profile relaxed --json`
+only when mechanical diagnostics help. The checker cannot verify facts, causality,
+learning, or standard compliance. It does not change the source.
 
-When loaded from a plugin, the user's current directory may be unrelated to the
-bundle. Locate the nearest ancestor of this skill containing `ste_promax/` and
-`__main__.py`, then use `python "<bundle-root>" <command> ...`. Keep source and
-output paths in the user's workspace; do not change directory into the plugin or
-write artifacts into its cache. The bundled entry point calls the same native
-engine and does not launch the installed PaperBoard CLI.
+Use absolute input/output paths in the user's workspace. Keep generated files in
+a fresh `artifacts/` subdirectory, not the bundle cache; preserve the normalized
+input and original source. No global skill installation or publication is implied.
+Read [output modes](references/output-modes.md) for rendering and narration, and
+[the authoring guide](../../docs/AUTHORING.md) for suite shapes and runnable examples.
+If a command is missing, report the installed bundle's limitation instead of
+inventing flags or a replacement wrapper.
+
+See [source evidence](references/source-evidence.md) for the original post, the
+standard, and the boundary between them.

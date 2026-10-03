@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ste-pro-max"
-version = "0.1.0"
+version = "0.2.0"
 description = "Evidence-first writing, visual explanations, and a native PaperBoard-derived artifact renderer."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,7 @@ Repository = "https://github.com/shyamsridhar123/STE-Pro-Max"
 include = ["ste_promax*"]
 
 [tool.setuptools.package-data]
-ste_promax = ["templates/*.j2", "designs/*.DESIGN.md"]
+ste_promax = ["templates/*.j2", "designs/*.DESIGN.md", "scripts/*.ps1"]
 
 [tool.ruff]
 line-length = 110

@@ -11,7 +11,7 @@ import wave
 
 
 SCRIPT = (Path(__file__).resolve().parents[1] /
-          "skills/ste-promax/scripts/narrate.ps1")
+          "ste_promax/scripts/narrate.ps1")
 
 
 @unittest.skipUnless(os.name == "nt", "System.Speech synthesis requires Windows")

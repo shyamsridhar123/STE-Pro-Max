@@ -1,0 +1,68 @@
+{
+  "kind": "story",
+  "version": 1,
+  "title": "Choose the next rehearsal, not a permanent winner",
+  "audience": "A fictional workshop coordinator comparing handout workflows",
+  "question": "Which workflow meets the supplied quality gate for the next rehearsal?",
+  "purpose": "decision-brief",
+  "summary": "Tray meets the gate with 1 mislabelled set out of 40; Stack is 6 minutes faster but has 4 and exceeds the cap of 2.",
+  "context": "Explicitly fictional classroom planning data: one scripted run per workflow, not a real benchmark.",
+  "sources": [
+    {"id": "workshop-notes", "title": "Fictional handout assembly rehearsal notes", "locator": "examples/suite/sources/workshop-trials.json", "note": "The decision rule is supplied by this exercise, not inferred from the chart."}
+  ],
+  "claims": [
+    {"id": "time-tradeoff", "type": "observation", "text": "Tray takes 24 minutes and Stack takes 18 minutes for 40 sets each.", "source_ids": ["workshop-notes"], "scope": "One scripted rehearsal per workflow."},
+    {"id": "quality-gate", "type": "observation", "text": "Tray has 1 mislabelled set and Stack has 4; the eligibility cap is 2 per 40 sets.", "source_ids": ["workshop-notes"], "scope": "Counts, not percentages."},
+    {"id": "tray-eligible", "type": "inference", "text": "Only Tray meets the supplied gate in these rehearsals, despite taking 6 more minutes.", "source_ids": ["workshop-notes"], "basis": "1 is at most 2, 4 exceeds 2, and 24 minus 18 is 6.", "uncertainty": "Single scripted runs do not establish repeat-run reliability."},
+    {"id": "repeat-before-adoption", "type": "proposal", "text": "Use Tray for the next rehearsal; repeat both workflows before adopting a standing process.", "source_ids": ["workshop-notes"], "scope": "Planning proposal only. No purchase or deployment is authorized."}
+  ],
+  "beats": [
+    {
+      "id": "pace",
+      "title": "Stack is faster in the supplied run",
+      "role": "Compare options",
+      "text": "Hold output quantity constant: each workflow assembles 40 sets.",
+      "claim_ids": ["time-tradeoff"],
+      "narration": "These fictional rehearsals each assemble forty sets. Tray takes twenty-four minutes; Stack takes eighteen. Stack is six minutes faster in these runs. Time alone is not the decision rule.",
+      "visual": {
+        "kind": "chart", "type": "bar", "title": "Preparation time for 40 sets",
+        "description": "One fictional rehearsal per workflow. The shorter bar is faster, not necessarily eligible.",
+        "categories": ["Tray", "Stack"], "series": [{"label": "Preparation", "values": [24, 18]}],
+        "y_label": "Preparation time (minutes)", "x_label": "Workflow", "domain": [0, 30],
+        "caption": "Source: workshop-notes, workflows. No run-to-run interval was supplied."
+      }
+    },
+    {
+      "id": "gate",
+      "title": "Apply the quality gate first",
+      "role": "Evaluate the criterion",
+      "text": "The supplied cap is 2 mislabelled sets per 40.",
+      "claim_ids": ["quality-gate", "tray-eligible"],
+      "narration": "The cap is two mislabelled sets per forty. Tray has one; Stack has four. Only Tray meets this gate. That is a comparison against a supplied criterion, not proof of a reliable long-term winner.",
+      "visual": {
+        "kind": "chart", "type": "bar", "title": "Mislabelled sets; cap is 2",
+        "description": "Counts out of 40 sets per workflow. The supplied eligibility cap is 2.",
+        "categories": ["Tray", "Stack"], "series": [{"label": "Mislabelled", "values": [1, 4]}],
+        "y_label": "Mislabelled sets (count)", "x_label": "Workflow", "domain": [0, 5],
+        "caption": "Source: workshop-notes, workflows and decision_rule. Lower is preferable under this rule."
+      },
+      "question": {
+        "prompt": "Does being 6 minutes faster make Stack eligible?",
+        "answer": "No. Its 4 mislabelled sets exceed the cap of 2, even though it takes 18 rather than 24 minutes."
+      }
+    },
+    {
+      "id": "next-rehearsal",
+      "title": "Make a bounded proposal",
+      "role": "Decision and conditions",
+      "text": "Propose Tray next. Repeat both before standardizing.",
+      "claim_ids": ["repeat-before-adoption"],
+      "narration": "The proposal is to use Tray for the next rehearsal, then repeat both workflows before standardizing. The notes contain no repeat-run distribution and do not authorize a purchase or deployment."
+    }
+  ],
+  "limitations": [
+    "The data and decision rule are fictional.",
+    "One scripted run per workflow supplies no repeat-run uncertainty estimate.",
+    "The proposal does not establish general superiority or authorize an external action."
+  ]
+}

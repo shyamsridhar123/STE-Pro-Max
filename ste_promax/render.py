@@ -21,7 +21,10 @@ from urllib.parse import urlsplit
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
+from .charts import render_chart, validate_chart
+from .diagrams import render_diagram, validate_diagram
 from .section_schema import SECTION_SCHEMA
+from .stories import render_story, validate_story
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _DEFAULT_DESIGN = Path(__file__).parent / "designs" / "paperboard.DESIGN.md"
@@ -87,6 +90,12 @@ def validate_input(input_data: dict[str, Any]) -> None:
             kind = section.get("kind")
             if not isinstance(kind, str) or kind not in SECTION_SCHEMA or kind not in _SECTION_EMITTERS:
                 raise ValueError(f"{location}.kind: unknown section kind {kind!r}")
+            if kind == "diagram":
+                validate_diagram(section, location)
+                continue
+            if kind == "chart":
+                validate_chart(section, location)
+                continue
             record(section, location, {"kind", *SECTION_SCHEMA[kind]["fields"]})
             if id(section) in active_sections:
                 raise ValueError(f"{location}: cyclic section nesting")
@@ -126,6 +135,16 @@ def validate_input(input_data: dict[str, Any]) -> None:
                 active_sections.remove(id(section))
 
     record(input_data, "input")
+    kind = input_data.get("kind")
+    if kind == "story":
+        validate_story(input_data)
+        return
+    if kind == "diagram":
+        validate_diagram(input_data, "input")
+        return
+    if kind == "chart":
+        validate_chart(input_data, "input")
+        return
     for key in ("title", "subtitle", "brand", "breadcrumb", "status_tag", "body_md", "body_html"):
         if key in input_data:
             text(input_data[key], f"input.{key}")
@@ -279,8 +298,9 @@ def _safe_url(value: str, image: bool = False) -> str | None:
 def _default_body_html(input_data: dict[str, Any]) -> str:
     """Convert input_data to an HTML body string.
 
-    Priority:
-      1. sections   — rich atv-tier section graph (hero / sec / stack-list / dep-list / q-list / steps / code-shell / color-strip / fit-row / anti / checklist / callout / props-table / file-path / subhead)
+    Explicit story, diagram, and chart documents use their native validated
+    renderer. Otherwise preserve the ordinary input-mode priority:
+      1. sections   — rich atv-tier section graph, including diagrams and charts
       2. body_html  — returned as-is.
       3. body_md    — converted via tiny built-in markdown converter.
       4. rows       — rendered as an HTML <table>.
@@ -290,6 +310,12 @@ def _default_body_html(input_data: dict[str, Any]) -> str:
     `sections` is supplied (those sections own their own headers via the hero kind).
     """
     validate_input(input_data)
+    kind = input_data.get("kind")
+    if kind == "story":
+        return render_story(input_data)
+    if kind in ("diagram", "chart"):
+        visual = render_diagram(input_data) if kind == "diagram" else render_chart(input_data)
+        return f'<h1>{_html_lib.escape(input_data["title"])}</h1>\n{visual}'
     parts: list[str] = []
 
     # Rich section graph (atv tier)
@@ -319,7 +345,7 @@ def _default_body_html(input_data: dict[str, Any]) -> str:
 
     rows = input_data.get("rows")
     if rows and isinstance(rows, list) and len(rows) > 0 and isinstance(rows[0], dict):
-        parts.append(_rows_to_table(rows))
+        parts.append(_table_scroll(_rows_to_table(rows)))
         return "\n".join(parts)
 
     # Fallback: JSON dump
@@ -575,6 +601,40 @@ def _emit_subhead(s: dict[str, Any]) -> str:
     return f'<div class="subhead">{_e(s.get("text", ""))}</div>'
 
 
+def _table_scroll(table_html: str) -> str:
+    """Wrap a generated table without changing its cells or native semantics."""
+    from html.parser import HTMLParser
+
+    class Headers(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.cells: list[list[str]] = []
+            self.in_header = False
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "th":
+                self.cells.append([])
+                self.in_header = True
+            elif tag == "img" and self.in_header:
+                self.cells[-1].append(dict(attrs).get("alt") or "")
+
+        def handle_endtag(self, tag):
+            if tag == "th":
+                self.in_header = False
+
+        def handle_data(self, data):
+            if self.in_header:
+                self.cells[-1].append(data)
+
+    headers = Headers()
+    headers.feed(table_html)
+    labels = ["".join(cell).strip() for cell in headers.cells]
+    labels = [label for label in labels if label]
+    label = "Table: " + ", ".join(labels) if labels else "Table data"
+    return (f'<div class="table-scroll" role="region" tabindex="0" aria-label="{_e(label)}">'
+            f'{table_html}</div>')
+
+
 def _emit_props_table(s: dict[str, Any]) -> str:
     """`props-table`: classic prop/type/default/notes table."""
     headers = s.get("headers", ["Prop", "Type", "Default", "Notes"])
@@ -594,7 +654,9 @@ def _emit_props_table(s: dict[str, Any]) -> str:
             f'<td class="muted">{_e(notes)}</td>'
             f'</tr>'
         )
-    return f'<table class="props"><thead><tr>{th}</tr></thead><tbody>{"".join(tr)}</tbody></table>'
+    return _table_scroll(
+        f'<table class="props"><thead><tr>{th}</tr></thead><tbody>{"".join(tr)}</tbody></table>'
+    )
 
 
 def _emit_status_table(s: dict[str, Any]) -> str:
@@ -626,7 +688,9 @@ def _emit_status_table(s: dict[str, Any]) -> str:
             else:
                 cells.append(f'<td>{_e(v)}</td>')
         tr.append(f'<tr>{"".join(cells)}</tr>')
-    return f'<table class="props"><thead><tr>{th}</tr></thead><tbody>{"".join(tr)}</tbody></table>'
+    return _table_scroll(
+        f'<table class="props"><thead><tr>{th}</tr></thead><tbody>{"".join(tr)}</tbody></table>'
+    )
 
 
 # Registry of section kinds → emitter functions
@@ -646,6 +710,8 @@ _SECTION_EMITTERS: dict[str, Any] = {
     "subhead": _emit_subhead,
     "props-table": _emit_props_table,
     "status-table": _emit_status_table,
+    "diagram": render_diagram,
+    "chart": render_chart,
 }
 
 
@@ -662,7 +728,8 @@ def _md_to_html(md: str) -> str:
     * Blockquotes (``> …``) with multi-line content
     * Horizontal rules (``---``, ``***``, ``___``)
     * Fenced code blocks with optional language tag (```` ```lang ````)
-    * GFM tables (header row + ``|---|`` separator)
+    * GFM tables (header row + ``|---|`` separator), with escaped literal pipes
+    * Backslash-escaped ASCII punctuation outside code spans
     * Bare http(s) URL auto-linking
     * Raw HTML is escaped; only the explicit body_html input is trusted.
 
@@ -704,7 +771,8 @@ def _md_to_html(md: str) -> str:
         close_p(); close_ul(); close_ol(); close_bq()
 
     def inline(text: str) -> str:
-        # Escape first so user content can't inject HTML; then re-introduce
+        # Protect escaped punctuation and code, then HTML-escape source text
+        # so user content can't inject HTML; then re-introduce
         # the small set of markdown-derived tags. After escaping we restore
         # well-known HTML entity sequences (``&amp;mdash;`` → ``&mdash;``)
         # so authors can write ``&mdash;`` / ``&#8212;`` / ``&#x2014;``
@@ -718,17 +786,22 @@ def _md_to_html(md: str) -> str:
         # writes ``\u0060&mdash;\u0060`` sees the literal characters, not the
         # em-dash glyph. We park code spans behind opaque placeholders before
         # the entity restoration pass and put them back at the end.
-        text = _html_lib.escape(text)
-        # Extract code spans first (operating on already-escaped text so the
-        # captured content is the displayable source). Use a placeholder that
-        # cannot collide with user content because ``\x00`` is escaped away.
         code_spans: list[str] = []
 
-        def _stash_code(m: re.Match[str]) -> str:
-            code_spans.append(m.group(1))
+        def protect_literal(m: re.Match[str]) -> str:
+            if m.group(1) is not None:
+                # An entity stays text through all Markdown regex passes,
+                # including escaped brackets, backticks, and ampersands.
+                return f"&#{ord(m.group(1))};"
+            # The alternation consumes each code span whole: backslashes and
+            # entities inside actual code must not undergo prose unescaping.
+            code_spans.append(_html_lib.escape(m.group(2)))
             return f"\x00CODE{len(code_spans) - 1}\x00"
 
-        text = re.sub(r"`([^`]+)`", _stash_code, text)
+        text = _html_lib.escape(re.sub(
+            r"""\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])|`([^`]+)`""",
+            protect_literal, text,
+        ))
         # Now restore HTML entities outside code spans.
         text = re.sub(
             r"&amp;(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);",
@@ -740,6 +813,20 @@ def _md_to_html(md: str) -> str:
         def stash_link(value: str) -> str:
             links.append(value)
             return f"\x00LINK{len(links) - 1}\x00"
+
+        literals: list[str] = []
+
+        def stash_literal(m: re.Match[str]) -> str:
+            literals.append(m.group(0))
+            return f"\x00LITERAL{len(literals) - 1}\x00"
+
+        # Protect literal tag-shaped text and escaped link notation before
+        # other markup passes. Attribute URLs and literal destinations are
+        # source text, not requests to synthesize links or emphasis.
+        text = re.sub(
+            r"&lt;[^\n]*?&gt;|(?:&#91;[^\n]*?(?:&#93;|\])|\[[^\n]*?&#93;)\([^)\n]*\)",
+            stash_literal, text,
+        )
 
         def image(m: re.Match[str]) -> str:
             url = _safe_url(m.group(2), image=True)
@@ -769,11 +856,14 @@ def _md_to_html(md: str) -> str:
         )
         # Stashed links and images cannot acquire nested auto-links.
         text = re.sub(
-            r'https?://[^\s<>"\']+',
+            r'https?://[^\s<>"\'\x00]+',
             lambda m: stash_link(f'<a href="{_e(_html_lib.unescape(m.group(0)))}">{m.group(0)}</a>'),
             text,
         )
         text = re.sub(r"\x00LINK(\d+)\x00", lambda m: links[int(m.group(1))], text)
+        # Literal labels can live inside generated links or image alt text;
+        # restore them after links, but before any embedded code-span tokens.
+        text = re.sub(r"\x00LITERAL(\d+)\x00", lambda m: literals[int(m.group(1))], text)
         # Restore code spans last so their literal contents (including any
         # ``&amp;mdash;`` source) are preserved as the author typed them.
         if code_spans:
@@ -782,6 +872,41 @@ def _md_to_html(md: str) -> str:
 
             text = re.sub(r"\x00CODE(\d+)\x00", _unstash, text)
         return text
+
+    def table_cells(line: str) -> list[str] | None:
+        """Split structural pipes only; consume a pipe escape at table level.
+
+        Paired backslashes remain for inline parsing. Only the backslash
+        escaping a pipe is removed here, including inside table code spans.
+        """
+        row = line.strip()
+        cells: list[str] = []
+        cell: list[str] = []
+        index = 0
+        delimiter = last_delimiter = False
+        while index < len(row):
+            char = row[index]
+            last_delimiter = False
+            if char == "\\" and index + 1 < len(row):
+                following = row[index + 1]
+                cell.extend(["|"] if following == "|" else [char, following])
+                index += 2
+                continue
+            if char == "|":
+                cells.append("".join(cell).strip())
+                cell = []
+                delimiter = last_delimiter = True
+            else:
+                cell.append(char)
+            index += 1
+        if not delimiter:
+            return None
+        cells.append("".join(cell).strip())
+        if row.startswith("|"):
+            cells.pop(0)
+        if last_delimiter:
+            cells.pop()
+        return cells
 
     i = 0
     n = len(lines)
@@ -811,9 +936,10 @@ def _md_to_html(md: str) -> str:
             continue
 
         # GFM table — header row immediately followed by ``|---|`` separator.
-        if "|" in line and i + 1 < n and table_sep_re.match(lines[i + 1]):
+        headers = table_cells(line)
+        if headers is not None and i + 1 < n and table_sep_re.match(lines[i + 1]):
             close_all()
-            headers = [h.strip() for h in line.strip().strip("|").split("|")]
+            table_start = len(html_lines)
             html_lines.append('<table class="md">')
             html_lines.append("<thead><tr>")
             for h in headers:
@@ -821,14 +947,17 @@ def _md_to_html(md: str) -> str:
             html_lines.append("</tr></thead>")
             i += 2  # skip header and separator
             html_lines.append("<tbody>")
-            while i < n and "|" in lines[i] and lines[i].strip():
-                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+            while i < n and lines[i].strip():
+                cells = table_cells(lines[i])
+                if cells is None:
+                    break
                 html_lines.append("<tr>")
                 for c in cells:
                     html_lines.append(f"<td>{inline(c)}</td>")
                 html_lines.append("</tr>")
                 i += 1
             html_lines.append("</tbody></table>")
+            html_lines[table_start:] = [_table_scroll("\n".join(html_lines[table_start:]))]
             continue
 
         # Horizontal rule (---, ***, ___, optionally spaced).
@@ -839,12 +968,15 @@ def _md_to_html(md: str) -> str:
             continue
 
         # ATX headings ``# `` … ``###### ``
-        heading = re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", line)
+        heading = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
         if heading:
             close_all()
             level = len(heading.group(1))
+            # Optional closing hashes need a preceding space. A literal \#
+            # at the end of a source title must reach inline() intact.
+            content = re.sub(r"\s+#+$", "", heading.group(2))
             html_lines.append(
-                f"<h{level}>{inline(heading.group(2))}</h{level}>"
+                f"<h{level}>{inline(content)}</h{level}>"
             )
             i += 1
             continue

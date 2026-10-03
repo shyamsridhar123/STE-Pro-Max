@@ -1,0 +1,70 @@
+{
+  "title": "Offline caption workflow: relationships and review state",
+  "sections": [
+    {
+      "kind": "hero",
+      "eyebrow": "Fictional technical documentation",
+      "title": "Trace the review loop before treating a package as approved",
+      "sub": "One offline working snapshot of 12 imaginary exhibit captions. No execution or publication is authorized.",
+      "meta": [{"label": "Source", "value": "caption-register"}, {"label": "Scope", "value": "Fictional local snapshot"}]
+    },
+    {"kind": "subhead", "text": "01 / Component relationships"},
+    {
+      "kind": "diagram",
+      "type": "flow",
+      "direction": "TB",
+      "title": "The offline caption review loop",
+      "description": "Catalog facts enter Draft, which checks names and requests human Review. Review may return edits or pass approved captions to a Local package.",
+      "nodes": [
+        {"id": "catalog", "label": "Catalog", "detail": "Local source facts"},
+        {"id": "draft", "label": "Draft", "detail": "Editable caption"},
+        {"id": "review", "label": "Review", "detail": "Human check"},
+        {"id": "package", "label": "Local package", "detail": "Not publication"}
+      ],
+      "edges": [
+        {"from": "catalog", "to": "draft", "label": "Supply facts"},
+        {"from": "draft", "to": "draft", "label": "Check names"},
+        {"from": "draft", "to": "review", "label": "Request review"},
+        {"from": "review", "to": "draft", "label": "Return edits", "style": "dashed"},
+        {"from": "review", "to": "package", "label": "Approved captions"}
+      ],
+      "caption": "Source: caption-register, nodes and relationships. Claim: report-architecture. Dashed is presentation only, not a weaker-evidence label."
+    },
+    {"kind": "subhead", "text": "02 / Current review state"},
+    {
+      "kind": "chart",
+      "type": "bar",
+      "title": "Review status of 12 captions",
+      "description": "The mutually exclusive statuses cover all 12 captions. Corrected and Already clear have completed review; Pending review has not.",
+      "categories": ["Corrected", "Already clear", "Pending review"],
+      "series": [{"label": "Captions", "values": [7, 3, 2]}],
+      "y_label": "Captions (count)",
+      "x_label": "Review status",
+      "domain": [0, 8],
+      "caption": "Source: caption-register, statuses and status_meaning. Claim: report-counts. These are fictional counts, not production quality metrics."
+    },
+    {
+      "kind": "callout",
+      "title": "What follows, and what does not",
+      "items": [
+        "Observation [report-counts]: 7 corrected plus 3 already clear equals 10 reviewed captions; 2 remain pending.",
+        "Supplied rule and inference [report-gate]: all 12 must finish review for a complete approved package. The 2 pending captions mean that gate is not met.",
+        "Qualification [report-limit]: the source supplies no timing, defect-rate comparison or evidence that the loop improves quality.",
+        "A local package is not publication. This report does not execute the workflow."
+      ]
+    },
+    {
+      "kind": "q-list",
+      "rows": [
+        {"num": "01", "title": "Does the feedback arrow prove that review improves caption quality?", "body": "No. It documents an allowed relationship, not a measured effect. See report-limit."},
+        {"num": "02", "title": "Can all 12 captions be treated as an approved package?", "body": "No. Only 10 have completed review; 2 are still pending. See report-gate."}
+      ]
+    },
+    {
+      "kind": "status-table",
+      "rows": [
+        {"source": "caption-register", "locator": "examples/suite/sources/caption-register.json", "claims": "report-architecture, report-counts, report-gate, report-limit", "status": "Fictional authored evidence; not independently verified"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "walkthrough-notes",
+  "title": "Fictional instruction-card walkthrough notebook",
+  "fictional": true,
+  "provenance": "An authored research-reading exercise. These are not published findings, recruited participants or measured human-subject results.",
+  "scope": "The same fictional facilitator completes three scripted walkthroughs per card. Order is not counterbalanced and no untrained reader is represented.",
+  "conditions": [
+    {"label": "Text", "seconds": [10, 12, 14], "median_seconds": 12, "minimum_seconds": 10, "maximum_seconds": 14},
+    {"label": "Icons", "seconds": [8, 9, 16], "median_seconds": 9, "minimum_seconds": 8, "maximum_seconds": 16}
+  ],
+  "uncertainty_meaning": "Bounds are the minimum and maximum of three fictional walkthrough times per card, not confidence intervals or population error estimates.",
+  "facilitator_note": {
+    "attributed_to": "The fictional facilitator",
+    "text": "The slow Icons walkthrough included a pause at an unfamiliar symbol.",
+    "qualification": "The note does not isolate the symbol as the cause of the pause or of total task time."
+  },
+  "proposal": "Repeat with untrained readers and counterbalanced order before choosing an instruction-card format.",
+  "claim_support": {
+    "medians-and-ranges": ["conditions", "uncertainty_meaning"],
+    "reported-pause": ["facilitator_note"],
+    "not-a-general-effect": ["scope", "conditions", "facilitator_note"],
+    "broaden-the-check": ["proposal"]
+  }
+}
