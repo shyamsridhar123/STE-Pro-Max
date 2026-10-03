@@ -49,8 +49,7 @@ def prose_paragraphs(text):
         line = re.sub(r"(`+)(.*?)\1", " ", line)
         line = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", line)
         # Discard URL internals, but retain terminal sentence punctuation.
-        line = URL.sub(lambda m: re.search(r"[.!?]+$", m[0])[0]
-                       if re.search(r"[.!?]+$", m[0]) else " ", line)
+        line = URL.sub(lambda m: tail[0] if (tail := re.search(r"[.!?]+$", m[0])) else " ", line)
         item = re.match(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[ xX]\]\s*)?", line)
         if item:
             flush()

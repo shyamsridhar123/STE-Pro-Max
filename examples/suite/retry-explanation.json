@@ -1,0 +1,68 @@
+{
+  "kind": "story",
+  "version": 1,
+  "title": "A retry need not create another record",
+  "audience": "A new engineer learning to read request traces",
+  "question": "Why do two requests leave only one stored record in this example?",
+  "purpose": "explanation",
+  "summary": "The fictional register reuses a receipt for a repeated key: 2 requests, 1 stored record.",
+  "context": "Explicitly fictional, sequential teaching trace. No implementation was executed.",
+  "sources": [
+    {"id": "retry-log", "title": "Fictional sequential retry trace", "locator": "examples/suite/sources/retry-trace.json", "note": "Authored input evidence; not production logs. Read events, counts, rule and qualification."}
+  ],
+  "claims": [
+    {"id": "same-receipt", "type": "observation", "text": "Both requests use key K7 and receive receipt R9.", "source_ids": ["retry-log"], "scope": "The supplied fictional sequential trace."},
+    {"id": "one-write", "type": "observation", "text": "The trace contains 2 requests and 1 stored record.", "source_ids": ["retry-log"], "scope": "Counts in this trace, not a throughput measurement."},
+    {"id": "bounded-lesson", "type": "inference", "text": "A repeated key can reuse a result without another write in this register.", "source_ids": ["retry-log"], "basis": "The supplied rule and second receipt agree with the single stored record.", "uncertainty": "This sequential example does not establish crash safety or behavior under concurrent requests."}
+  ],
+  "beats": [
+    {
+      "id": "trace",
+      "title": "The same key returns the same receipt",
+      "role": "Concrete mechanism",
+      "text": "Follow K7 through the original request and its retry.",
+      "claim_ids": ["same-receipt"],
+      "narration": "In this fictional trace, a client submits key K7. The register stores one record and returns receipt R9. The client then retries the same key. The register returns the same receipt without another write.",
+      "visual": {
+        "kind": "diagram",
+        "type": "sequence",
+        "title": "One sequential retry",
+        "description": "The second request repeats K7 and returns R9; the trace contains one store operation.",
+        "participants": [{"id": "client", "label": "Client"}, {"id": "register", "label": "Register"}],
+        "messages": [
+          {"from": "client", "to": "register", "label": "Submit key K7"},
+          {"from": "register", "to": "register", "label": "Store one record"},
+          {"from": "register", "to": "client", "label": "Receipt R9"},
+          {"from": "client", "to": "register", "label": "Retry key K7"},
+          {"from": "register", "to": "client", "label": "Return receipt R9"}
+        ],
+        "caption": "Source: retry-log, events and rule. Fictional and sequential."
+      }
+    },
+    {
+      "id": "count",
+      "title": "Count writes, not just requests",
+      "role": "Check understanding",
+      "text": "Two requests. One stored record. Keep the scope narrow.",
+      "claim_ids": ["one-write", "bounded-lesson"],
+      "narration": "Count the requests and records separately: two requests, one stored record. Does that prove crash safety or behavior under concurrent requests? No. This example covers sequential requests only. Its lesson is narrower: a repeated key can reuse a result.",
+      "visual": {
+        "kind": "chart",
+        "type": "bar",
+        "title": "Different counts",
+        "description": "Counted objects differ: requests versus stored records in the same fictional trace.",
+        "categories": ["Requests", "Stored records"],
+        "series": [{"label": "Trace count", "values": [2, 1]}],
+        "y_label": "Count (objects)",
+        "x_label": "Object counted",
+        "domain": [0, 2],
+        "caption": "Source: retry-log, counts. This is not a performance comparison."
+      },
+      "question": {
+        "prompt": "Does one stored record prove crash safety or behavior under concurrent requests?",
+        "answer": "No. The supplied trace covers sequential requests only."
+      }
+    }
+  ],
+  "limitations": ["Fictional trace only; concurrency, crashes and persistence are outside its scope."]
+}

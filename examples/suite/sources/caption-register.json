@@ -1,0 +1,34 @@
+{
+  "id": "caption-register",
+  "title": "Fictional offline exhibit-caption register",
+  "fictional": true,
+  "provenance": "Authored technical-documentation evidence for an imaginary exhibit. No museum collection, publishing system or production metrics are represented.",
+  "scope": "One offline working snapshot of 12 captions; no execution or publication is authorized.",
+  "nodes": [
+    {"id": "catalog", "label": "Catalog", "detail": "Local source facts"},
+    {"id": "draft", "label": "Draft", "detail": "Editable caption"},
+    {"id": "review", "label": "Review", "detail": "Human check"},
+    {"id": "package", "label": "Local package", "detail": "Not publication"}
+  ],
+  "relationships": [
+    {"from": "catalog", "to": "draft", "label": "Supply facts"},
+    {"from": "draft", "to": "draft", "label": "Check names"},
+    {"from": "draft", "to": "review", "label": "Request review"},
+    {"from": "review", "to": "draft", "label": "Return edits", "style": "dashed"},
+    {"from": "review", "to": "package", "label": "Approved captions"}
+  ],
+  "statuses": [
+    {"label": "Corrected", "captions": 7},
+    {"label": "Already clear", "captions": 3},
+    {"label": "Pending review", "captions": 2}
+  ],
+  "status_meaning": "The categories are mutually exclusive and cover all 12 captions. Corrected and Already clear have completed human review; Pending review has not.",
+  "rule": "A complete approved package requires all 12 captions to finish human review.",
+  "qualification": "The register supplies no timing, defect-rate comparison or evidence that the loop improves caption quality.",
+  "claim_support": {
+    "report-architecture": ["nodes", "relationships"],
+    "report-counts": ["statuses", "status_meaning"],
+    "report-gate": ["statuses", "status_meaning", "rule"],
+    "report-limit": ["qualification"]
+  }
+}

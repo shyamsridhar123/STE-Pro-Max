@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>{{ story.title }} — prepared story media</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#171717;color:#efece6;font-family:system-ui,sans-serif}
+#story-video{position:relative;width:100%;height:100%;overflow:hidden}
+.scene{position:absolute;inset:0;padding:45px 60px 180px;background:#171717}
+.eyebrow{font:20px/1.4 monospace;color:#edba94;margin:0 0 16px}
+h1{font-size:44px;line-height:1.2;margin:0 0 16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.content{height:760px;max-width:1800px;min-width:0}
+.content p{font-size:28px;line-height:1.4;margin:0 0 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.visual-layout{display:grid;grid-template-columns:1040px 720px;gap:40px}
+.visual{height:760px;width:1040px;display:flex;align-items:center;justify-content:center}
+.visual svg{width:100%!important;height:100%!important;min-width:0!important;max-width:100%!important}
+.content .qualifications{font-size:18px;line-height:1.25;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sequence-layout{display:grid;grid-template-rows:32px 24px 360px 1fr;gap:8px}
+.sequence-layout .visual{height:360px;width:1800px}
+.content .stage-label{font-size:23px;line-height:32px;margin:0;color:#edba94}
+.content .pacing{font-size:18px;line-height:24px;margin:0}
+.sequence-layout .qualifications{font-size:20px;line-height:1.2}
+.caption{position:absolute;bottom:55px;left:60px;right:60px;margin:0;font-size:25px;line-height:1.35;
+white-space:pre-wrap;overflow-wrap:anywhere}
+.evidence{position:absolute;bottom:16px;left:60px;right:60px;margin:0;font-size:18px;color:#d2cdc5}
+</style>
+</head>
+<body>
+{% macro scene(beat, number, total, stage=none) %}
+  <section id="scene-{{ beat.id }}{% if stage %}-stage-{{ stage.number }}{% endif %}" class="clip scene"
+           data-start="{{ stage.start if stage else beat.start }}"
+           data-duration="{{ stage.duration if stage else beat.duration }}" data-track-index="0">
+    <p class="eyebrow">STE-PRO MAX / BEAT {{ number }} OF {{ total }} / EVIDENCE-LINKED EXPLANATION</p>
+    <h1>{{ beat.visual.title }}</h1>
+    {% if stage %}
+    <div class="content sequence-layout">
+      <p class="stage-label">Stage {{ stage.number }}/{{ stage.count }} — Demonstration pacing, not measured event time</p>
+      <p class="pacing">Speech-to-message alignment is unverified. Diagram numbering is local to this single-message view.</p>
+      <div class="visual">{{ stage.svg|safe }}</div>
+      <p class="qualifications">{{ beat.visual.paragraphs|join('\n\n') }}</p>
+    </div>
+    {% elif beat.visual.svg %}
+    <div class="content visual-layout">
+      <div class="visual">{{ beat.visual.svg|safe }}</div>
+      <p class="qualifications">{{ beat.visual.paragraphs|join('\n\n') }}</p>
+    </div>
+    {% else %}
+    <div class="content">
+      {% for paragraph in beat.visual.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+    </div>
+    {% endif %}
+  </section>
+{% endmacro %}
+<main id="story-video" data-composition-id="story-video" data-start="0" data-duration="{{ duration }}"
+      data-width="1920" data-height="1080" data-fps="24" data-no-timeline="true">
+{% for beat in beats %}
+  {% set beat_number = loop.index %}
+  {% if beat.stages %}{% for stage in beat.stages %}{{ scene(beat, beat_number, beats|length, stage) }}{% endfor %}
+  {% else %}{{ scene(beat, beat_number, beats|length) }}{% endif %}
+  <audio id="voice-{{ beat.id }}" src="{{ beat.audio_src }}" data-start="{{ beat.start }}"
+         data-duration="{{ beat.duration }}" data-track-index="1"></audio>
+  <p id="caption-{{ beat.id }}" class="clip caption" data-start="{{ beat.start }}"
+     data-duration="{{ beat.duration }}" data-track-index="2">{% if beat.caption_visible %}{{ beat.text }}{% else %}Full narration is in ../transcript.txt and ../captions.vtt. This cue is too long for an on-frame caption.{% endif %}</p>
+{% endfor %}
+  <p class="evidence">Full source, claims, qualifications and limits: ../review.html · No independent source or speech-content verification is claimed</p>
+</main>
+</body>
+</html>

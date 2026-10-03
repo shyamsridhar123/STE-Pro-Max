@@ -13,11 +13,13 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import wave
 import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("build_plugin", ROOT / "tools/build_plugin.py")
+assert SPEC is not None and SPEC.loader is not None
 builder = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(builder)
 
@@ -29,7 +31,7 @@ class PluginTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.source = self.root / "source"
         self.source.mkdir()
-        files = ("__main__.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
+        files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
                  ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
                  ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip")
         for relative in files:
@@ -50,14 +52,15 @@ class PluginTests(unittest.TestCase):
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.1.0")
+            self.assertEqual(manifest["version"], "0.3.0")
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
             self.assertNotIn("skills", manifest)
             self.assertNotIn("mcpServers", manifest)
             self.assertNotIn("hooks", manifest)
-        self.assertTrue((self.source / "skills/ste-promax/SKILL.md").is_file())
+        for skill in ("ste-promax", "ste-visual-docs", "ste-storytelling"):
+            self.assertTrue((self.source / "skills" / skill / "SKILL.md").is_file())
         allowed = {"$schema", "name", "version", "description", "author", "homepage",
                    "repository", "license", "keywords", "extensions"}
         self.assertLessEqual(set(portable), allowed)
@@ -67,7 +70,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.1.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.3.0", "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -100,10 +103,16 @@ class PluginTests(unittest.TestCase):
         required = {
             "plugin.json", ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
             ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "ste_promax/render.py",
-            "ste_promax/templates/atv-tier.html.j2", "ste_promax/templates/gallery.html.j2",
-            "ste_promax/designs/paperboard.DESIGN.md", "skills/ste-promax/SKILL.md",
-            "skills/ste-promax/scripts/narrate.ps1", "__main__.py", "pyproject.toml",
+            "ste_promax/templates/document.html.j2", "ste_promax/templates/gallery.html.j2",
+            "ste_promax/designs/ste.DESIGN.md", "skills/ste-promax/SKILL.md",
+            "ste_promax/scripts/narrate.ps1", "__main__.py", "pyproject.toml",
+            "ste_promax/diagrams.py", "ste_promax/charts.py", "ste_promax/stories.py", "ste_promax/media.py",
+            "ste_promax/section_schema.py", "ste_promax/templates/story.html.j2",
+            "ste_promax/templates/story-video.html.j2", "skills/ste-visual-docs/SKILL.md",
+            "skills/ste-storytelling/SKILL.md", "docs/AUTHORING.md",
             "LICENSE", "NOTICE", "ste-promax/SKILL.md", "STE-ProMAX.zip", "docs/PLUGINS.md",
+            "quickstart.py", "ste_promax/onboarding.py", "ste_promax/data/quickstart.json",
+            "docs/assets/hero.png", "docs/assets/showcase.webp",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))
@@ -156,7 +165,7 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), "KEEP")
 
     def test_missing_source_fails_before_output_writes(self):
-        (self.source / "ste_promax/templates/atv-tier.html.j2").unlink()
+        (self.source / "ste_promax/templates/document.html.j2").unlink()
         with self.assertRaisesRegex(ValueError, "Missing required"):
             self.build()
         self.assertFalse(self.output.exists())
@@ -230,11 +239,10 @@ class PluginTests(unittest.TestCase):
         env.pop("PYTHONPATH", None)
         env["PATH"] = str(workspace)
         env["PYTHONDONTWRITEBYTECODE"] = "1"
-        self.assertIsNone(shutil.which("paperboard", path=env["PATH"]))
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.1.0")
+        self.assertEqual(version.stdout.strip(), "0.3.0")
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)
@@ -250,6 +258,44 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(source.read_bytes(), content)
         self.assertEqual((workspace / "artifact/source.md").read_bytes(), content)
         self.assertNotIn("fonts.googleapis.com", Path(manifest["files"]["html"]["path"]).read_text())
+
+    def test_extracted_bundle_runs_suite_commands_from_an_unrelated_workspace(self):
+        self.build()
+        extracted = self.root / "extracted-suite"
+        with zipfile.ZipFile(self.output / "ste-pro-max.zip") as archive:
+            archive.extractall(extracted)
+        bundle = extracted / "ste-pro-max"
+        workspace = self.root / "user-workspace"
+        workspace.mkdir()
+        source = workspace / "story.json"
+        shutil.copyfile(ROOT / "examples/suite/retry-explanation.json", source)
+        audio = workspace / "audio"
+        audio.mkdir()
+        for name, seconds in (("trace", 8), ("count", 2)):
+            with wave.open(str(audio / (name + ".wav")), "wb") as stream:
+                stream.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+                stream.writeframes(b"\xf0\xd8\x10\x27" * (4000 * seconds))
+
+        def run(*args):
+            process = subprocess.run([sys.executable, "-B", str(bundle), *map(str, args)],
+                                     cwd=workspace, capture_output=True, text=True, timeout=45)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            return json.loads(process.stdout)
+
+        self.assertIn("beats", run("schema", "story")["fields"])
+        artifact = run("render", source, "--output-dir", workspace / "story")
+        self.assertEqual(artifact["status"], "complete")
+        self.assertEqual(len(artifact["visuals"]), 2)
+        self.assertTrue((workspace / "story" / "evidence.json").is_file())
+        prepared = run("narrate", source, "--audio-dir", audio, "--output-dir", workspace / "media")
+        self.assertEqual(prepared["status"], "prepared_not_rendered")
+        self.assertEqual(prepared["narration"], "provided PCM")
+        self.assertEqual(prepared["duration_seconds"], 10)
+        timeline = json.loads((workspace / "media" / "timeline.json").read_bytes())
+        self.assertEqual(len(timeline["beats"][0]["stages"]), 5)
+        self.assertTrue((bundle / "ste_promax/scripts/narrate.ps1").is_file())
+        self.assertEqual((workspace / "media" / "source.json").read_bytes(), source.read_bytes())
+        self.assertFalse(list((workspace / "media").glob("*.mp4")))
 
     def test_cli_reports_failure_without_side_effects(self):
         self.output.mkdir()

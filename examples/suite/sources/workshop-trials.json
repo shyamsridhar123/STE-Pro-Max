@@ -1,0 +1,23 @@
+{
+  "id": "workshop-notes",
+  "title": "Fictional handout assembly rehearsal notes",
+  "fictional": true,
+  "provenance": "Invented classroom planning data, not a real experiment, vendor benchmark or production metric.",
+  "scope": "One scripted rehearsal per workflow, assembling 40 handout sets in each rehearsal.",
+  "workflows": [
+    {"label": "Tray", "sets": 40, "minutes": 24, "mislabelled_sets": 1},
+    {"label": "Stack", "sets": 40, "minutes": 18, "mislabelled_sets": 4}
+  ],
+  "decision_rule": {
+    "maximum_mislabelled_sets": 2,
+    "text": "A workflow is eligible for the next rehearsal only if at most 2 of its 40 sets are mislabelled; among eligible workflows prefer shorter preparation time."
+  },
+  "qualification": "These are single scripted runs. Operator learning and a repeat-run distribution are not supplied.",
+  "proposal": "Use Tray for the next rehearsal and repeat both workflows before adopting a standing process. No purchase or deployment is authorized.",
+  "claim_support": {
+    "time-tradeoff": ["workflows"],
+    "quality-gate": ["workflows", "decision_rule"],
+    "tray-eligible": ["workflows", "decision_rule", "qualification"],
+    "repeat-before-adoption": ["proposal", "qualification"]
+  }
+}

@@ -1,0 +1,161 @@
+{% macro claim_card(claim) -%}
+<article class="ste-claim">
+  <div class="ste-claim-kind">{{ claim.type }} <span>· {{ claim.id }}</span></div>
+  <p>{{ claim.text }}</p>
+  {% for key, label in [('attributed_to','Attribution'),('basis','Basis'),('scope','Scope'),('uncertainty','Qualification')] %}
+  {% if claim.get(key) %}<p class="ste-qualification"><strong>{{ label }}:</strong> {{ claim[key] }}</p>{% endif %}
+  {% endfor %}
+  <p class="ste-source-refs">Sources:
+    {% for ref in claim.source_ids %}<a href="#{{ prefix }}-source-{{ ref }}">{{ ref }}</a>{% if not loop.last %}, {% endif %}
+    {% else %}none; proposal{% endfor %}
+  </p>
+</article>
+{%- endmacro %}
+<style>
+.ste-story{--story-border:var(--line-strong,#554b42);--story-muted:var(--text-2,#c8c2ba);margin:36px auto;max-width:1120px}
+.ste-story h1{font-size:clamp(30px,5vw,52px);line-height:1.1;letter-spacing:-.025em;margin:16px 0 22px}
+.ste-story h2{font-size:clamp(22px,3vw,32px);line-height:1.2;margin:12px 0 22px}
+.ste-story h3{font-size:18px;line-height:1.35}
+.ste-story p{line-height:1.65;overflow-wrap:anywhere}
+.ste-story .ste-story-eyebrow,.ste-story .ste-claim-kind{font:600 11px/1.5 var(--font-mono,monospace);letter-spacing:.08em;text-transform:uppercase;color:var(--amber,#efa276)}
+.ste-story .ste-story-summary{font-size:20px;max-width:850px}
+.ste-story .ste-story-context,.ste-story .ste-story-audience{color:var(--story-muted)}
+.ste-story .ste-story-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:18px 0;border-block:1px solid var(--story-border);margin-top:26px}
+.ste-story button,.ste-story summary{font:600 13px/1.4 var(--font-body,system-ui);cursor:pointer}
+.ste-story button{border:1px solid var(--story-border);border-radius:4px;background:var(--surface,#171513);color:var(--text-1,#f4eee7);padding:11px 14px;min-height:44px}
+.ste-story button:hover:not(:disabled){border-color:var(--amber,#efa276)}
+.ste-story button:disabled{opacity:.45;cursor:default}
+.ste-story :focus-visible{outline:3px solid var(--amber,#efa276);outline-offset:4px}
+.ste-story .ste-story-progress{font:12px/1.5 var(--font-mono,monospace);color:var(--story-muted);margin-left:auto}
+.ste-story .ste-story-outline{display:flex;flex-wrap:wrap;gap:6px 20px;padding:18px 0;list-style:none}
+.ste-story .ste-story-outline a[aria-current=step]{border-bottom-color:var(--amber,#efa276);font-weight:700}
+.ste-story .ste-story-beat{border-top:1px solid var(--story-border);padding:28px 0;min-width:0}
+.ste-story .ste-beat-role{font:12px var(--font-mono,monospace);color:var(--story-muted)}
+.ste-story .ste-claim{border-left:3px solid var(--amber,#efa276);padding:3px 0 3px 18px;margin:24px 0}
+.ste-story .ste-claim-kind span{color:var(--story-muted);text-transform:none;letter-spacing:0}
+.ste-story .ste-claim>p{margin:8px 0}
+.ste-story .ste-qualification,.ste-story .ste-source-refs{font-size:13px;color:var(--story-muted)}
+.ste-story .ste-question{background:var(--surface,#171513);border:1px solid var(--story-border);padding:18px 20px;margin:22px 0}
+.ste-story .ste-question>p{margin-top:0}
+.ste-story .ste-answer-print{display:none}
+.ste-story summary{padding:8px 0;min-height:40px}
+.ste-story .ste-story-limits,.ste-story .ste-story-ledger,.ste-story .ste-story-sources{border-top:1px solid var(--story-border);padding-top:24px;margin-top:26px}
+.ste-story .ste-story-source{margin:22px 0;overflow-wrap:anywhere}
+.ste-story .ste-story-source p{margin:5px 0;color:var(--story-muted)}
+.ste-story .ste-story-review{font-size:13px;padding:14px 16px;border:1px solid var(--story-border);color:var(--story-muted)}
+.ste-story [hidden]{display:none!important}
+@media(max-width:720px){.ste-story .ste-story-progress{width:100%;margin-left:0}.ste-story .ste-story-outline{display:block}.ste-story .ste-story-outline li{margin:12px 0}.ste-story h1{font-size:32px}}
+@media(prefers-reduced-motion:reduce){.ste-story *{scroll-behavior:auto!important;transition:none!important}}
+@media print{
+  .ste-story .ste-story-controls,.ste-story .ste-story-outline,.ste-story .ste-question details{display:none!important}
+  .ste-story .ste-story-beat[hidden],.ste-story .ste-answer-print{display:block!important}
+  .ste-story{max-width:none;--story-muted:#333;--story-border:#aaa;--amber:#75410b;--surface:#fff;--text-1:#111;color:#111}
+  .ste-story .ste-claim{break-inside:avoid}
+}
+</style>
+<article class="ste-story" id="{{ prefix }}" data-ste-story>
+  <header>
+    <div class="ste-story-eyebrow">{{ story.purpose }} / Evidence-linked story</div>
+    <h1>{{ story.title }}</h1>
+    <p class="ste-story-audience"><strong>For:</strong> {{ story.audience }}</p>
+    <p><strong>Question:</strong> {{ story.question }}</p>
+    <p class="ste-story-summary">{{ story.summary }}</p>
+    {% if story.get('context') %}<p class="ste-story-context">{{ story.context }}</p>{% endif %}
+  </header>
+  <div class="ste-story-controls" hidden>
+    <button type="button" data-story-mode aria-pressed="false">Start guided view</button>
+    <button type="button" data-story-previous disabled>Previous</button>
+    <button type="button" data-story-next disabled>Next</button>
+    <span class="ste-story-progress" role="status" aria-live="polite" data-story-progress>All {{ beats|length }} beats visible</span>
+  </div>
+  <nav aria-label="Story outline">
+    <ol class="ste-story-outline">
+    {% for beat in beats %}<li><a href="#{{ prefix }}-beat-{{ beat.id }}" data-story-link="{{ loop.index0 }}">{{ loop.index }}. {{ beat.title }}</a></li>{% endfor %}
+    </ol>
+  </nav>
+  {% for beat in beats %}
+  <section class="ste-story-beat" id="{{ prefix }}-beat-{{ beat.id }}" data-story-beat>
+    {% if beat.get('role') %}<div class="ste-beat-role">{{ beat.role }}</div>{% endif %}
+    <h2 tabindex="-1">{{ loop.index }}. {{ beat.title }}</h2>
+    {% if beat.get('text') %}<p>{{ beat.text }}</p>{% endif %}
+    {% for claim in beat.claims %}{{ claim_card(claim) }}{% endfor %}
+    {{ beat.visual_html | safe }}
+    {% if beat.get('question') %}
+    <div class="ste-question">
+      <p><strong>Check your understanding:</strong> {{ beat.question.prompt }}</p>
+      {% if beat.question.get('answer') %}
+      <details><summary>Show answer</summary><div><p>{{ beat.question.answer }}</p></div></details>
+      <div class="ste-answer-print" data-story-print-answer><p><strong>Answer:</strong> {{ beat.question.answer }}</p></div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+  {% if story.get('limitations') %}
+  <aside class="ste-story-limits"><h2>Material limitations</h2>
+    <ul>{% for item in story.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+  </aside>
+  {% endif %}
+  <section class="ste-story-ledger">
+    <h2>Complete claim ledger</h2>
+    <p>Every supplied claim is retained here, including claims not selected for a narrative beat.</p>
+    {% for claim in story.claims %}{{ claim_card(claim) }}{% endfor %}
+  </section>
+  <section class="ste-story-sources">
+    <h2>Source register</h2>
+    <p class="ste-story-review">References are structurally linked, not independently verified by this engine.
+      Review claims, narrative, visuals and narration against the source before delivery.</p>
+    {% for source in story.sources %}
+    <article class="ste-story-source" id="{{ prefix }}-source-{{ source.id }}">
+      <h3>[{{ source.id }}] {{ source.title }}</h3>
+      {% if source.get('url') %}<p><a href="{{ source.url }}" rel="noopener noreferrer">{{ source.url }}</a></p>{% endif %}
+      {% if source.get('locator') %}<p><strong>Locator:</strong> {{ source.locator }}</p>{% endif %}
+      {% if source.get('note') %}<p>{{ source.note }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+</article>
+<script>
+(() => {
+  "use strict";
+  document.querySelectorAll("[data-ste-story]").forEach(root => {
+    if (root.dataset.storyReady) return;
+    root.dataset.storyReady = "true";
+    const beats = [...root.querySelectorAll("[data-story-beat]")];
+    const mode = root.querySelector("[data-story-mode]");
+    const previous = root.querySelector("[data-story-previous]");
+    const next = root.querySelector("[data-story-next]");
+    const progress = root.querySelector("[data-story-progress]");
+    const links = [...root.querySelectorAll("[data-story-link]")];
+    let guided = false, index = 0;
+    function show(focus) {
+      beats.forEach((beat, i) => { beat.hidden = guided && i !== index; });
+      links.forEach((link, i) => {
+        if (guided && i === index) link.setAttribute("aria-current", "step");
+        else link.removeAttribute("aria-current");
+      });
+      previous.disabled = !guided || index === 0;
+      next.disabled = !guided || index === beats.length - 1;
+      mode.setAttribute("aria-pressed", String(guided));
+      mode.textContent = guided ? "Show all content" : "Start guided view";
+      progress.textContent = guided ? `Beat ${index + 1} of ${beats.length}` : `All ${beats.length} beats visible`;
+      if (focus && guided) beats[index].querySelector("h2").focus({preventScroll: true});
+    }
+    mode.addEventListener("click", () => { guided = !guided; show(false); });
+    previous.addEventListener("click", () => { index = Math.max(0, index - 1); show(true); });
+    next.addEventListener("click", () => { index = Math.min(beats.length - 1, index + 1); show(true); });
+    links.forEach((link, i) => link.addEventListener("click", () => { index = i; show(false); }));
+    function followHash() {
+      let target;
+      try { target = decodeURIComponent(window.location.hash.slice(1)); }
+      catch { return; }
+      const selected = beats.findIndex(beat => beat.id === target);
+      if (selected !== -1) { index = selected; show(guided); }
+    }
+    window.addEventListener("hashchange", followHash);
+    root.querySelector(".ste-story-controls").hidden = false;
+    show(false);
+    followHash();
+  });
+})();
+</script>

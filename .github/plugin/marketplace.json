@@ -8,7 +8,7 @@
       "name": "ste-pro-max",
       "source": "./",
       "description": "Flexible STE-inspired writing and visual explanations with one native source engine.",
-      "version": "0.1.0"
+      "version": "0.3.0"
     }
   ]
 }

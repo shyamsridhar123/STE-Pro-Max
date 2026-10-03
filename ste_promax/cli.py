@@ -5,9 +5,11 @@ import html
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 from ste_promax import __version__
+from ste_promax.json_input import loads_json
 from ste_promax.writing import LIMITS, check_text, strip_frontmatter
 
 
@@ -26,7 +28,7 @@ def has_raw_html(value):
     return False
 
 
-def normalized_input(source, title=None, trusted_html=False):
+def normalized_input(source: Path, title: str | None = None, trusted_html: bool = False):
     """Validate before filesystem writes; keep the original bytes separately."""
     original = source.read_bytes()
     text = original.decode("utf-8-sig")
@@ -34,7 +36,7 @@ def normalized_input(source, title=None, trusted_html=False):
         raise ValueError("Input is empty.")
     suffix = source.suffix.lower()
     if suffix == ".json":
-        data = json.loads(text)
+        data = loads_json(text)
         if not isinstance(data, dict):
             raise ValueError("JSON input must be an object.")
         for key in ("title", "body_html", "body_md"):
@@ -52,9 +54,10 @@ def normalized_input(source, title=None, trusted_html=False):
         raise ValueError("Render input must be .html, .md, or .json.")
     if has_raw_html(data) and not trusted_html:
         raise ValueError("Raw HTML requires explicit --trusted-html consent; review the authored content first.")
-    data["title"] = title if title is not None else data.get("title", source.stem)
-    if not data["title"].strip():
+    resolved_title = title if title is not None else data.get("title", source.stem)
+    if not isinstance(resolved_title, str) or not resolved_title.strip():
         raise ValueError("Title must not be empty.")
+    data["title"] = resolved_title
     normalized = (json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
     return original, normalized, data
 
@@ -77,6 +80,26 @@ def lint_status(text):
     keys = [key.value for key, _ in nodes.value if isinstance(key, yaml.ScalarNode)]
     value = data.get("lint_passed")
     return value if keys.count("lint_passed") == 1 and type(value) is bool else None
+
+
+def visual_inputs(data):
+    """Walk validated structured visuals in source order; never parse raw HTML."""
+    def sections(items, prefix):
+        for index, item in enumerate(items):
+            location = f"{prefix}[{index}]"
+            if item["kind"] in ("diagram", "chart"):
+                yield location, item
+            elif item["kind"] == "sec":
+                yield from sections(item.get("body", []), location + ".body")
+    kind = data.get("kind")
+    if kind in ("diagram", "chart"):
+        yield "input", data
+    elif kind == "story":
+        for index, beat in enumerate(data["beats"]):
+            if beat.get("visual"):
+                yield f"beats[{index}].visual", beat["visual"]
+    else:
+        yield from sections(data.get("sections", []), "sections")
 
 
 def render(args):
@@ -107,15 +130,29 @@ def render(args):
         ) from exc
 
     validate_input(data)
+    companions = {}
+    if data.get("kind") == "story":
+        from ste_promax.stories import story_companions
+        companions = story_companions(data)
+    visuals = []
+    for index, (location, visual) in enumerate(visual_inputs(data), 1):
+        from ste_promax.charts import chart_svg
+        from ste_promax.diagrams import diagram_svg
+        name = f"visual-{index:02}.svg"
+        companions[name] = diagram_svg(visual) if visual["kind"] == "diagram" else chart_svg(visual)
+        visuals.append({"file": name, "source": location, "kind": visual["kind"]})
     output.mkdir(parents=True, exist_ok=True)
     saved_source = output / ("source" + source.suffix.lower())
     input_path = output / "input.json"
-    for path, contents in ((saved_source, original), (input_path, normalized)):
+    retained = [("source", saved_source, original), ("input", input_path, normalized)]
+    retained.extend((Path(name).stem, output / name, text.encode("utf-8"))
+                    for name, text in companions.items())
+    for _, path, contents in retained:
         with path.open("xb") as stream:
             stream.write(contents)
-    files = {"source": file_record(saved_source), "input": file_record(input_path)}
+    files = {name: file_record(path) for name, path, _ in retained}
     saved_design = None
-    if design:
+    if design is not None and design_bytes is not None:
         saved_design = output / "input-design.md"
         with saved_design.open("xb") as stream:
             stream.write(design_bytes)
@@ -149,7 +186,7 @@ def render(args):
 
     lint = None
     external = set()
-    protected = {saved_source, input_path, saved_design, output / "manifest.json"}
+    protected = {path for _, path, _ in retained} | {saved_design, output / "manifest.json"}
     artifact_paths = [path.resolve() for path in expected.values()]
     if len(set(artifact_paths)) != len(artifact_paths):
         complete = False
@@ -178,7 +215,7 @@ def render(args):
     if external:
         warnings.append("External references remain; full offline operation has not been established.")
     # The renderer must not mutate the saved, repeatable input or authored source.
-    for name, path, content in (("source", saved_source, original), ("input", input_path, normalized)):
+    for name, path, content in retained:
         if path.is_symlink() or not path.is_file():
             complete = False
             warnings.append(f"Native renderer removed or replaced saved {name}.")
@@ -194,6 +231,7 @@ def render(args):
         "source_sha256": hashlib.sha256(original).hexdigest(), "files": files,
         "trusted_html": args.trusted_html, "lint_passed": lint,
         "external_references": sorted(external), "offline_verified": False, "warnings": warnings,
+        "visuals": visuals,
     }
     with (output / "manifest.json").open("x", encoding="utf-8", newline="\n") as stream:
         json.dump(manifest, stream, ensure_ascii=False, indent=2)
@@ -204,12 +242,25 @@ def render(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="ste-promax", description=__doc__)
     parser.add_argument("--version", action="version", version=__version__)
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command")
+    starter = commands.add_parser("start", help="Make a local artifact from a source or the fictional demo.")
+    starter.add_argument("input", nargs="?", help="Local .md, .json, or reviewed .html source.")
+    starter.add_argument("--output-dir", help="New directory; defaults to a fresh folder under ./artifacts/.")
+    starter.add_argument("--title")
+    starter.add_argument("--design", help="Local design file, archived with the input.")
+    starter.add_argument("--trusted-html", action="store_true",
+                         help="Explicitly trust reviewed authored HTML; never inferred.")
+    starter.add_argument("--json", action="store_true", help="Print the unmodified render manifest.")
+    starter.add_argument("--open", action="store_true", help="Open the result only after successful rendering.")
+    doctor = commands.add_parser("doctor", help="Read-only local dependency and platform diagnostics.")
+    doctor.add_argument("--json", action="store_true")
     check = commands.add_parser("check", help="Advisory prose-length diagnostics; no certification.")
     check.add_argument("input")
     check.add_argument("--profile", choices=LIMITS, default="relaxed")
     check.add_argument("--json", action="store_true")
     check.add_argument("--fail-on-findings", action="store_true")
+    schema = commands.add_parser("schema", help="Describe native input shapes with usable examples; outputs JSON.")
+    schema.add_argument("kind", nargs="?", help="story, diagram, chart, or another section kind; omit for all.")
     renderer = commands.add_parser("render", help="Render through the native STE-Pro Max implementation.")
     renderer.add_argument("input")
     renderer.add_argument("--output-dir", required=True)
@@ -217,15 +268,46 @@ def main(argv=None):
     renderer.add_argument("--design", help="Local design file, archived with the input.")
     renderer.add_argument("--trusted-html", action="store_true",
                           help="Explicitly trust reviewed authored HTML; never inferred from input metadata.")
+    narrator = commands.add_parser("narrate", help="Prepare story media from local speech or PCM audio; never export a movie.")
+    narrator.add_argument("input")
+    narrator.add_argument("--output-dir", required=True, help="New directory with an existing parent.")
+    audio_source = narrator.add_mutually_exclusive_group()
+    audio_source.add_argument("--voice", help="Installed Windows System.Speech voice.")
+    audio_source.add_argument("--audio-dir", type=Path, help="Local directory of <beat-id>.wav files.")
     args = parser.parse_args(argv)
+    if args.command is None:
+        parser.print_help()
+        print("\nFirst result: start          Environment check: doctor\n"
+              "Local files only; no API or model calls. Browser opens only with start --open.")
+        return 0
     try:
+        # ASCII-escaped JSON survives legacy host pipes; artifact files remain UTF-8.
+        if args.command in {"start", "doctor"}:
+            from ste_promax.onboarding import run
+            return run(args)
+        if args.command == "schema":
+            from ste_promax.section_schema import SECTION_SCHEMA
+            from ste_promax.stories import STORY_SCHEMA
+            result = {"format": "ste-promax.schema-catalog.v1", "story": STORY_SCHEMA, "sections": SECTION_SCHEMA}
+            if args.kind:
+                result = STORY_SCHEMA if args.kind == "story" else SECTION_SCHEMA.get(args.kind)
+                if result is None:
+                    raise ValueError(f"Unknown schema {args.kind!r}; run 'schema' to list the supported shapes.")
+            print(json.dumps(result, ensure_ascii=True, indent=2))
+            return 0
         if args.command == "render":
             result = render(args)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
+            print(json.dumps(result, ensure_ascii=True, indent=2))
             return 0 if result["status"] == "complete" else 2
+        if args.command == "narrate":
+            from ste_promax.media import prepare_story_media
+            result = prepare_story_media(Path(args.input), Path(args.output_dir),
+                                         voice=args.voice, audio_dir=args.audio_dir)
+            print(json.dumps(result, ensure_ascii=True, indent=2))
+            return 0 if result["status"] == "prepared_not_rendered" else 2
         result = check_text(Path(args.input).read_text(encoding="utf-8-sig"), args.profile)
         if args.json:
-            print(json.dumps(result, ensure_ascii=False, indent=2))
+            print(json.dumps(result, ensure_ascii=True, indent=2))
         else:
             print(f"{result['word_count']} words; {result['sentence_count']} sentences; "
                   f"{len(result['findings'])} advisory findings ({args.profile}).")
@@ -233,6 +315,6 @@ def main(argv=None):
                 print(json.dumps(finding, ensure_ascii=False))
             print("\n".join(result["limitations"]))
         return 1 if args.fail_on_findings and result["findings"] else 0
-    except (OSError, ValueError, ImportError) as exc:
+    except (OSError, ValueError, ImportError, RuntimeError, subprocess.TimeoutExpired) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2

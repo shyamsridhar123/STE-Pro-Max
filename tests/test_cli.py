@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tempfile
 from types import ModuleType
+from typing import Any
 import unittest
 from unittest.mock import Mock, patch
 
@@ -25,20 +26,22 @@ class RenderTests(unittest.TestCase):
         self.output = self.root / "new output"
         self.lint = "true"
         self.html = "<html><head></head><body>Reviewed</body></html>"
-        self.render_module = ModuleType("ste_promax.render")
-        self.gallery_module = ModuleType("ste_promax.gallery")
+        self.render_module = Mock(spec=ModuleType("ste_promax.render"))
+        self.gallery_module = Mock(spec=ModuleType("ste_promax.gallery"))
         self.renderer = Mock(side_effect=self.fake_render)
         self.gallery = Mock(side_effect=self.fake_gallery)
         self.render_module.render_artifact = self.renderer
         self.render_module.validate_input = Mock()
         self.gallery_module.regenerate_gallery = self.gallery
 
-    def fake_render(self, input_data, design_path=None, output_dir=None):
+    def fake_render(self, input_data, design_path: Path | None = None, output_dir: Path | None = None):
         self.input_data = input_data
         self.design_path = design_path
         self.assertEqual(output_dir, self.output)
-        triple = {name + "_path": output_dir / ("example" + suffix) for name, suffix in
-                  (("html", ".html"), ("design", ".DESIGN.md"), ("meta", ".meta.yaml"))}
+        assert output_dir is not None
+        triple: dict[str, Any] = {
+            name + "_path": output_dir / ("example" + suffix) for name, suffix in
+            (("html", ".html"), ("design", ".DESIGN.md"), ("meta", ".meta.yaml"))}
         triple["html_path"].write_text(self.html, encoding="utf-8")
         triple["design_path"].write_text("# Design\n", encoding="utf-8")
         triple["meta_path"].write_text(f"lint_passed: {self.lint}\n", encoding="utf-8")
@@ -162,6 +165,7 @@ class RenderTests(unittest.TestCase):
         design.write_bytes(content)
         self.assertEqual(self.run_cli("--design", str(design))[0], 0)
         self.assertEqual(self.design_path, self.output / "input-design.md")
+        assert self.design_path is not None
         self.assertEqual(self.design_path.read_bytes(), content)
         self.assertEqual(design.read_bytes(), content)
 
@@ -281,7 +285,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual((self.output / "example.html").read_text(), self.html)
 
     def test_removed_wrapper_options_are_rejected(self):
-        for option in ("--paperboard", "--paperboard-source", "--offline-fonts"):
+        for option in ("--external-renderer", "--renderer-source", "--offline-fonts"):
             with self.subTest(option=option), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as error:
                     cli.main(["render", str(self.source), "--output-dir", str(self.output), option])
@@ -289,11 +293,11 @@ class RenderTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_version(self):
-        self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(__version__, "0.3.0")
         with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as error:
             cli.main(["--version"])
         self.assertEqual(error.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "0.1.0")
+        self.assertEqual(output.getvalue().strip(), "0.3.0")
 
 
 class NativeIntegrationTests(unittest.TestCase):

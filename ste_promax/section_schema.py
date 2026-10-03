@@ -1,9 +1,9 @@
-"""Modified for STE-Pro-Max from ATV-PaperBoard.
-Copyright (c) 2026 All-The-Vibes / atv-paperboard contributors.
+"""Native STE-Pro-Max resources.
+Copyright (c) 2026 Shyam Sridhar and contributors.
 SPDX-License-Identifier: Apache-2.0
 Source commit: 4b068bcab8e4dc105f0ef975ee224564f5d63383.
 Changes: offline system fonts, safe metadata, native STE-Pro-Max branding.
-Native ATV section schema; section fields are plain text, not trusted HTML.
+Native STE section schema; section fields are plain text, not trusted HTML.
 Keep this registry aligned with ste_promax.render._SECTION_EMITTERS.
 row_fields lists the fixed-column row keys used by renderer input preflight.
 status-table instead derives its permitted columns from the first supplied row.
@@ -11,6 +11,9 @@ status-table instead derives its permitted columns from the first supplied row.
 from __future__ import annotations
 
 from typing import Any
+
+from .charts import CHART_SCHEMA
+from .diagrams import DIAGRAM_SCHEMA
 
 SECTION_SCHEMA: dict[str, dict[str, Any]] = {
     "hero": {
@@ -28,12 +31,12 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
         "example": {
             "kind": "hero",
             "eyebrow": "Release report",
-            "title": "ATV tier renders artifacts as designed documents.",
-            "title_into": "not colored tables.",
-            "sub": "Six section kinds, one opinionated dark template, zero CDN dependencies.",
+            "title": "An illustrative release note.",
+            "title_into": "not a release approval.",
+            "sub": "Example content for a local document. Review its evidence and limitations before acting.",
             "meta": [
-                {"label": "Version", "value": "v0.2.0"},
-                {"label": "Tier", "value": "atv"},
+                {"label": "Example", "value": "Fictional"},
+                {"label": "Tier", "value": "ste"},
             ],
         },
     },
@@ -108,7 +111,7 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
                     "name": "jinja2",
                     "tag": "required",
                     "role": "templating",
-                    "why": "Renders the atv-tier template.",
+                    "why": "Renders the ste-tier template.",
                     "version": ">=3.1.0",
                 },
             ],
@@ -130,7 +133,7 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
         "example": {
             "kind": "q-list",
             "rows": [
-                {"num": "01", "title": "What is the target tier?", "body": "Default is atv."},
+                {"num": "01", "title": "What is the target tier?", "body": "Default is ste."},
                 {"num": "02", "title": "Where does input come from?", "body": "Agent-constructed JSON via stdin."},
             ],
         },
@@ -286,8 +289,8 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
                 {
                     "name": "tier",
                     "type": "string",
-                    "default": "atv",
-                    "notes": "The native offline ATV template.",
+                    "default": "ste",
+                    "notes": "The native offline STE template.",
                 },
             ],
         },
@@ -313,6 +316,8 @@ SECTION_SCHEMA: dict[str, dict[str, Any]] = {
             ],
         },
     },
+    "diagram": DIAGRAM_SCHEMA,
+    "chart": CHART_SCHEMA,
 }
 
 

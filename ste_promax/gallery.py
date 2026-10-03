@@ -1,6 +1,6 @@
-"""Local artifact gallery, modified for STE-Pro-Max from ATV-PaperBoard.
+"""Local artifact gallery for STE-Pro-Max.
 
-Copyright (c) 2026 All-The-Vibes / atv-paperboard contributors.
+Copyright (c) 2026 Shyam Sridhar and contributors.
 SPDX-License-Identifier: Apache-2.0
 Source: core/gallery.py at 4b068bcab8e4dc105f0ef975ee224564f5d63383.
 Modified: explicit local directory, safe YAML/links, owned-index replacement;
@@ -49,7 +49,7 @@ def regenerate_gallery(artifact_dir: Path) -> Path:
             "title": str(meta.get("title") or slug.replace("-", " ").title()),
             "generator": str(meta.get("generator", "unknown")),
             "design": str(meta.get("design", "")),
-            "tier": str(meta.get("tier", "atv")),
+            "tier": str(meta.get("tier", "ste")),
             "created_at": str(meta.get("created_at", "")),
             "html_name": html_name,
             "html_exists": not html_path.is_symlink() and html_path.is_file(),

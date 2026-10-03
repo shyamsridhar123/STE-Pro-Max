@@ -10,6 +10,7 @@ import wave
 
 MODULE = Path(__file__).resolve().parents[1] / "examples/narrated-demo/prepare.py"
 SPEC = importlib.util.spec_from_file_location("prepare_video_example", MODULE)
+assert SPEC is not None and SPEC.loader is not None
 PREPARE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PREPARE)
 

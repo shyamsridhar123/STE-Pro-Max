@@ -11,7 +11,7 @@ import wave
 
 
 SCRIPT = (Path(__file__).resolve().parents[1] /
-          "skills/ste-promax/scripts/narrate.ps1")
+          "ste_promax/scripts/narrate.ps1")
 
 
 @unittest.skipUnless(os.name == "nt", "System.Speech synthesis requires Windows")
@@ -34,6 +34,7 @@ class NarrationTests(unittest.TestCase):
         )
 
     def run_script(self, *args):
+        assert self.powershell is not None
         return subprocess.run(
             [self.powershell, "-NoProfile", "-NonInteractive",
              "-File", str(SCRIPT), *map(str, args)],
