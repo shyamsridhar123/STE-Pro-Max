@@ -124,20 +124,25 @@ def env_ready(python: Path, root: Path, workspace: Path) -> bool:
     return python.is_file() and probe_python(str(python), root, workspace)
 
 
-def preflight_source(source: Path) -> None:
+def preflight_source(source: Path, root: Path) -> None:
     if source.suffix.lower() not in {".md", ".json"}:
         raise ValueError("Quickstart accepts .md or .json, not raw .html or other formats. "
                          "For reviewed HTML use native start with explicit --trusted-html.")
     # The bundle's normalizer is standard-library-only. Reuse its strict JSON,
     # empty-input and raw-HTML gates rather than introducing another parser.
     previous = sys.dont_write_bytecode
+    previous_path = sys.path[:]
     sys.dont_write_bytecode = True
+    # Isolated Python omits a script's directory. Use only the already-checked
+    # bundle root, never caller cwd/PYTHONPATH or an unrelated installed copy.
+    sys.path.insert(0, str(root))
     try:
         from ste_promax.cli import normalized_input
         from ste_promax.input_validation import validate_input
         _, _, data = normalized_input(source)
         validate_input(data)
     finally:
+        sys.path[:] = previous_path
         sys.dont_write_bytecode = previous
 
 
@@ -219,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
         workspace = safe_path(Path.cwd(), directory=True, required=True)
         source = safe_path(Path(args.source), required=True) if args.source is not None else None
         if source is not None:
-            preflight_source(source)
+            preflight_source(source, root)
         output = None
         if args.output_dir:
             output = safe_path(Path(args.output_dir), directory=True)
@@ -245,7 +250,7 @@ def main(argv: list[str] | None = None) -> int:
     except subprocess.TimeoutExpired:
         print("Quickstart timed out; any environment and output files were preserved.", file=sys.stderr)
         return 2
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, ImportError) as exc:
         print(f"Quickstart: {exc}", file=sys.stderr)
         return 2
 

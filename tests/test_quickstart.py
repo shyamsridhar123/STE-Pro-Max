@@ -468,6 +468,24 @@ class QuickstartTests(unittest.TestCase):
         self.assertFalse(self.environment.exists())
         self.assertEqual(result.stderr, "")
 
+    def test_source_preflight_uses_bundle_under_isolated_no_site_python(self):
+        source = self.workspace / "notes.md"
+        source.write_text("# Source\n\nApproval remains pending.\n", encoding="utf-8")
+        code = (
+            "import runpy,sys; from pathlib import Path; "
+            "q=runpy.run_path(sys.argv[1]); before=sys.path[:]; "
+            "q['preflight_source'](Path(sys.argv[2]),Path(sys.argv[1]).parent); "
+            "assert sys.path==before; "
+            "assert 'jinja2' not in sys.modules and 'yaml' not in sys.modules"
+        )
+        result = subprocess.run(
+            [sys.executable, "-I", "-S", "-B", "-c", code, str(ROOT / "quickstart.py"), str(source)],
+            cwd=self.workspace, capture_output=True, text=True, check=False, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertFalse(self.environment.exists())
+
     def test_real_isolated_probe_and_start_ignore_pythonpath_shadow_packages(self):
         if not quickstart.dependencies_ready():
             self.skipTest("Current interpreter lacks declared render dependencies")
