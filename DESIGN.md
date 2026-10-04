@@ -30,11 +30,13 @@ Technical and business readers need clear updates; learners need a concrete exam
 they can inspect and manipulate. An agent author needs a repeatable local workflow.
 
 ## Information architecture
-The README leads with the generated editorial hero, a bold product promise, and
-large real examples: source-to-brief transformation, an interactive retry model,
-and a rate lab. Native installation and a short STE/Karpathy explanation follow.
-Keep it short; definitions, limits, prompts, research, lifecycle, and developer
-detail belong behind the `docs/README.md` hub. Focused skills route writing, visual documentation,
+The README leads with the generated editorial hero and an STE-first,
+Karpathy-inspired product promise. Named STE and Karpathy-guideline highlights
+come before the large real examples: source-to-brief transformation, an interactive
+retry model, and a rate lab. Native installation follows. Keep the foundations
+visible, not buried in a footer or only in linked docs. Extended background,
+limits, prompts, research, lifecycle, and developer detail belong behind the
+`docs/README.md` hub. Focused skills route writing, visual documentation,
 storytelling, and media. A story presents its question and audience, an overview,
 ordered evidence-backed beats, and a source register. Guided and all-content views
 share the same facts. Source disclosures remain visible and printable.

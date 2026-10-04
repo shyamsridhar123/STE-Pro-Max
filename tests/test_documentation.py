@@ -109,13 +109,24 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("style preference, not a score", approach)
         self.assertIn("endorse this", approach)
 
-    def test_readme_sells_the_result_before_reference_detail_and_stays_short(self):
+    def test_readme_highlights_ste_and_karpathy_before_examples_and_stays_short(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        ste = readme.index("## STE: the foundation")
+        guidelines = readme.index("## Karpathy's guidelines, put to work")
         showcase = readme.index("## Show, don't tell")
         install = readme.index("## Install the plugin")
-        explanation = readme.index("## Clear writing. Richer explanations.")
+        self.assertLess(ste, guidelines)
+        self.assertLess(guidelines, showcase)
         self.assertLess(showcase, install)
-        self.assertLess(install, explanation)
+        self.assertIn("STE means Simplified Technical English", readme[ste:guidelines])
+        self.assertIn("**Before:**", readme[ste:guidelines])
+        self.assertIn("Check the configuration before you deploy.", readme[ste:guidelines])
+        playbook = readme[guidelines:showcase]
+        self.assertIn("https://x.com/karpathy/status/2105819303471976479", playbook)
+        for idea in ("relaxed STE", "diagrams and images", "interactive HTML",
+                     "animation", "Narrate", "available media tool", "purpose-built",
+                     "smallest useful medium"):
+            self.assertIn(idea, playbook)
         self.assertNotIn("## What stays honest", readme)
         self.assertLessEqual(sum(bool(line.strip()) for line in readme.splitlines()), 100)
         self.assertLess(len(readme.split()), 500)

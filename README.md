@@ -6,12 +6,36 @@
 
 **Stop shipping walls of text. Make complex ideas click.**
 
-Turn dense docs, tangled systems, and raw numbers into **sharp briefs, visual
-explanations, and interactive mini-labs**—with the AI agent you already use.
+**STE-inspired clarity. Karpathy-inspired explanations.** Turn dense docs, systems,
+and numbers into **sharp briefs, visual explanations, and interactive mini-labs**.
 
 **GitHub Copilot · Claude Code · Codex.** Native plugin. No Python setup.
 
-[See the results](#show-dont-tell) · [Install](#install-the-plugin) · [Get the demos](docs/EXAMPLES.md#get-the-files) · [Docs](docs/README.md)
+[STE](#ste-the-foundation) · [Karpathy](#karpathys-guidelines-put-to-work) · [Demos](#show-dont-tell) · [Install](#install-the-plugin) · [Docs](docs/README.md)
+
+## STE: the foundation
+
+**STE means Simplified Technical English**—a controlled language for technical
+writing. Here: short sentences, consistent terms, clear instructions.
+**Simpler language. Facts and uncertainty intact.**
+
+> **Before:** “Prior to initiating deployment, verification of the configuration is required.”
+>
+> **STE:** “Check the configuration before you deploy.”
+
+STE-inspired, not ASD-STE100 certification. [The approach](docs/APPROACH.md).
+
+## Karpathy's guidelines, put to work
+
+Our takeaways from [his post](https://x.com/karpathy/status/2105819303471976479):
+
+- **Write clearly.** Use relaxed STE, not robotic prose.
+- **Show the mechanism.** Use diagrams and images.
+- **Make it explorable.** Use interactive HTML, controls, and animation.
+- **Narrate when useful.** Bespoke explainers need a separately available media tool.
+- **Build to explain.** Small, purpose-built software can make an idea tangible.
+
+Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 ## Show, don't tell
 
@@ -82,14 +106,5 @@ codex plugin add ste-pro-max@ste-pro-max-plugins
 > Use STE-Pro Max on this material. Make it clear, visual, and interactive where it helps.
 
 [Host versions, updates & uninstall](docs/PLUGINS.md) · [More prompts](docs/EXAMPLES.md#steal-these-prompts)
-
-## Clear writing. Richer explanations.
-
-**STE means Simplified Technical English.** Clear sentences. Consistent terms.
-Meaning intact. We combine those principles with
-[Karpathy’s ideas for better model output](https://x.com/karpathy/status/2105819303471976479):
-show the mechanism, make it explorable, narrate when useful.
-
-STE-inspired, not ASD-STE100 certification. [The approach](docs/APPROACH.md).
 
 [Documentation](docs/README.md) · [All examples](docs/EXAMPLES.md) · [Advanced engine](docs/AUTHORING.md) · [Apache-2.0](LICENSE)
