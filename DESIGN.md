@@ -10,7 +10,8 @@ the native renderer, and the owner's October 3 identity/onboarding brief.
 in `docs/UX_PLAN.md`. The product entry is native plugin installation.
 
 ## Brand
-An explanatory notebook: precise, calm, and direct. Show evidence and limits.
+Make complex ideas click. Confident, outcome-led product copy; precise, direct
+explanations. Show evidence and limits without making defensive caveats the pitch.
 Avoid decorative dashboards, invented metrics, AI badges, and claims of certification.
 STE-Pro Max is the only product identity in current source and generated output.
 
@@ -29,9 +30,11 @@ Technical and business readers need clear updates; learners need a concrete exam
 they can inspect and manipulate. An agent author needs a repeatable local workflow.
 
 ## Information architecture
-The README leads with a generated editorial hero, what STE means and the
-Karpathy-inspired purpose, three real interactive examples, and native installation.
-Keep it short; lifecycle/developer detail belongs in linked docs. Focused skills route writing, visual documentation,
+The README leads with the generated editorial hero, a bold product promise, and
+large real examples: source-to-brief transformation, an interactive retry model,
+and a rate lab. Native installation and a short STE/Karpathy explanation follow.
+Keep it short; definitions, limits, prompts, research, lifecycle, and developer
+detail belong behind the `docs/README.md` hub. Focused skills route writing, visual documentation,
 storytelling, and media. A story presents its question and audience, an overview,
 ordered evidence-backed beats, and a source register. Guided and all-content views
 share the same facts. Source disclosures remain visible and printable.

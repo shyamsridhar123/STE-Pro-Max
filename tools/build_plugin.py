@@ -12,7 +12,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 NAME = "ste-pro-max"
 ROOT_FILES = (
-    "__main__.py", "quickstart.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
+    "__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
     ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
     ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip",
 )
@@ -40,6 +40,11 @@ REQUIRED_PAYLOAD = (
     "examples/showcase/release-brief.html", "examples/showcase/rate-lab.html",
     "docs/assets/retry-lab.gif", "docs/assets/retry-lab.png",
     "docs/assets/release-brief.png", "docs/assets/rate-lab.png",
+    "docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
+    "examples/showcase/brief-transformation.html", "examples/showcase/sources/launch-note.md",
+    "examples/showcase/retry-storm.html", "examples/showcase/sources/retry-storm.json",
+    "docs/assets/brief-transformation.png", "docs/assets/retry-storm.png",
+    "docs/assets/retry-storm.gif",
 )
 EXCLUDED_NAMES = {
     "artifacts", "tests", "node_modules", "venv", "__pycache__", "omx_wiki", "memory.md",

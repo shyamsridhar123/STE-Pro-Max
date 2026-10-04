@@ -6,7 +6,8 @@ three authoring skills and standalone HTML/SVG templates.
 
 ## Install a release
 
-These commands select **v0.4.0**, not the older unmerged default branch. Choose one host.
+These commands select the pinned **v0.4.0** release, not the moving default
+branch. Choose one host.
 
 ### GitHub Copilot CLI
 

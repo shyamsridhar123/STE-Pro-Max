@@ -3,6 +3,41 @@
 Verified locally on October 3, 2026. This records what ran, not an assertion of
 formal STE certification or universal host compatibility.
 
+## Example-first README refresh
+
+The README now puts real output before reference detail. The new docs hub
+contains the STE/Karpathy approach, example prompts and download instructions.
+The v0.4.0 plugin, its manifests, and its release assets were not changed.
+
+### Local checks
+
+- **361 regression tests passed**, including new source-fidelity, arithmetic,
+  documentation-link, brevity, and packaged-documentation checks.
+- Ruff and all-surface Pyright passed. The imported ZIP and original skill
+  hashes still match [the preserved sources](PROVENANCE.md).
+- The brief transformation passed **21 browser checks**: verbatim source,
+  counts and proportions, evidence highlights, keyboard use, responsive
+  layout, no-JavaScript reading, print, and offline behavior.
+- The retry model passed **30 browser checks**, including all 16 input pairs
+  at desktop, 320px, and 375px; matching SVG mark counts and data tables;
+  comparison/reset, keyboard, print, and no-JavaScript behavior.
+- Neither new example made external requests or produced browser errors.
+- The local GitHub-style README preview passed at **1280px, 375px, and 320px**:
+  four loaded images, 19 resolving local links, usable installation disclosures,
+  and no page-level horizontal overflow. This is not a pixel-identical GitHub
+  renderer or a screen-reader conformance audit.
+- The existing v0.4.0 examples ZIP was downloaded anonymously with HTTP 200.
+  Its three examples remain separate from the two new repository examples.
+  The annotated release tag still resolves to `1b50fb0fed3bfa4f9f7c783280b0979c54fe06b3`.
+
+An independent review found a docs-hub link to `DESIGN.md` absent from source
+bundles. The root design file is now included; a regression test checks the
+new documentation's relative links inside the built bundle.
+
+Evidence is retained under `artifacts/show-dont-tell-20261003/`.
+Browser checks used local Chrome; no new host-installation, cross-browser,
+assistive-technology, or measured-learning claim is made for this refresh.
+
 ## Plugin-first v0.4.0
 
 The default installed workflow is now three native skills plus standalone

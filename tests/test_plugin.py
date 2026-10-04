@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -13,6 +14,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.parse import unquote, urlsplit
 import wave
 import zipfile
 
@@ -31,7 +33,7 @@ class PluginTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.source = self.root / "source"
         self.source.mkdir()
-        files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "plugin.json",
+        files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
                  ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
                  ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip")
         for relative in files:
@@ -116,6 +118,11 @@ class PluginTests(unittest.TestCase):
             "examples/showcase/retry-lab.html", "examples/showcase/release-brief.html",
             "examples/showcase/rate-lab.html", "docs/assets/retry-lab.gif",
             "docs/assets/retry-lab.png", "docs/assets/release-brief.png", "docs/assets/rate-lab.png",
+            "DESIGN.md", "docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
+            "examples/showcase/brief-transformation.html", "examples/showcase/sources/launch-note.md",
+            "examples/showcase/retry-storm.html", "examples/showcase/sources/retry-storm.json",
+            "docs/assets/brief-transformation.png", "docs/assets/retry-storm.png",
+            "docs/assets/retry-storm.gif",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))
@@ -172,6 +179,22 @@ class PluginTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Missing required"):
             self.build()
         self.assertFalse(self.output.exists())
+
+    def test_packaged_documentation_links_resolve(self):
+        manifest = self.build()
+        bundle = self.output / manifest["bundle_dir"]
+        documents = ("README.md", "docs/README.md", "docs/APPROACH.md",
+                     "docs/EXAMPLES.md", "examples/showcase/README.md")
+        for document in documents:
+            source = (bundle / document).read_text(encoding="utf-8")
+            for href in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", source):
+                parsed = urlsplit(href)
+                if parsed.scheme or not parsed.path:
+                    continue
+                with self.subTest(document=document, href=href):
+                    target = (bundle / document).parent / unquote(parsed.path)
+                    self.assertTrue(target.resolve().is_relative_to(bundle))
+                    self.assertTrue(target.is_file(), f"Missing from bundle: {href}")
 
     def test_missing_output_parent_is_not_created(self):
         self.output = self.root / "missing parent" / "build"
