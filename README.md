@@ -47,7 +47,7 @@ Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-observatory.html) · [Guide](docs/LINE_STUDIO.md).
 
-*Development preview—not in v0.4.0.*
+*New in v0.5.0.*
 
 ### One request. 81 backend attempts.
 
@@ -79,13 +79,13 @@ Move the inputs. See **percentage points vs. relative change** update together.
 
 ## Install the plugin
 
-Choose your agent. Install **v0.4.0**, restart it, and bring your own material.
+Choose your agent. Install **v0.5.0**, restart it, and bring your own material.
 
 <details open>
 <summary><strong>GitHub Copilot CLI</strong></summary>
 
 ```sh
-copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.4.0
+copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 ```
 
@@ -95,7 +95,7 @@ copilot plugin install ste-pro-max@ste-pro-max-plugins
 <summary><strong>Claude Code</strong></summary>
 
 ```sh
-claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.4.0
+claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
 claude plugin install ste-pro-max@ste-pro-max-plugins
 ```
 
@@ -105,7 +105,7 @@ claude plugin install ste-pro-max@ste-pro-max-plugins
 <summary><strong>Codex CLI</strong></summary>
 
 ```sh
-codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.4.0
+codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.5.0
 codex plugin add ste-pro-max@ste-pro-max-plugins
 ```
 

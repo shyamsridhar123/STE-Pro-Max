@@ -2,17 +2,17 @@
 
 The host's native plugin manager owns installation and lifecycle. No custom
 installer, Python setup, global skill copy, or startup hook is required for the
-three authoring skills and standalone HTML/SVG templates.
+four authoring skills and standalone HTML/SVG templates.
 
 ## Install a release
 
-These commands select the pinned **v0.4.0** release, not the moving default
+These commands select the pinned **v0.5.0** release, not the moving default
 branch. Choose one host.
 
 ### GitHub Copilot CLI
 
 ```sh
-copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.4.0
+copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 copilot plugin list --json
 ```
@@ -20,7 +20,7 @@ copilot plugin list --json
 ### Claude Code
 
 ```sh
-claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.4.0
+claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
 claude plugin install ste-pro-max@ste-pro-max-plugins --scope user
 claude plugin list --json
 ```
@@ -31,7 +31,7 @@ when that is the intended installation; it can write project settings.
 ### Codex CLI
 
 ```sh
-codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.4.0
+codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.5.0
 codex plugin add ste-pro-max@ste-pro-max-plugins --json
 codex plugin list --json
 ```
@@ -43,8 +43,8 @@ Desktop UI behavior is not inferred from CLI installation tests.
 
 ## Use it
 
-Ask for `STE-ProMAX`, `STE visual docs`, or `STE storytelling`, and supply the
-material. The agent reads the installed skill and uses its normal model/file
+Ask for `STE-ProMAX`, `STE visual docs`, `STE storytelling`, or `STE Line Studio`,
+and supply the material. The agent reads the installed skill and uses its normal model/file
 and browser tools. It can adapt the [standalone examples](../examples/showcase/README.md)
 without a build, runtime bootstrap, provider key, or server.
 
@@ -65,6 +65,24 @@ new release. To move versions, select the new release/ref in your host's
 marketplace configuration and reinstall/update its entry. Do not overwrite
 existing tags or silently opt people into an unpinned development branch.
 Codex's inherited `--enable`/`--disable` flags control features, **not plugins**.
+
+### Move an existing Copilot installation to v0.5.0
+
+If your marketplace is pinned to v0.4.0, `plugin update` alone stays on that
+release. In PowerShell or your terminal, remove only the STE registration,
+then select the new tag:
+
+```powershell
+copilot plugin uninstall ste-pro-max@ste-pro-max-plugins
+copilot plugin marketplace remove ste-pro-max-plugins
+copilot plugin marketplace add "shyamsridhar123/STE-Pro-Max#v0.5.0"
+copilot plugin install ste-pro-max@ste-pro-max-plugins
+copilot plugin list --json
+```
+
+Restart Copilot. The installed version should be `0.5.0`, with all four STE
+skills available. These commands do not remove your authored workspace files.
+For a first installation, use the shorter commands above.
 
 ## Local development is a different mode
 

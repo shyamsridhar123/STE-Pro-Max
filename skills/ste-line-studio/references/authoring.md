@@ -1,7 +1,7 @@
 # Authoring original line-art explanations
 
-Development reference. Runtime contracts and examples must be checked against the
-files in the loaded bundle; this document does not certify a released feature.
+Authoring reference for v0.5.0. Check runtime contracts and examples against the
+files in the loaded bundle; this document is not a compatibility certificate.
 
 ## Choose a visual argument
 
@@ -201,5 +201,5 @@ Record checks actually performed:
 
 Report unchecked surfaces explicitly. Structural validation is not source
 verification, a screenshot is not an interaction test, and browser checks do not
-prove accessibility conformance or learning outcomes. Development documentation
-does not establish package availability or a released version.
+prove accessibility conformance or learning outcomes. Check the installed
+version and actual artifact rather than inferring behavior from documentation.
