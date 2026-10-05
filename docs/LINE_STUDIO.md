@@ -1,15 +1,17 @@
 # STE Line Studio
 
-**In development. Not included in the published v0.4.0 release.**
+**Included in STE-Pro Max v0.5.0.**
 
 Line Studio adds original line-art SVG figures and reader-controlled explanations
 as a fourth native STE skill for Copilot CLI, Claude Code, and Codex. The aim is
 to help a reader see a mechanism, inspect its parts, and test an idea—not just
 watch a polished animation.
 
-This guide describes the development feature. It is not a release announcement
-or a universal compatibility claim. [Recorded checks](VALIDATION.md#line-studio-development-050)
-cover the actual local build, browser behavior and native Copilot discovery.
+Use the [v0.5.0 installation guide](PLUGINS.md) to get all four skills.
+[Recorded checks](VALIDATION.md#line-studio-development-050) cover the original
+implementation; release-specific checks are attached to the
+[release](https://github.com/shyamsridhar123/STE-Pro-Max/releases/tag/v0.5.0).
+They are not a universal compatibility claim.
 
 ## Start with a complete explanation
 
@@ -48,7 +50,7 @@ a policy recommendation.
 
 ## Make your own figure
 
-When the development skill is available in the loaded bundle, ask:
+After installing the plugin, ask:
 
 > Use STE Line Studio to explain this mechanism. Start with a concrete example,
 > let me inspect the meaningful changes, and keep the source limitations visible.
@@ -96,9 +98,7 @@ evidence. None is implied by this guide, and none establishes learning outcomes.
 - [Original math primitives](../ste_promax/assets/line-math.js)
 - [SVG and interaction runtime](../ste_promax/assets/line-studio.js)
 - [Developer-only example builder](../tools/build_line_studio.mjs)
-- [Existing plugin installation guide](PLUGINS.md) — its v0.4.0 instructions do
-  **not** install this development feature.
+- [Plugin installation and update guide](PLUGINS.md)
 
 The example builder is for maintainers rebuilding standalone examples, not a
-setup requirement for readers or ordinary authoring. No new release, tag, or
-installation command is announced here.
+setup requirement for readers or ordinary authoring.

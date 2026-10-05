@@ -8,8 +8,8 @@ Evidence: the original writing skill, Karpathy's October 1 Chicago-time post,
 the native renderer, and the owner's October 3 identity/onboarding brief.
 `docs/PLUGIN_FIRST_PLAN.md` supersedes the earlier runtime-first onboarding
 in `docs/UX_PLAN.md`. The product entry is native plugin installation.
-`docs/LINE_STUDIO_PLAN.md` scopes the new original isometric feature on this
-development branch; it is not part of the published v0.4.0 release.
+`docs/LINE_STUDIO_PLAN.md` records the original isometric feature implementation.
+Line Studio is included in v0.5.0; the previous v0.4.0 release is unchanged.
 
 ## Brand
 Make complex ideas click. Confident, outcome-led product copy; precise, direct

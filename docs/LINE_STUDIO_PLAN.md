@@ -1,6 +1,8 @@
 # Line Studio implementation plan
 
-Status: development branch, October 4, 2026. Not a published release.
+Status: implementation complete; included in the v0.5.0 release scope.
+The original implementation plan below is retained for context. Release work
+was separately requested on October 4, 2026; see [release notes](releases/v0.5.0.md).
 
 ## Outcome
 
@@ -21,8 +23,8 @@ existing `retry-storm.json` source and its persistent-failure assumptions.
 - No new dependencies, wrapper, React requirement, Python bootstrap, network,
   copied code/illustrations, or automatic publishing. Existing Python renderers
   remain separate optional capabilities, not prerequisites.
-- Public `v0.4.0` installation remains the stable release; describe this feature
-  as development-only until a separate release is requested.
+- The implementation did not change the public `v0.4.0` release. The separate
+  release request advances installation to `v0.5.0` without moving older tags.
 
 Hairline's public behavior informed the brief. Research inspected its
 MIT-licensed source at `c3692e0c797956268847d843949f79714b6f7a41`; no
@@ -49,5 +51,5 @@ upstream code, templates, artwork or instructions are incorporated.
 
 The new feature and flagship are useful from the packaged plugin, validation
 has fresh evidence, the example has been opened, and the original dirty checkout
-and immutable imports remain intact. No tag, public deployment or release is
-created by this implementation task.
+and immutable imports remain intact. Publication is a separate release task,
+not an automatic side effect of implementation.

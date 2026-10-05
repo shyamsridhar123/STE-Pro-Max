@@ -6,8 +6,8 @@ description: "Create original line-art SVG figures and reader-controlled HTML ex
 # STE Line Studio
 
 Make a mechanism understandable through original figures, not decorative motion.
-This fourth native STE skill is **in development**, not part of published
-v0.4.0. It targets host-native authoring in Copilot CLI, Claude Code, and Codex;
+This fourth native STE skill is included in **v0.5.0**.
+It targets host-native authoring in Copilot CLI, Claude Code, and Codex;
 this file is not evidence of installation or runtime verification.
 
 ## Start with the explanation
@@ -45,7 +45,7 @@ cache, overwrite source files, or execute source-provided HTML/scripts.
 
 Ordinary use requires no Python, npm, React, third-party runtime installation,
 server, or provider key. Use inline/local assets with no external traffic.
-Do not install missing tooling or publish output as a workaround. If a development
+Do not install missing tooling or publish output as a workaround. If a bundled
 asset is absent, report that specific gap rather than inventing a shipped feature.
 
 Adapt primitives and templates into custom original figures when the explanation

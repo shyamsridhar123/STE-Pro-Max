@@ -24,12 +24,10 @@ with its native file tools into a new `artifacts/` directory. Keep the installed
 copy unchanged. Replace fictional values only with supplied evidence, and test
 controls, keyboard use, mobile layout, no-JavaScript reading, and print output.
 
-The v0.4.0 plugin ships the original retry-lab, release-brief, and rate-lab
-starters. The two newer examples can be read directly from this repository;
-they are not part of the unchanged v0.4.0 tag.
-Line Studio and Retry Observatory are new development-source features
-(`0.5.0`), not a published `v0.5.0` release. Their source templates, original
-JavaScript and source JSON are included in a newly built development bundle.
+The v0.5.0 plugin includes all seven examples above, including Line Studio and
+Retry Observatory, with editable templates, original JavaScript and source JSON.
+The previous v0.4.0 tag remains unchanged and includes only the original
+retry-lab, release-brief and rate-lab starters.
 
 The template route is host-authored HTML/SVG. It does not implicitly run the
 optional Python engine's schema validators or produce its hash manifest.

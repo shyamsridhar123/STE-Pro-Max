@@ -1,5 +1,6 @@
 """Example-first documentation contracts; no image/Markdown package or network."""
 from pathlib import Path
+import json
 import re
 import struct
 import unittest
@@ -94,7 +95,7 @@ class ReadmeTests(unittest.TestCase):
         approach = (ROOT / "docs/APPROACH.md").read_text(encoding="utf-8")
         for host, verb in (("copilot", "install"), ("claude", "install"), ("codex", "add")):
             self.assertIn(f"{host} plugin {verb} ste-pro-max@ste-pro-max-plugins", readme)
-        self.assertIn("v0.4.0", readme)
+        self.assertIn("v0.5.0", readme)
         self.assertNotIn("python quickstart.py", readme)
         self.assertNotIn("git clone", readme)
         self.assertNotIn("--plugin-dir", readme)
@@ -116,9 +117,28 @@ class ReadmeTests(unittest.TestCase):
             r"\(examples/showcase/retry-observatory\.html\)",
         )
         self.assertIn("docs/LINE_STUDIO.md", section)
-        self.assertIn("Development preview", section)
-        self.assertIn("v0.4.0", section)
+        self.assertIn("New in v0.5.0", section)
+        self.assertNotIn("Development preview", section)
         self.assertNotIn("certified", section.lower())
+
+    def test_release_install_pins_and_feature_availability_match_manifest(self):
+        version = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))["version"]
+        for document in ("README.md", "docs/PLUGINS.md"):
+            source = (ROOT / document).read_text(encoding="utf-8")
+            for host in ("copilot", "claude"):
+                self.assertIn(
+                    f"{host} plugin marketplace add shyamsridhar123/STE-Pro-Max#v{version}",
+                    source,
+                )
+            self.assertIn(f"codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v{version}", source)
+        for document in ("docs/LINE_STUDIO.md", "skills/ste-line-studio/SKILL.md",
+                         "examples/showcase/README.md", "docs/EXAMPLES.md"):
+            source = (ROOT / document).read_text(encoding="utf-8")
+            self.assertIn(f"v{version}", source)
+            for stale in ("**in development**", "**In development.", "development preview",
+                          "not a published `v0.5.0`", "release/tag has been published"):
+                self.assertNotIn(stale, source)
+        self.assert_local_links_resolve(f"docs/releases/v{version}.md")
 
     def test_readme_defines_ste_and_links_actual_karpathy_post_without_claiming_endorsement(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

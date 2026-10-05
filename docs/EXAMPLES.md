@@ -10,12 +10,12 @@ unzip, and open an HTML file in `examples/showcase/`.
 GitHub's file viewer displays source code; download the file to interact with it.
 The source material is embedded, so each example also works on its own.
 
-The [v0.4.0 examples-only ZIP](https://github.com/shyamsridhar123/STE-Pro-Max/releases/download/v0.4.0/ste-examples.zip)
-contains the original retry walkthrough, release brief, and rate lab.
-The new brief transformation and retry model are repository examples; they are
-not retroactively added to the existing v0.4.0 release.
+The [v0.5.0 examples-only ZIP](https://github.com/shyamsridhar123/STE-Pro-Max/releases/download/v0.5.0/ste-examples.zip)
+contains all seven standalone examples and their source notes. Unzip it and
+open `ste-examples/retry-observatory.html` to start.
+The older v0.4.0 release is unchanged; new examples are not retroactively added.
 
-## New in development: Line Studio
+## New in v0.5.0: Line Studio
 
 [Retry Observatory](../examples/showcase/retry-observatory.html) ·
 [SVG preview](assets/retry-observatory.svg) ·
@@ -28,9 +28,8 @@ scrub, change the assumptions, or save a static SVG. It uses the
 [same illustrative source model](../examples/showcase/sources/retry-storm.json)
 as the existing retry example—not newly observed system behavior.
 
-Line Studio is implemented in development source version `0.5.0`. No
-`v0.5.0` release/tag has been published; the stable v0.4.0 install does not
-include these new examples.
+Line Studio and these examples are included in v0.5.0. Install that release
+or use the examples-only ZIP; an installation pinned to v0.4.0 stays unchanged.
 
 ## A dense update becomes a sharp brief
 
