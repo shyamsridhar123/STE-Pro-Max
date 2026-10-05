@@ -7,7 +7,8 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ("brief-transformation", "retry-storm", "retry-lab", "release-brief", "rate-lab")
+EXAMPLES = ("brief-transformation", "retry-storm", "retry-lab", "release-brief", "rate-lab",
+            "retry-observatory")
 
 
 def heading_ids(markdown):
@@ -40,7 +41,8 @@ class ReadmeTests(unittest.TestCase):
 
     def test_moved_reference_material_remains_discoverable_and_linked(self):
         for document in ("docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
-                         "examples/showcase/README.md"):
+                         "examples/showcase/README.md", "docs/LINE_STUDIO.md",
+                         "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md"):
             self.assert_local_links_resolve(document)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("docs/README.md", readme)
@@ -100,6 +102,23 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("No Python setup", readme)
         self.assertIn("not ASD-STE100 certification", readme)
         self.assertNotIn("pip install ste-pro-max", readme)
+
+    def test_line_studio_uses_the_existing_showcase_structure(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        showcase = readme.split("## Show, don't tell", 1)[1].split("## Install the plugin", 1)[0]
+        match = re.search(r"^### Line Studio: [^\n]+\n(.*?)(?=^### |\Z)", showcase, re.M | re.S)
+        self.assertIsNotNone(match, "Line Studio needs a named showcase subsection.")
+        section = match.group(1)
+        self.assertRegex(section, r"(?m)^> .+")
+        self.assertRegex(
+            section,
+            r"\[!\[[^\]]+\]\(docs/assets/retry-observatory\.png\)\]"
+            r"\(examples/showcase/retry-observatory\.html\)",
+        )
+        self.assertIn("docs/LINE_STUDIO.md", section)
+        self.assertIn("Development preview", section)
+        self.assertIn("v0.4.0", section)
+        self.assertNotIn("certified", section.lower())
 
     def test_readme_defines_ste_and_links_actual_karpathy_post_without_claiming_endorsement(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

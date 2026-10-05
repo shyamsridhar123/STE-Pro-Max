@@ -39,14 +39,23 @@ Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 ## Show, don't tell
 
+### Line Studio: see the mechanism
+
+> “Make 81 → 3 explorable.”
+
+[![Retry Observatory: 81 versus 3](docs/assets/retry-observatory.png)](examples/showcase/retry-observatory.html)
+
+Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-observatory.html) · [Guide](docs/LINE_STUDIO.md).
+
+*Development preview—not in v0.4.0.*
+
 ### One request. 81 backend attempts.
 
 > “Show me why retries multiply. Let me change the rules.”
 
 [![Working retry model: four layers with three attempts each produce 81 backend attempts; one retry owner produces three.](docs/assets/retry-storm.gif)](examples/showcase/retry-storm.html)
 
-Change the layers. Change the attempts. Watch the multiplication—and compare
-one retry owner. [Explore the model](examples/showcase/retry-storm.html) · [Still image](docs/assets/retry-storm.png).
+Change the rules. Watch attempts multiply. [Explore](examples/showcase/retry-storm.html) · [Still](docs/assets/retry-storm.png).
 
 ### The update nobody reads → the brief everyone gets
 
@@ -54,8 +63,7 @@ one retry owner. [Explore the model](examples/showcase/retry-storm.html) · [Sti
 
 [![A dense Northstar pilot note becomes a visual brief: 186 of 240 answers accepted, limits visible, shadow pilot proposed.](docs/assets/brief-transformation.png)](examples/showcase/brief-transformation.html)
 
-Buried findings become a clear takeaway. Highlight the numbers, scope, and
-next step to trace them back to the source. [Explore the brief](examples/showcase/brief-transformation.html).
+Trace the numbers, scope, and next step to their source. [Explore the brief](examples/showcase/brief-transformation.html).
 
 ### Don't just quote the number. Let people question it.
 

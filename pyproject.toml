@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ste-pro-max"
-version = "0.4.0"
+version = "0.5.0"
 description = "Clear writing, visual documentation, and evidence-linked stories with a low-friction local workflow."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,7 @@ Repository = "https://github.com/shyamsridhar123/STE-Pro-Max"
 include = ["ste_promax*"]
 
 [tool.setuptools.package-data]
-ste_promax = ["templates/*.j2", "designs/*.DESIGN.md", "scripts/*.ps1", "data/*.json"]
+ste_promax = ["templates/*.j2", "designs/*.DESIGN.md", "scripts/*.ps1", "data/*.json", "assets/*.js"]
 
 [tool.ruff]
 line-length = 110

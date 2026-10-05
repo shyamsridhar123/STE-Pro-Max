@@ -61,6 +61,7 @@ based on what the reader needs to understand—not a quota of media types.
 | Relationships, message order, or quantities | Native visual document through [ste-visual-docs](../ste-visual-docs/SKILL.md) |
 | An explanation, decision brief, research digest, or incident review with linked evidence | Reader-controlled story through [ste-storytelling](../ste-storytelling/SKILL.md) |
 | A “what if” or parameter change | Reviewed authored HTML when native shapes do not serve the request |
+| A spatial mechanism or interactive line-art figure | Original SVG through [ste-line-studio](../ste-line-studio/SKILL.md) |
 | Requested speech or video | Reviewed story narration preparation; video export is a separate workflow |
 
 Do not generate every medium for each request. A disposable, single-purpose example

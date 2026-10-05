@@ -1,6 +1,6 @@
 # See what you can make
 
-Five self-contained examples. Real HTML, real controls, no build or server.
+Self-contained examples. Real HTML, real controls, no build or server.
 Every source is fictional or an explicitly stated mathematical model.
 
 ## Get the files
@@ -14,6 +14,23 @@ The [v0.4.0 examples-only ZIP](https://github.com/shyamsridhar123/STE-Pro-Max/re
 contains the original retry walkthrough, release brief, and rate lab.
 The new brief transformation and retry model are repository examples; they are
 not retroactively added to the existing v0.4.0 release.
+
+## New in development: Line Studio
+
+[Retry Observatory](../examples/showcase/retry-observatory.html) ·
+[SVG preview](assets/retry-observatory.svg) ·
+[Six original interaction patterns](../examples/showcase/line-studio.html) ·
+[Feature guide](LINE_STUDIO.md)
+
+The observatory builds the retry mechanism one idea at a time: one attempt
+budget, nested budgets, multiplication, then one retry owner. Play, pause,
+scrub, change the assumptions, or save a static SVG. It uses the
+[same illustrative source model](../examples/showcase/sources/retry-storm.json)
+as the existing retry example—not newly observed system behavior.
+
+Line Studio is implemented in development source version `0.5.0`. No
+`v0.5.0` release/tag has been published; the stable v0.4.0 install does not
+include these new examples.
 
 ## A dense update becomes a sharp brief
 

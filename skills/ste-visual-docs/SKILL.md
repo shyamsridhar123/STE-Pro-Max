@@ -20,6 +20,9 @@ Read [the example guide](../../examples/showcase/README.md) for starters, and
 [STE-ProMAX](../ste-promax/SKILL.md) for writing rules when revising prose.
 For multiple evidence-linked beats, use
 [ste-storytelling](../ste-storytelling/SKILL.md), not a second rendering engine.
+For an original isometric figure, inspectable parts, or a paced interactive SVG
+explanation, use [STE Line Studio](../ste-line-studio/SKILL.md). Its JavaScript
+primitives are bundled locally; no additional plugin or package install is needed.
 
 - Keep units, baselines, populations, dates, and uncertainty attached to the data.
   Label illustrative or simulated material. Never fill an evidence gap with an

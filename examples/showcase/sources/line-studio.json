@@ -1,0 +1,84 @@
+{
+  "title": "STE Line Studio",
+  "classification": "Original illustrative interaction patterns, not observed systems or quantitative data",
+  "figures": [
+    {
+      "kind": "stack",
+      "title": "Keep the evidence in reach.",
+      "summary": "A stack of source notes. Select a note to inspect its role. Heights and spacing are illustrative, not confidence or importance scores.",
+      "theme": "dark",
+      "intensity": 0.55,
+      "items": [
+        { "label": "Original note", "detail": "Keep the unmodified material beside the explanation." },
+        { "label": "Observation", "detail": "State what was seen without adding a cause." },
+        { "label": "Qualification", "detail": "Retain scope, uncertainty, and contrary evidence." },
+        { "label": "Next question", "detail": "Identify what the source does not yet establish." }
+      ]
+    },
+    {
+      "kind": "field",
+      "title": "Explore a neighborhood.",
+      "summary": "A proximity field responds to the pointer. The columns are an interaction metaphor, not measured values or inferred relationships.",
+      "theme": "dark",
+      "intensity": 0.6,
+      "items": [
+        { "label": "Question", "detail": "Start with a specific reader question." },
+        { "label": "Source", "detail": "Inspect the material that can answer it." },
+        { "label": "Context", "detail": "Keep the surrounding conditions visible." },
+        { "label": "Comparison", "detail": "Choose a baseline that preserves meaning." },
+        { "label": "Limit", "detail": "Name what the evidence does not cover." },
+        { "label": "Revision", "detail": "Change the explanation when the source changes." }
+      ]
+    },
+    {
+      "kind": "layers",
+      "title": "Separate claims from presentation.",
+      "summary": "An exploded review stack. Layers describe responsibilities, not a real system architecture or a processing timeline.",
+      "theme": "dark",
+      "intensity": 0.7,
+      "items": [
+        { "label": "Source", "detail": "Preserve the original input." },
+        { "label": "Claim", "detail": "Distinguish observation, attribution, inference, and proposal." },
+        { "label": "Explanation", "detail": "Choose the smallest useful medium." },
+        { "label": "Review", "detail": "Inspect both the evidence and the actual artifact." }
+      ]
+    },
+    {
+      "kind": "signal",
+      "title": "Trace a thought.",
+      "summary": "An editable pointer trail with a bounded history. The trace is a drawing, not telemetry, a waveform, or a measured event.",
+      "theme": "dark",
+      "intensity": 0.55,
+      "items": [
+        { "label": "Begin", "detail": "Introduce a concrete example." },
+        { "label": "Connect", "detail": "Show the intermediate relationship." },
+        { "label": "Check", "detail": "Ask what the reader can now explain." }
+      ]
+    },
+    {
+      "kind": "orbit",
+      "title": "Change your point of view.",
+      "summary": "Rotate the same three responsibilities. Camera angle changes the presentation, not the underlying evidence.",
+      "theme": "dark",
+      "intensity": 0.5,
+      "items": [
+        { "label": "Author", "detail": "Makes the explanation clear." },
+        { "label": "Reader", "detail": "Needs a question answered." },
+        { "label": "Reviewer", "detail": "Checks claims and behavior independently." }
+      ]
+    },
+    {
+      "kind": "flow",
+      "title": "Follow the handoff.",
+      "summary": "A user-started pulse marks a conceptual handoff. Its speed is explanatory pacing, not latency or throughput.",
+      "theme": "dark",
+      "intensity": 0.45,
+      "items": [
+        { "label": "Read", "detail": "Understand the supplied source." },
+        { "label": "Explain", "detail": "Write and visualize only what it supports." },
+        { "label": "Inspect", "detail": "Check the resulting artifact." },
+        { "label": "Deliver", "detail": "Return the useful result with material limits." }
+      ]
+    }
+  ]
+}

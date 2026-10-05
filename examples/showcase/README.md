@@ -1,12 +1,14 @@
 # What good looks like
 
-Five working, single-file examples. Open an HTML file in a browser: no Python,
+Working, single-file examples. Open an HTML file in a browser: no Python,
 package installation, server, external font, or build step is required.
 All data is explicitly fictional. These are reusable authoring starters, not
 evidence of a real system's safety or a measured learning outcome.
 
 | Example | Try it | What to preserve when adapting |
 | --- | --- | --- |
+| [Retry Observatory — Line Studio](retry-observatory.html) | Play or scrub the isometric explanation; change budgets and layers; save SVG | Cumulative attempt counts, initial attempt included, persistent failure, no timing or concurrency claim |
+| [Line Studio patterns](line-studio.html) | Inspect six original line-art interactions by pointer or keyboard | Metaphors are illustrative, not measured data; retain equivalent controls and full descriptions |
 | [From dense note to sharp brief](brief-transformation.html) | Trace the outcome, scope, and proposal to the original note | 240 total questions; 186 accepted, 38 requiring edits, 16 unanswered; limited scope; proposed, unstarted pilot |
 | [One request. 81 backend attempts.](retry-storm.html) | Change layers and attempts; compare a single retry owner | Persistent-failure model, attempts including the initial call, worst-case counts rather than timing or telemetry |
 | [One retry. One record.](retry-lab.html) | Step through K7/R9, play the trace, reset | Message order, 2 requests / 1 stored record, sequential-only scope |
@@ -25,6 +27,9 @@ controls, keyboard use, mobile layout, no-JavaScript reading, and print output.
 The v0.4.0 plugin ships the original retry-lab, release-brief, and rate-lab
 starters. The two newer examples can be read directly from this repository;
 they are not part of the unchanged v0.4.0 tag.
+Line Studio and Retry Observatory are new development-source features
+(`0.5.0`), not a published `v0.5.0` release. Their source templates, original
+JavaScript and source JSON are included in a newly built development bundle.
 
 The template route is host-authored HTML/SVG. It does not implicitly run the
 optional Python engine's schema validators or produce its hash manifest.
