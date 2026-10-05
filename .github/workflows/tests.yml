@@ -24,5 +24,9 @@ jobs:
         run: python -m pip install .
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
+      - name: Verify original SVG primitives and generated examples
+        run: |
+          node --test tests/line-math.test.cjs tests/line-studio.test.cjs tests/retry-observatory.test.cjs
+          node tools/build_line_studio.mjs --check
       - name: Verify fresh quickstart and no-install reuse
         run: python tools/verify_quickstart.py --evidence-dir "${{ runner.temp }}/ste-first-run"

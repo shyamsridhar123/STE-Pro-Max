@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ste-pro-max",
-  "version": "0.4.0",
-  "description": "Simplified Technical English-inspired writing, visual explanations, and evidence-linked stories. Native skills and standalone templates; no Python required for authoring.",
+  "version": "0.5.0",
+  "description": "STE-inspired writing, evidence-linked stories, and original interactive SVG explanations. Native authoring skills and standalone templates; no Python setup.",
   "author": {
     "name": "Shyam Sridhar"
   },
@@ -14,6 +14,7 @@
     "documentation",
     "diagrams",
     "storytelling",
+    "interactive-svg",
     "agent-skills"
   ],
   "extensions": {
@@ -21,13 +22,14 @@
       "interface": {
         "displayName": "STE-Pro Max",
         "shortDescription": "Clear writing. Visual explanations. Evidence intact.",
-        "longDescription": "Three native authoring skills and self-contained HTML/SVG examples, inspired by Simplified Technical English and Karpathy’s output guidelines. Optional deterministic engine is separate.",
+        "longDescription": "Four native skills for clear writing, visual documentation, evidence-linked stories, and original interactive isometric SVG explanations. Optional deterministic engine is separate.",
         "developerName": "Shyam Sridhar",
         "category": "Productivity",
         "defaultPrompt": [
           "Use STE-ProMAX to rewrite these notes without losing uncertainty.",
           "Use STE visual docs to explain this retry flow.",
-          "Use STE storytelling to turn these findings into a decision brief."
+          "Use STE storytelling to turn these findings into a decision brief.",
+          "Use STE Line Studio to make this mechanism explorable."
         ],
         "brandColor": "#D8A47F",
         "screenshots": [

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="A controllable visual explanation of nested retry amplification. One original request, four retry layers, 81 backend attempts.">
+<title>Retry Observatory · STE Line Studio</title>
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#e9edf2;background:#10151b;font-synthesis:none;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,summary{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+button:disabled{opacity:.42;cursor:default}
+:focus-visible{outline:2px solid #efc97b;outline-offset:5px}
+.observatory{--bg:#10151b;--ink:#e9edf2;--muted:#a3b0bf;--rule:#344452;--blue:#79bdf2;--gold:#efc97b;--mint:#8ad4be;background:var(--bg);color:var(--ink);min-height:100vh;padding:28px clamp(18px,4vw,70px) 48px}
+.observatory[data-theme=light]{--bg:#f7f9fb;--ink:#172333;--muted:#526173;--rule:#b0becb;--blue:#176698;--gold:#82600a;--mint:#176b55;color-scheme:light}
+.wrap{max-width:1460px;margin:auto}
+.masthead{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
+.brand{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;text-decoration:none}
+.brand svg{width:28px;height:28px;color:var(--gold)}
+.brand small{font-weight:400;color:var(--muted);display:block;font-size:12px;margin-top:3px}
+.masthead-note{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:9px}
+.dot{width:6px;height:6px;display:inline-block;background:var(--mint);border-radius:50%}
+.introduction{padding:30px 0 16px;display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(37px,4.2vw,64px);line-height:1.07;letter-spacing:-1.8px;font-weight:400;margin:0}
+.intro-note{font-size:14px;line-height:1.6;color:var(--muted);max-width:270px;margin:0 0 4px}
+.workspace{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:clamp(22px,3.5vw,55px);align-items:start}
+.lesson{padding-top:26px;min-width:0}
+.chapter-list{display:flex;gap:6px;margin-bottom:27px}
+.chapter-list button{background:none;color:var(--muted);border:1px solid var(--rule);border-radius:50%;width:32px;height:32px;font-size:12px;flex-shrink:0}
+.chapter-list button[aria-current=step]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chapter-list .connector{width:25px;border-top:1px solid var(--rule);align-self:center}
+h2{font-size:22px;font-weight:500;line-height:1.34;letter-spacing:-.4px;margin:0 0 12px;min-height:59px}
+.explanation{font-size:14px;color:var(--muted);line-height:1.75;min-height:103px;margin:0}
+.formula{font:44px/1.2 Georgia,"Times New Roman",serif;color:var(--gold);padding:22px 0 25px;min-height:100px;white-space:normal;letter-spacing:-1px}
+.formula sup{font-size:.48em;vertical-align:super;margin-left:2px}
+.inputs{border-top:1px solid var(--rule);padding-top:19px;display:grid;gap:19px}
+.input-label{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13px}
+.input-label output{color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:14px 0 2px;accent-color:var(--blue);cursor:pointer;height:17px}
+.range-ends{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.budget-note{font-size:11px;color:var(--muted);line-height:1.6;margin:13px 0 0}
+.drawing-column{min-width:0;padding-top:10px}
+.canvas-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;color:var(--muted);padding:0 4px 2px}
+.canvas-actions{display:flex;gap:14px}
+.text-button{background:none;border:0;color:var(--muted);padding:7px 0;font-size:12px;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:4px}
+.text-button:hover{color:var(--ink)}
+.drawing-region{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--rule) var(--bg);border-bottom:1px solid var(--rule)}
+.drawing{min-width:640px}
+.drawing svg{display:block;width:100%;height:auto}
+.transport{padding:19px 0 16px}
+.timeline-label{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--muted)}
+.timeline-label output{font-variant-numeric:tabular-nums}
+.transport input{accent-color:var(--gold);margin:8px 0 12px}
+.transport-buttons{display:flex;align-items:center;gap:10px}
+.play{min-height:39px;background:var(--ink);color:var(--bg);border:0;border-radius:4px;padding:8px 17px;font-size:12px;font-weight:600}
+.step-button{min-height:39px;background:none;color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px 12px;font-size:12px}
+.reset{margin-left:auto}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 0;margin-top:12px}
+.comparison-item{display:flex;align-items:center;gap:15px;color:var(--muted)}
+.comparison-item strong{font:42px/1 Georgia,serif;color:var(--blue)}
+.comparison-item:last-child strong{color:var(--mint)}
+.comparison-item p{margin:0;font-size:12px;line-height:1.6}
+.comparison-item p span{display:block;color:var(--ink);font-size:13px}
+.comparison[data-active=nested] .comparison-item:first-child p span,.comparison[data-active=owner] .comparison-item:last-child p span{font-weight:600}
+.conclusion{margin:12px 0 0;color:var(--muted);font-size:12px}
+.lower{display:grid;grid-template-columns:1.35fr 1fr;gap:48px;padding-top:33px;margin-top:14px}
+.scope{font-size:12px;color:var(--muted);line-height:1.7;margin:0;max-width:680px}
+.scope strong{color:var(--ink);font-weight:500}
+details{font-size:12px;color:var(--muted)}
+summary{cursor:pointer;color:var(--ink);padding:0 0 12px}
+details p,details li{line-height:1.7}
+details ul{padding-left:20px}
+table{border-collapse:collapse;width:100%;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--rule)}
+th{font-weight:500;color:var(--ink)}
+footer{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:11px;padding-top:30px;margin-top:18px;border-top:1px solid var(--rule)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+noscript p{padding:15px;border:1px solid var(--rule);color:var(--gold);font-size:13px;line-height:1.6}
+@media(max-width:1050px){.workspace{grid-template-columns:240px minmax(0,1fr);gap:25px}.introduction{padding-top:28px}.intro-note{max-width:230px}h1{font-size:44px}.formula{font-size:38px}.comparison-item{gap:9px}.comparison-item strong{font-size:34px}}
+@media(min-width:1100px){h1{font-size:clamp(41px,3.5vw,55px)}h1 br{display:none}.intro-note{font-size:12px;max-width:230px}.introduction{align-items:center}}
+@media(max-width:780px){.observatory{padding:20px 20px 35px}.introduction{display:block}.intro-note{max-width:100%;margin:15px 0 0}.workspace{grid-template-columns:1fr}.lesson{padding-top:5px;display:grid;grid-template-columns:1fr 1fr;column-gap:22px}.chapter-list,.lesson h2,.explanation,.formula{grid-column:1}.inputs{grid-column:2;grid-row:2/5;border-top:0;padding-top:0}.chapter-list{margin-bottom:16px}h2{min-height:0;font-size:20px}.explanation{min-height:0;font-size:13px}.formula{padding:17px 0 0;min-height:0}.budget-note{display:none}.drawing-column{padding-top:0}.lower{grid-template-columns:1fr;gap:25px}.masthead-note{font-size:10px}.transport{padding-top:14px}.comparison{margin-top:6px}footer{flex-wrap:wrap}.canvas-toolbar{padding-right:0}}
+@media(max-width:440px){h1{font-size:38px;letter-spacing:-1px}.lesson{display:block}.chapter-list{margin:8px 0 18px}.formula{padding:17px 0 20px}.inputs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);gap:20px;padding-top:16px}.input-label{font-size:12px}.intro-note{font-size:12px}.comparison{gap:14px}.comparison-item{align-items:flex-start}.comparison-item p{font-size:10px}.comparison-item p span{font-size:11px}.comparison-item strong{font-size:34px}.transport-buttons{gap:7px;flex-wrap:wrap}.play{padding:8px 12px}.step-button{padding:8px 9px}.masthead-note{display:none}.canvas-toolbar{font-size:10px;gap:8px}.canvas-actions{gap:10px}.text-button{font-size:11px}}
+@media(max-width:320px){.observatory{padding:16px 12px 28px}h1{font-size:31px;overflow-wrap:anywhere}.workspace{grid-template-columns:minmax(0,1fr)}.chapter-list .connector{width:12px}.inputs{grid-template-columns:minmax(0,1fr);gap:12px}.canvas-toolbar{align-items:flex-start;flex-direction:column}.comparison{grid-template-columns:minmax(0,1fr);gap:16px}.formula{font-size:31px;overflow-wrap:anywhere}.lower{grid-template-columns:minmax(0,1fr)}th,td{padding:8px 4px;font-size:11px}footer{overflow-wrap:anywhere}.intro-note br{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media print{.observatory{--bg:#fff;--ink:#172333;--muted:#394b5c;--rule:#c1ccd6;color:#172333;background:#fff;padding:0}.masthead-note,.canvas-toolbar,.chapter-list,.inputs,.transport,.conclusion,footer{display:none!important}.introduction{padding:16px 0}.intro-note{max-width:380px}h1{font-size:32px}.workspace{display:block}.lesson{display:block;padding:5px 0}h2,.explanation{min-height:0}.formula{padding:10px 0;font-size:32px;min-height:0}.drawing-region{overflow:visible}.drawing{min-width:0}.drawing svg{max-height:330px}.comparison{break-inside:avoid}.lower{display:block}.lower>section{margin-top:15px}details{display:block}details>div{display:block!important}summary{list-style:none;font-weight:bold}.comparison-item strong{color:#172333!important}noscript p{color:#172333}}
+@media print{details::details-content{display:block;content-visibility:visible}}
+</style>
+</head>
+<body>
+<main class="observatory" data-retry-observatory data-theme="dark">
+<div class="wrap">
+<header class="masthead">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 10.5v11L16 29 3 21.5v-11ZM3 10.5l13 7.5 13-7.5M16 18v11M9.5 6.8l13 7.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    <span>STE Line Studio<small>Retry Observatory</small></span>
+  </div>
+  <span class="masthead-note"><span class="dot"></span> A local, interactive explanation</span>
+</header>
+<section class="introduction" aria-labelledby="page-title">
+  <h1 id="page-title">Small retries. <br>Exponential work.</h1>
+  <p class="intro-note">A budget inside a budget is a multiplier.<br>See why. Then change the rules.</p>
+</section>
+<div class="workspace">
+  <section class="lesson" aria-label="The explanation">
+    <nav class="chapter-list" aria-label="Explanation chapters" data-retry-controls>
+      <button type="button" data-retry-chapter="0" aria-label="Chapter 1: One budget" disabled>1</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="1" aria-label="Chapter 2: Nested budgets" disabled>2</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="2" aria-label="Chapter 3: The multiplication" aria-current="step" disabled>3</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="3" aria-label="Chapter 4: One retry owner" disabled>4</button>
+    </nav>
+    <h2 data-retry-headline>The next layer repeats the work.</h2>
+    <p class="explanation" data-retry-copy>At every boundary, each incoming call can start 3 more. After 4 layers, the backend can receive 81 attempts from one original request.</p>
+    <div class="formula" data-retry-formula aria-label="3 to the fourth power equals 81">3<sup>4</sup> = 81</div>
+    <div class="inputs" data-retry-controls>
+      <div><label class="input-label" for="attempts">Attempts per layer <output for="attempts" data-retry-attempt-value>3 total</output></label>
+        <input type="range" id="attempts" data-retry-attempts min="1" max="4" step="1" value="3" disabled>
+        <div class="range-ends" aria-hidden="true"><span>1</span><span>4</span></div></div>
+      <div><label class="input-label" for="layers">Retry layers <output for="layers" data-retry-layer-value>4</output></label>
+        <input type="range" id="layers" data-retry-layers min="1" max="4" step="1" value="4" disabled>
+        <div class="range-ends" aria-hidden="true"><span>1</span><span>4</span></div></div>
+    </div>
+    <p class="budget-note">The initial attempt is included in the budget.<br>Three attempts means two retries.</p>
+  </section>
+  <section class="drawing-column" aria-label="Interactive isometric model">
+    <div class="canvas-toolbar" data-retry-controls>
+      <span>Isometric attempt map</span>
+      <div class="canvas-actions"><button class="text-button" data-retry-theme type="button" aria-pressed="false" disabled>Light canvas</button><button class="text-button" data-retry-export type="button" disabled>Save SVG</button></div>
+    </div>
+    <div class="drawing-region" role="region" tabindex="0" data-retry-drawing-region aria-label="Attempt map. Scroll horizontally on small screens. Space plays or pauses; Home and End seek.">
+      <div class="drawing" data-retry-drawing><!--__STE_STATIC__--></div>
+    </div>
+    <div class="transport" data-retry-controls>
+      <label class="timeline-label" for="timeline"><span>Reveal the explanation</span><output data-retry-position for="timeline">19 / 26 s</output></label>
+      <input id="timeline" data-retry-timeline type="range" min="0" max="1000" step="1" value="720" aria-label="Explanation progress" disabled>
+      <div class="transport-buttons">
+        <button type="button" class="play" data-retry-play aria-pressed="false" disabled>Play the explanation</button>
+        <button type="button" class="step-button" data-retry-previous aria-label="Previous explanatory state" disabled>Back</button>
+        <button type="button" class="step-button" data-retry-next aria-label="Next explanatory state" disabled>Next</button>
+        <button type="button" class="text-button reset" data-retry-reset disabled>Reset</button>
+      </div>
+    </div>
+    <div class="comparison" data-retry-comparison data-active="nested" aria-label="Backend attempt comparison">
+      <div class="comparison-item"><strong data-retry-nested-total>81</strong><p><span>Every layer retries</span>backend attempts</p></div>
+      <div class="comparison-item"><strong data-retry-owner-total>3</strong><p><span>One layer owns retries</span>backend attempts</p></div>
+    </div>
+    <p class="conclusion" data-retry-difference>78 fewer backend attempts in this model.</p>
+  </section>
+</div>
+<noscript><p>This is a readable static example. Enable JavaScript to play, change assumptions, or export SVG. The default calculation is 3 × 3 × 3 × 3 = 81, versus 3 × 1 × 1 × 1 = 3.</p></noscript>
+<div class="lower">
+  <section aria-label="Scope and assumptions">
+    <p class="scope"><strong>A visual proof of a small model, not production telemetry.</strong> Every attempt fails. Every retrying layer exhausts its budget. An upstream retry starts fresh downstream budgets. Tiles count cumulative calls, not concurrent requests or elapsed time.</p>
+    <details style="margin-top:18px" open>
+      <summary>What this model assumes</summary>
+      <div>
+        <ul>
+          <li>One original request and serial layers, each calling only the next layer.</li>
+          <li>No early success, deadlines, cancellation, caching, circuit breakers, deduplication, or shared retry budget.</li>
+          <li>In the comparison, only the outermost layer retries. Other layers forward once.</li>
+        </ul>
+        <p>Fewer attempts is not a resilience guarantee or a production policy recommendation. The animation is explanatory pacing, not a simulated request trace.</p>
+      </div>
+    </details>
+  </section>
+  <section aria-label="Exact numbers">
+    <table><caption style="text-align:left;color:var(--ink);margin-bottom:8px">Count only the final boundary for backend load.</caption>
+      <thead><tr><th scope="col">Boundary</th><th scope="col">Nested</th><th scope="col">One owner</th></tr></thead>
+      <tbody data-retry-counts><tr><th scope="row">1</th><td>3</td><td>3</td></tr><tr><th scope="row">2</th><td>9</td><td>3</td></tr><tr><th scope="row">3</th><td>27</td><td>3</td></tr><tr><th scope="row">4 — backend</th><td>81</td><td>3</td></tr></tbody>
+    </table>
+  </section>
+</div>
+<footer><span>STE-Pro Max · Original interactive SVG</span><span>Evidence before embellishment. Intuition before notation.</span></footer>
+<p class="sr-only" role="status" aria-live="polite" data-retry-status></p>
+</div>
+</main>
+<script type="application/json" id="retry-source">__STE_SOURCE__</script>
+<script>/*__STE_MATH__*/</script>
+<script>/*__STE_RETRY__*/</script>
+<script>window.steRetryExample = STERetryObservatory.mount(document.querySelector("[data-retry-observatory]"));</script>
+</body>
+</html>

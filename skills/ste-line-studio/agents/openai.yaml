@@ -1,0 +1,4 @@
+interface:
+  display_name: "STE Line Studio"
+  short_description: "Original line-art figures that explain mechanisms"
+  default_prompt: "Use $ste-line-studio to explain this mechanism with an original, source-grounded figure in my requested medium."

@@ -15,10 +15,11 @@ ROOT_FILES = (
     "__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
     ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
     ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip",
+    "tools/build_line_studio.mjs",
 )
 # Runtime/source trees only; no tests, generated artifacts, or repository state.
 TREES = {
-    "ste_promax": {".py", ".j2", ".md", ".ps1", ".json"},
+    "ste_promax": {".py", ".j2", ".md", ".ps1", ".json", ".js"},
     "skills": {".md", ".yaml", ".yml", ".json", ".py", ".ps1", ".sh"},
     "examples": {".md", ".json", ".py", ".ps1", ".html", ".css", ".js", ".svg", ".txt"},
     "docs": {".md", ".txt", ".svg", ".png", ".webp", ".gif"},
@@ -45,6 +46,13 @@ REQUIRED_PAYLOAD = (
     "examples/showcase/retry-storm.html", "examples/showcase/sources/retry-storm.json",
     "docs/assets/brief-transformation.png", "docs/assets/retry-storm.png",
     "docs/assets/retry-storm.gif",
+    "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/agents/openai.yaml",
+    "skills/ste-line-studio/references/authoring.md", "docs/LINE_STUDIO.md",
+    "ste_promax/assets/line-math.js", "ste_promax/assets/line-studio.js",
+    "ste_promax/assets/retry-observatory.js",
+    "examples/showcase/line-studio.html", "examples/showcase/retry-observatory.html",
+    "examples/showcase/sources/line-studio.json", "docs/assets/retry-observatory.svg",
+    "docs/assets/retry-observatory.png",
 )
 EXCLUDED_NAMES = {
     "artifacts", "tests", "node_modules", "venv", "__pycache__", "omx_wiki", "memory.md",
@@ -154,7 +162,7 @@ def build_plugin(output_dir, source_root=ROOT):
     manifest = {
         "name": NAME, "version": identity["version"], "bundle_type": "source",
         "bundle_dir": NAME,
-        "runtime": "Requires Python and the dependencies declared in pyproject.toml; nothing is auto-installed.",
+        "runtime": "Native skills and standalone HTML/SVG need no runtime setup. Only the optional engine requires Python and pyproject.toml dependencies; nothing is auto-installed.",
         "archive": {"path": archive.name, **record(archive.read_bytes())},
         "files": {relative: record(contents) for relative, contents in payload.items()},
     }

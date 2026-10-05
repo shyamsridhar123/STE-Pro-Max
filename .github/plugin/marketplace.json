@@ -7,8 +7,8 @@
     {
       "name": "ste-pro-max",
       "source": "./",
-      "description": "Native writing, visual explanation, and storytelling skills. No Python prerequisite for authoring.",
-      "version": "0.4.0"
+      "description": "Native writing, visual explanation, storytelling, and interactive SVG authoring. No Python prerequisite.",
+      "version": "0.5.0"
     }
   ]
 }

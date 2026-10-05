@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="A controllable visual explanation of nested retry amplification. One original request, four retry layers, 81 backend attempts.">
+<title>Retry Observatory · STE Line Studio</title>
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#e9edf2;background:#10151b;font-synthesis:none;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,summary{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+button:disabled{opacity:.42;cursor:default}
+:focus-visible{outline:2px solid #efc97b;outline-offset:5px}
+.observatory{--bg:#10151b;--ink:#e9edf2;--muted:#a3b0bf;--rule:#344452;--blue:#79bdf2;--gold:#efc97b;--mint:#8ad4be;background:var(--bg);color:var(--ink);min-height:100vh;padding:28px clamp(18px,4vw,70px) 48px}
+.observatory[data-theme=light]{--bg:#f7f9fb;--ink:#172333;--muted:#526173;--rule:#b0becb;--blue:#176698;--gold:#82600a;--mint:#176b55;color-scheme:light}
+.wrap{max-width:1460px;margin:auto}
+.masthead{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
+.brand{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;text-decoration:none}
+.brand svg{width:28px;height:28px;color:var(--gold)}
+.brand small{font-weight:400;color:var(--muted);display:block;font-size:12px;margin-top:3px}
+.masthead-note{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:9px}
+.dot{width:6px;height:6px;display:inline-block;background:var(--mint);border-radius:50%}
+.introduction{padding:30px 0 16px;display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(37px,4.2vw,64px);line-height:1.07;letter-spacing:-1.8px;font-weight:400;margin:0}
+.intro-note{font-size:14px;line-height:1.6;color:var(--muted);max-width:270px;margin:0 0 4px}
+.workspace{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:clamp(22px,3.5vw,55px);align-items:start}
+.lesson{padding-top:26px;min-width:0}
+.chapter-list{display:flex;gap:6px;margin-bottom:27px}
+.chapter-list button{background:none;color:var(--muted);border:1px solid var(--rule);border-radius:50%;width:32px;height:32px;font-size:12px;flex-shrink:0}
+.chapter-list button[aria-current=step]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chapter-list .connector{width:25px;border-top:1px solid var(--rule);align-self:center}
+h2{font-size:22px;font-weight:500;line-height:1.34;letter-spacing:-.4px;margin:0 0 12px;min-height:59px}
+.explanation{font-size:14px;color:var(--muted);line-height:1.75;min-height:103px;margin:0}
+.formula{font:44px/1.2 Georgia,"Times New Roman",serif;color:var(--gold);padding:22px 0 25px;min-height:100px;white-space:normal;letter-spacing:-1px}
+.formula sup{font-size:.48em;vertical-align:super;margin-left:2px}
+.inputs{border-top:1px solid var(--rule);padding-top:19px;display:grid;gap:19px}
+.input-label{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13px}
+.input-label output{color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:14px 0 2px;accent-color:var(--blue);cursor:pointer;height:17px}
+.range-ends{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.budget-note{font-size:11px;color:var(--muted);line-height:1.6;margin:13px 0 0}
+.drawing-column{min-width:0;padding-top:10px}
+.canvas-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;color:var(--muted);padding:0 4px 2px}
+.canvas-actions{display:flex;gap:14px}
+.text-button{background:none;border:0;color:var(--muted);padding:7px 0;font-size:12px;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:4px}
+.text-button:hover{color:var(--ink)}
+.drawing-region{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--rule) var(--bg);border-bottom:1px solid var(--rule)}
+.drawing{min-width:640px}
+.drawing svg{display:block;width:100%;height:auto}
+.transport{padding:19px 0 16px}
+.timeline-label{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--muted)}
+.timeline-label output{font-variant-numeric:tabular-nums}
+.transport input{accent-color:var(--gold);margin:8px 0 12px}
+.transport-buttons{display:flex;align-items:center;gap:10px}
+.play{min-height:39px;background:var(--ink);color:var(--bg);border:0;border-radius:4px;padding:8px 17px;font-size:12px;font-weight:600}
+.step-button{min-height:39px;background:none;color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px 12px;font-size:12px}
+.reset{margin-left:auto}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 0;margin-top:12px}
+.comparison-item{display:flex;align-items:center;gap:15px;color:var(--muted)}
+.comparison-item strong{font:42px/1 Georgia,serif;color:var(--blue)}
+.comparison-item:last-child strong{color:var(--mint)}
+.comparison-item p{margin:0;font-size:12px;line-height:1.6}
+.comparison-item p span{display:block;color:var(--ink);font-size:13px}
+.comparison[data-active=nested] .comparison-item:first-child p span,.comparison[data-active=owner] .comparison-item:last-child p span{font-weight:600}
+.conclusion{margin:12px 0 0;color:var(--muted);font-size:12px}
+.lower{display:grid;grid-template-columns:1.35fr 1fr;gap:48px;padding-top:33px;margin-top:14px}
+.scope{font-size:12px;color:var(--muted);line-height:1.7;margin:0;max-width:680px}
+.scope strong{color:var(--ink);font-weight:500}
+details{font-size:12px;color:var(--muted)}
+summary{cursor:pointer;color:var(--ink);padding:0 0 12px}
+details p,details li{line-height:1.7}
+details ul{padding-left:20px}
+table{border-collapse:collapse;width:100%;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--rule)}
+th{font-weight:500;color:var(--ink)}
+footer{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:11px;padding-top:30px;margin-top:18px;border-top:1px solid var(--rule)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+noscript p{padding:15px;border:1px solid var(--rule);color:var(--gold);font-size:13px;line-height:1.6}
+@media(max-width:1050px){.workspace{grid-template-columns:240px minmax(0,1fr);gap:25px}.introduction{padding-top:28px}.intro-note{max-width:230px}h1{font-size:44px}.formula{font-size:38px}.comparison-item{gap:9px}.comparison-item strong{font-size:34px}}
+@media(min-width:1100px){h1{font-size:clamp(41px,3.5vw,55px)}h1 br{display:none}.intro-note{font-size:12px;max-width:230px}.introduction{align-items:center}}
+@media(max-width:780px){.observatory{padding:20px 20px 35px}.introduction{display:block}.intro-note{max-width:100%;margin:15px 0 0}.workspace{grid-template-columns:1fr}.lesson{padding-top:5px;display:grid;grid-template-columns:1fr 1fr;column-gap:22px}.chapter-list,.lesson h2,.explanation,.formula{grid-column:1}.inputs{grid-column:2;grid-row:2/5;border-top:0;padding-top:0}.chapter-list{margin-bottom:16px}h2{min-height:0;font-size:20px}.explanation{min-height:0;font-size:13px}.formula{padding:17px 0 0;min-height:0}.budget-note{display:none}.drawing-column{padding-top:0}.lower{grid-template-columns:1fr;gap:25px}.masthead-note{font-size:10px}.transport{padding-top:14px}.comparison{margin-top:6px}footer{flex-wrap:wrap}.canvas-toolbar{padding-right:0}}
+@media(max-width:440px){h1{font-size:38px;letter-spacing:-1px}.lesson{display:block}.chapter-list{margin:8px 0 18px}.formula{padding:17px 0 20px}.inputs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);gap:20px;padding-top:16px}.input-label{font-size:12px}.intro-note{font-size:12px}.comparison{gap:14px}.comparison-item{align-items:flex-start}.comparison-item p{font-size:10px}.comparison-item p span{font-size:11px}.comparison-item strong{font-size:34px}.transport-buttons{gap:7px;flex-wrap:wrap}.play{padding:8px 12px}.step-button{padding:8px 9px}.masthead-note{display:none}.canvas-toolbar{font-size:10px;gap:8px}.canvas-actions{gap:10px}.text-button{font-size:11px}}
+@media(max-width:320px){.observatory{padding:16px 12px 28px}h1{font-size:31px;overflow-wrap:anywhere}.workspace{grid-template-columns:minmax(0,1fr)}.chapter-list .connector{width:12px}.inputs{grid-template-columns:minmax(0,1fr);gap:12px}.canvas-toolbar{align-items:flex-start;flex-direction:column}.comparison{grid-template-columns:minmax(0,1fr);gap:16px}.formula{font-size:31px;overflow-wrap:anywhere}.lower{grid-template-columns:minmax(0,1fr)}th,td{padding:8px 4px;font-size:11px}footer{overflow-wrap:anywhere}.intro-note br{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media print{.observatory{--bg:#fff;--ink:#172333;--muted:#394b5c;--rule:#c1ccd6;color:#172333;background:#fff;padding:0}.masthead-note,.canvas-toolbar,.chapter-list,.inputs,.transport,.conclusion,footer{display:none!important}.introduction{padding:16px 0}.intro-note{max-width:380px}h1{font-size:32px}.workspace{display:block}.lesson{display:block;padding:5px 0}h2,.explanation{min-height:0}.formula{padding:10px 0;font-size:32px;min-height:0}.drawing-region{overflow:visible}.drawing{min-width:0}.drawing svg{max-height:330px}.comparison{break-inside:avoid}.lower{display:block}.lower>section{margin-top:15px}details{display:block}details>div{display:block!important}summary{list-style:none;font-weight:bold}.comparison-item strong{color:#172333!important}noscript p{color:#172333}}
+@media print{details::details-content{display:block;content-visibility:visible}}
+</style>
+</head>
+<body>
+<main class="observatory" data-retry-observatory data-theme="dark">
+<div class="wrap">
+<header class="masthead">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 10.5v11L16 29 3 21.5v-11ZM3 10.5l13 7.5 13-7.5M16 18v11M9.5 6.8l13 7.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    <span>STE Line Studio<small>Retry Observatory</small></span>
+  </div>
+  <span class="masthead-note"><span class="dot"></span> A local, interactive explanation</span>
+</header>
+<section class="introduction" aria-labelledby="page-title">
+  <h1 id="page-title">Small retries. <br>Exponential work.</h1>
+  <p class="intro-note">A budget inside a budget is a multiplier.<br>See why. Then change the rules.</p>
+</section>
+<div class="workspace">
+  <section class="lesson" aria-label="The explanation">
+    <nav class="chapter-list" aria-label="Explanation chapters" data-retry-controls>
+      <button type="button" data-retry-chapter="0" aria-label="Chapter 1: One budget" disabled>1</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="1" aria-label="Chapter 2: Nested budgets" disabled>2</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="2" aria-label="Chapter 3: The multiplication" aria-current="step" disabled>3</button><span class="connector" aria-hidden="true"></span>
+      <button type="button" data-retry-chapter="3" aria-label="Chapter 4: One retry owner" disabled>4</button>
+    </nav>
+    <h2 data-retry-headline>The next layer repeats the work.</h2>
+    <p class="explanation" data-retry-copy>At every boundary, each incoming call can start 3 more. After 4 layers, the backend can receive 81 attempts from one original request.</p>
+    <div class="formula" data-retry-formula aria-label="3 to the fourth power equals 81">3<sup>4</sup> = 81</div>
+    <div class="inputs" data-retry-controls>
+      <div><label class="input-label" for="attempts">Attempts per layer <output for="attempts" data-retry-attempt-value>3 total</output></label>
+        <input type="range" id="attempts" data-retry-attempts min="1" max="4" step="1" value="3" disabled>
+        <div class="range-ends" aria-hidden="true"><span>1</span><span>4</span></div></div>
+      <div><label class="input-label" for="layers">Retry layers <output for="layers" data-retry-layer-value>4</output></label>
+        <input type="range" id="layers" data-retry-layers min="1" max="4" step="1" value="4" disabled>
+        <div class="range-ends" aria-hidden="true"><span>1</span><span>4</span></div></div>
+    </div>
+    <p class="budget-note">The initial attempt is included in the budget.<br>Three attempts means two retries.</p>
+  </section>
+  <section class="drawing-column" aria-label="Interactive isometric model">
+    <div class="canvas-toolbar" data-retry-controls>
+      <span>Isometric attempt map</span>
+      <div class="canvas-actions"><button class="text-button" data-retry-theme type="button" aria-pressed="false" disabled>Light canvas</button><button class="text-button" data-retry-export type="button" disabled>Save SVG</button></div>
+    </div>
+    <div class="drawing-region" role="region" tabindex="0" data-retry-drawing-region aria-label="Attempt map. Scroll horizontally on small screens. Space plays or pauses; Home and End seek.">
+      <div class="drawing" data-retry-drawing><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" role="img" aria-labelledby="retry-title retry-description"><title id="retry-title">A retry budget inside a retry budget.</title><desc id="retry-description">4 serial retry layers; 3 total attempts per retrying layer, including the initial call. Under persistent failure, nested retries produce 81 backend attempts; one retry owner produces 3. Each tile is one cumulative attempt, not a simultaneous request or a unit of time. This timeline reveals the explanation, not production telemetry.</desc><metadata>{&quot;type&quot;:&quot;illustrative-model&quot;,&quot;attempts&quot;:3,&quot;layers&quot;:4,&quot;retries&quot;:2,&quot;nested&quot;:[3,9,27,81],&quot;owner&quot;:[3,3,3,3],&quot;nestedBackend&quot;:81,&quot;ownerBackend&quot;:3,&quot;repeated&quot;:78,&quot;progress&quot;:0.72,&quot;limits&quot;:&quot;Persistent failure; exhausted budgets; no shared deadline, cancellation, caching, circuit breaker or deduplication; not a resilience guarantee.&quot;}</metadata><rect width="960" height="440" fill="#10151b"/><defs><marker id="retry-arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#a3b0bf" stroke-width="1.2"/></marker></defs><text x="38" y="42" fill="#a3b0bf" font-family="system-ui, sans-serif" font-size="14">One original request</text><text x="922" y="42" fill="#a3b0bf" text-anchor="end" font-family="system-ui, sans-serif" font-size="14">Every backend attempt fails</text><g data-boundary="0" opacity="1"><path d="M 73.52786404500043 219.88443016488208 Q 78 217.64836218738228 82.47213595499957 219.88443016488208 L 100.35549532321804 228.82610984899128 Q 104.82763127821761 231.06217782649108 100.35549532321804 233.29824580399088 L 82.47213595499957 242.23992548810008 Q 78 244.47599346559988 73.52786404500043 242.23992548810008 L 55.64450467678197 233.29824580399088 Q 51.17236872178239 231.06217782649108 55.64450467678197 228.82610984899128 Z" fill="none" stroke="#344452" stroke-width="1" stroke-dasharray="3 5"/><defs><g id="retry-tile-0" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"><path d="M 14.849242404917497 1.0650635094610963 Q 14.849242404917497 2.1650635094610964 13.86537249481759 2.65699846451105 L 0.9838699100999083 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 0.9838699100999083 4.767622737947698 L 13.86537249481759 -1.6731285544111436 Q 14.849242404917497 -2.1650635094610973 14.849242404917497 -1.0650635094610972 Z" fill="#111922"/><path d="M -14.849242404917497 1.0650635094610972 Q -14.849242404917497 2.1650635094610973 -13.86537249481759 2.6569984645110507 L -0.9838699100999065 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -14.849242404917497 -1.0650635094610963 Z" fill="#111922"/><path d="M -0.9838699100999083 -9.09774975686989 Q -8.881784197001252e-16 -9.589684711919844 0.9838699100999065 -9.09774975686989 L 13.86537249481759 -2.6569984645110507 Q 14.849242404917497 -2.1650635094610973 13.86537249481759 -1.6731285544111436 L 0.9838699100999083 4.767622737947698 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -13.86537249481759 -2.65699846451105 Z" fill="#151e28"/></g></defs><use href="#retry-tile-0" transform="translate(78 225)" color="#e9edf2" opacity="1" data-attempt="1"/><text x="78" y="112" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">Input</text><text x="78" y="325" fill="#e9edf2" text-anchor="middle" font-family="Georgia, serif" font-size="40">1</text><text x="78" y="352" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">attempt</text></g><g data-boundary="1" opacity="1"><path d="M 257.5997277033944 211.4203619940791 Q 262.071863658394 209.1842940165793 266.5439996133936 211.4203619940791 L 318.283631664824 237.29017801979424 Q 322.7557676198236 239.52624599729404 318.283631664824 241.76231397479384 L 300.4002722966056 250.70399365890304 Q 295.928136341606 252.94006163640285 291.4560003866064 250.70399365890304 L 239.716368335176 224.8341776331879 Q 235.24423238017644 222.5981096556881 239.716368335176 220.3620416781883 Z" fill="none" stroke="#344452" stroke-width="1" stroke-dasharray="3 5"/><defs><g id="retry-tile-1" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"><path d="M 14.849242404917497 1.0650635094610963 Q 14.849242404917497 2.1650635094610964 13.86537249481759 2.65699846451105 L 0.9838699100999083 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 0.9838699100999083 4.767622737947698 L 13.86537249481759 -1.6731285544111436 Q 14.849242404917497 -2.1650635094610973 14.849242404917497 -1.0650635094610972 Z" fill="#111922"/><path d="M -14.849242404917497 1.0650635094610972 Q -14.849242404917497 2.1650635094610973 -13.86537249481759 2.6569984645110507 L -0.9838699100999065 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -14.849242404917497 -1.0650635094610963 Z" fill="#111922"/><path d="M -0.9838699100999083 -9.09774975686989 Q -8.881784197001252e-16 -9.589684711919844 0.9838699100999065 -9.09774975686989 L 13.86537249481759 -2.6569984645110507 Q 14.849242404917497 -2.1650635094610973 13.86537249481759 -1.6731285544111436 L 0.9838699100999083 4.767622737947698 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -13.86537249481759 -2.65699846451105 Z" fill="#151e28"/></g></defs><use href="#retry-tile-1" transform="translate(262.072 216.536)" color="#79bdf2" opacity="1" data-attempt="1"/><use href="#retry-tile-1" transform="translate(279 225)" color="#79bdf2" opacity="1" data-attempt="2"/><use href="#retry-tile-1" transform="translate(295.928 233.464)" color="#79bdf2" opacity="1" data-attempt="3"/><text x="279" y="112" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">After layer 1</text><text x="279" y="325" fill="#79bdf2" text-anchor="middle" font-family="Georgia, serif" font-size="40">3</text><text x="279" y="352" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">attempts</text><path d="M 109 159 L 247 159" stroke="#344452" stroke-width="1.1" marker-end="url(#retry-arrow)" fill="none"/><text x="178.5" y="141" text-anchor="middle" fill="#efc97b" font-family="Georgia, serif" font-size="26">×3</text></g><g data-boundary="2" opacity="1"><path d="M 475.5278640450004 202.95629382327613 Q 480 200.72022584577633 484.4721359549996 202.95629382327613 L 536.2117680064299 228.82610984899128 Q 540.6839039614295 231.06217782649108 536.2117680064299 233.29824580399088 L 484.4721359549996 259.16806182970606 Q 480 261.40412980720583 475.5278640450004 259.16806182970606 L 423.7882319935701 233.29824580399088 Q 419.3160960385705 231.06217782649108 423.7882319935701 228.82610984899128 Z" fill="none" stroke="#344452" stroke-width="1" stroke-dasharray="3 5"/><defs><g id="retry-tile-2" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"><path d="M 14.849242404917497 1.0650635094610963 Q 14.849242404917497 2.1650635094610964 13.86537249481759 2.65699846451105 L 0.9838699100999083 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 0.9838699100999083 4.767622737947698 L 13.86537249481759 -1.6731285544111436 Q 14.849242404917497 -2.1650635094610973 14.849242404917497 -1.0650635094610972 Z" fill="#111922"/><path d="M -14.849242404917497 1.0650635094610972 Q -14.849242404917497 2.1650635094610973 -13.86537249481759 2.6569984645110507 L -0.9838699100999065 9.09774975686989 Q 8.881784197001252e-16 9.589684711919844 8.881784197001252e-16 8.489684711919844 L 8.881784197001252e-16 6.359557692997651 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -14.849242404917497 -1.0650635094610963 Z" fill="#111922"/><path d="M -0.9838699100999083 -9.09774975686989 Q -8.881784197001252e-16 -9.589684711919844 0.9838699100999065 -9.09774975686989 L 13.86537249481759 -2.6569984645110507 Q 14.849242404917497 -2.1650635094610973 13.86537249481759 -1.6731285544111436 L 0.9838699100999083 4.767622737947698 Q 8.881784197001252e-16 5.259557692997651 -0.9838699100999065 4.767622737947698 L -13.86537249481759 -1.6731285544111427 Q -14.849242404917497 -2.1650635094610964 -13.86537249481759 -2.65699846451105 Z" fill="#151e28"/></g></defs><use href="#retry-tile-2" transform="translate(480 208.072)" color="#79bdf2" opacity="1" data-attempt="1"/><use href="#retry-tile-2" transform="translate(496.928 216.536)" color="#79bdf2" opacity="1" data-attempt="2"/><use href="#retry-tile-2" transform="translate(463.072 216.536)" color="#79bdf2" opacity="1" data-attempt="4"/><use href="#retry-tile-2" transform="translate(513.856 225)" color="#79bdf2" opacity="1" data-attempt="3"/><use href="#retry-tile-2" transform="translate(480 225)" color="#79bdf2" opacity="1" data-attempt="5"/><use href="#retry-tile-2" transform="translate(446.144 225)" color="#79bdf2" opacity="1" data-attempt="7"/><use href="#retry-tile-2" transform="translate(496.928 233.464)" color="#79bdf2" opacity="1" data-attempt="6"/><use href="#retry-tile-2" transform="translate(463.072 233.464)" color="#79bdf2" opacity="1" data-attempt="8"/><use href="#retry-tile-2" transform="translate(480 241.928)" color="#79bdf2" opacity="1" data-attempt="9"/><text x="480" y="112" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">After layer 2</text><text x="480" y="325" fill="#79bdf2" text-anchor="middle" font-family="Georgia, serif" font-size="40">9</text><text x="480" y="352" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">attempts</text><path d="M 310 159 L 448 159" stroke="#344452" stroke-width="1.1" marker-end="url(#retry-arrow)" fill="none"/><text x="379.5" y="141" text-anchor="middle" fill="#efc97b" font-family="Georgia, serif" font-size="26">×3</text></g><g data-boundary="3" opacity="1"><path d="M 646.9708005914027 198.79143488208737 Q 651.4429365464023 196.55536690458757 655.9150725014018 198.79143488208737 L 745.5414858888075 243.6046415757901 Q 750.0136218438071 245.8407095532899 745.5414858888075 248.0767775307897 L 715.0291994085973 263.3329207708948 Q 710.5570634535977 265.5689887483946 706.0849274985982 263.3329207708948 L 616.4585141111925 218.51971407719202 Q 611.9863781561929 216.28364609969222 616.4585141111925 214.04757812219242 Z" fill="none" stroke="#344452" stroke-width="1" stroke-dasharray="3 5"/><defs><g id="retry-tile-3" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"><path d="M 8.642416214502248 1.0650635094610963 Q 8.642416214502248 2.1650635094610964 7.65854630440234 2.65699846451105 L 0.9838699100999084 5.994336661662266 Q 8.881784197001252e-16 6.486271616712219 8.881784197001252e-16 5.38627161671222 L 8.881784197001252e-16 3.2561445977900263 Q 8.881784197001252e-16 2.156144597790026 0.9838699100999084 1.6642096427400723 L 7.65854630440234 -1.6731285544111434 Q 8.642416214502248 -2.1650635094610973 8.642416214502248 -1.0650635094610972 Z" fill="#111922"/><path d="M -8.642416214502248 1.0650635094610972 Q -8.642416214502248 2.1650635094610973 -7.65854630440234 2.6569984645110507 L -0.9838699100999068 5.994336661662266 Q 8.881784197001252e-16 6.486271616712219 8.881784197001252e-16 5.38627161671222 L 8.881784197001252e-16 3.2561445977900263 Q 8.881784197001252e-16 2.156144597790026 -0.9838699100999068 1.6642096427400725 L -7.65854630440234 -1.6731285544111427 Q -8.642416214502248 -2.1650635094610964 -8.642416214502248 -1.0650635094610963 Z" fill="#111922"/><path d="M -0.9838699100999084 -5.994336661662266 Q -8.881784197001252e-16 -6.486271616712219 0.9838699100999068 -5.994336661662266 L 7.65854630440234 -2.6569984645110507 Q 8.642416214502248 -2.1650635094610973 7.65854630440234 -1.6731285544111434 L 0.9838699100999084 1.6642096427400723 Q 8.881784197001252e-16 2.156144597790026 -0.9838699100999068 1.6642096427400725 L -7.65854630440234 -1.6731285544111427 Q -8.642416214502248 -2.1650635094610964 -7.65854630440234 -2.65699846451105 Z" fill="#151e28"/></g></defs><use href="#retry-tile-3" transform="translate(651.443 200.369)" color="#79bdf2" opacity="1" data-attempt="1"/><use href="#retry-tile-3" transform="translate(661.295 205.295)" color="#79bdf2" opacity="1" data-attempt="2"/><use href="#retry-tile-3" transform="translate(641.591 205.295)" color="#79bdf2" opacity="1" data-attempt="10"/><use href="#retry-tile-3" transform="translate(671.148 210.221)" color="#79bdf2" opacity="1" data-attempt="3"/><use href="#retry-tile-3" transform="translate(651.443 210.221)" color="#79bdf2" opacity="1" data-attempt="11"/><use href="#retry-tile-3" transform="translate(631.738 210.221)" color="#79bdf2" opacity="1" data-attempt="19"/><use href="#retry-tile-3" transform="translate(681 215.148)" color="#79bdf2" opacity="1" data-attempt="4"/><use href="#retry-tile-3" transform="translate(661.295 215.148)" color="#79bdf2" opacity="1" data-attempt="12"/><use href="#retry-tile-3" transform="translate(641.591 215.148)" color="#79bdf2" opacity="1" data-attempt="20"/><use href="#retry-tile-3" transform="translate(690.852 220.074)" color="#79bdf2" opacity="1" data-attempt="5"/><use href="#retry-tile-3" transform="translate(671.148 220.074)" color="#79bdf2" opacity="1" data-attempt="13"/><use href="#retry-tile-3" transform="translate(651.443 220.074)" color="#79bdf2" opacity="1" data-attempt="21"/><use href="#retry-tile-3" transform="translate(700.705 225)" color="#79bdf2" opacity="1" data-attempt="6"/><use href="#retry-tile-3" transform="translate(681 225)" color="#79bdf2" opacity="1" data-attempt="14"/><use href="#retry-tile-3" transform="translate(661.295 225)" color="#79bdf2" opacity="1" data-attempt="22"/><use href="#retry-tile-3" transform="translate(710.557 229.926)" color="#79bdf2" opacity="1" data-attempt="7"/><use href="#retry-tile-3" transform="translate(690.852 229.926)" color="#79bdf2" opacity="1" data-attempt="15"/><use href="#retry-tile-3" transform="translate(671.148 229.926)" color="#79bdf2" opacity="1" data-attempt="23"/><use href="#retry-tile-3" transform="translate(720.409 234.852)" color="#79bdf2" opacity="1" data-attempt="8"/><use href="#retry-tile-3" transform="translate(700.705 234.852)" color="#79bdf2" opacity="1" data-attempt="16"/><use href="#retry-tile-3" transform="translate(681 234.852)" color="#79bdf2" opacity="1" data-attempt="24"/><use href="#retry-tile-3" transform="translate(730.262 239.779)" color="#79bdf2" opacity="1" data-attempt="9"/><use href="#retry-tile-3" transform="translate(710.557 239.779)" color="#79bdf2" opacity="1" data-attempt="17"/><use href="#retry-tile-3" transform="translate(690.852 239.779)" color="#79bdf2" opacity="1" data-attempt="25"/><use href="#retry-tile-3" transform="translate(720.409 244.705)" color="#79bdf2" opacity="1" data-attempt="18"/><use href="#retry-tile-3" transform="translate(700.705 244.705)" color="#79bdf2" opacity="1" data-attempt="26"/><use href="#retry-tile-3" transform="translate(710.557 249.631)" color="#79bdf2" opacity="1" data-attempt="27"/><text x="681" y="112" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">After layer 3</text><text x="681" y="325" fill="#79bdf2" text-anchor="middle" font-family="Georgia, serif" font-size="40">27</text><text x="681" y="352" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">attempts</text><path d="M 511 159 L 649 159" stroke="#344452" stroke-width="1.1" marker-end="url(#retry-arrow)" fill="none"/><text x="580.5" y="141" text-anchor="middle" fill="#efc97b" font-family="Georgia, serif" font-size="26">×3</text></g><g data-boundary="4" opacity="1"><path d="M 877.5278640450005 184.0129031552885 Q 882 181.7768351777887 886.4721359549995 184.0129031552885 L 976.0985493424051 228.82610984899128 Q 980.5706852974047 231.06217782649108 976.0985493424051 233.29824580399088 L 886.4721359549995 278.1114524976937 Q 882 280.34752047519345 877.5278640450005 278.1114524976937 L 787.9014506575949 233.29824580399088 Q 783.4293147025953 231.06217782649108 787.9014506575949 228.82610984899128 Z" fill="none" stroke="#344452" stroke-width="1" stroke-dasharray="3 5"/><defs><g id="retry-tile-4" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"><path d="M 8.642416214502248 1.0650635094610963 Q 8.642416214502248 2.1650635094610964 7.65854630440234 2.65699846451105 L 0.9838699100999084 5.994336661662266 Q 8.881784197001252e-16 6.486271616712219 8.881784197001252e-16 5.38627161671222 L 8.881784197001252e-16 3.2561445977900263 Q 8.881784197001252e-16 2.156144597790026 0.9838699100999084 1.6642096427400723 L 7.65854630440234 -1.6731285544111434 Q 8.642416214502248 -2.1650635094610973 8.642416214502248 -1.0650635094610972 Z" fill="#111922"/><path d="M -8.642416214502248 1.0650635094610972 Q -8.642416214502248 2.1650635094610973 -7.65854630440234 2.6569984645110507 L -0.9838699100999068 5.994336661662266 Q 8.881784197001252e-16 6.486271616712219 8.881784197001252e-16 5.38627161671222 L 8.881784197001252e-16 3.2561445977900263 Q 8.881784197001252e-16 2.156144597790026 -0.9838699100999068 1.6642096427400725 L -7.65854630440234 -1.6731285544111427 Q -8.642416214502248 -2.1650635094610964 -8.642416214502248 -1.0650635094610963 Z" fill="#111922"/><path d="M -0.9838699100999084 -5.994336661662266 Q -8.881784197001252e-16 -6.486271616712219 0.9838699100999068 -5.994336661662266 L 7.65854630440234 -2.6569984645110507 Q 8.642416214502248 -2.1650635094610973 7.65854630440234 -1.6731285544111434 L 0.9838699100999084 1.6642096427400723 Q 8.881784197001252e-16 2.156144597790026 -0.9838699100999068 1.6642096427400725 L -7.65854630440234 -1.6731285544111427 Q -8.642416214502248 -2.1650635094610964 -7.65854630440234 -2.65699846451105 Z" fill="#151e28"/></g></defs><use href="#retry-tile-4" transform="translate(882 185.591)" color="#79bdf2" opacity="1" data-attempt="1"/><use href="#retry-tile-4" transform="translate(891.852 190.517)" color="#79bdf2" opacity="1" data-attempt="2"/><use href="#retry-tile-4" transform="translate(872.148 190.517)" color="#79bdf2" opacity="1" data-attempt="10"/><use href="#retry-tile-4" transform="translate(901.705 195.443)" color="#79bdf2" opacity="1" data-attempt="3"/><use href="#retry-tile-4" transform="translate(882 195.443)" color="#79bdf2" opacity="1" data-attempt="11"/><use href="#retry-tile-4" transform="translate(862.295 195.443)" color="#79bdf2" opacity="1" data-attempt="19"/><use href="#retry-tile-4" transform="translate(911.557 200.369)" color="#79bdf2" opacity="1" data-attempt="4"/><use href="#retry-tile-4" transform="translate(891.852 200.369)" color="#79bdf2" opacity="1" data-attempt="12"/><use href="#retry-tile-4" transform="translate(872.148 200.369)" color="#79bdf2" opacity="1" data-attempt="20"/><use href="#retry-tile-4" transform="translate(852.443 200.369)" color="#79bdf2" opacity="1" data-attempt="28"/><use href="#retry-tile-4" transform="translate(921.409 205.295)" color="#79bdf2" opacity="1" data-attempt="5"/><use href="#retry-tile-4" transform="translate(901.705 205.295)" color="#79bdf2" opacity="1" data-attempt="13"/><use href="#retry-tile-4" transform="translate(882 205.295)" color="#79bdf2" opacity="1" data-attempt="21"/><use href="#retry-tile-4" transform="translate(862.295 205.295)" color="#79bdf2" opacity="1" data-attempt="29"/><use href="#retry-tile-4" transform="translate(842.591 205.295)" color="#79bdf2" opacity="1" data-attempt="37"/><use href="#retry-tile-4" transform="translate(931.262 210.221)" color="#79bdf2" opacity="1" data-attempt="6"/><use href="#retry-tile-4" transform="translate(911.557 210.221)" color="#79bdf2" opacity="1" data-attempt="14"/><use href="#retry-tile-4" transform="translate(891.852 210.221)" color="#79bdf2" opacity="1" data-attempt="22"/><use href="#retry-tile-4" transform="translate(872.148 210.221)" color="#79bdf2" opacity="1" data-attempt="30"/><use href="#retry-tile-4" transform="translate(852.443 210.221)" color="#79bdf2" opacity="1" data-attempt="38"/><use href="#retry-tile-4" transform="translate(832.738 210.221)" color="#79bdf2" opacity="1" data-attempt="46"/><use href="#retry-tile-4" transform="translate(941.114 215.148)" color="#79bdf2" opacity="1" data-attempt="7"/><use href="#retry-tile-4" transform="translate(921.409 215.148)" color="#79bdf2" opacity="1" data-attempt="15"/><use href="#retry-tile-4" transform="translate(901.705 215.148)" color="#79bdf2" opacity="1" data-attempt="23"/><use href="#retry-tile-4" transform="translate(882 215.148)" color="#79bdf2" opacity="1" data-attempt="31"/><use href="#retry-tile-4" transform="translate(862.295 215.148)" color="#79bdf2" opacity="1" data-attempt="39"/><use href="#retry-tile-4" transform="translate(842.591 215.148)" color="#79bdf2" opacity="1" data-attempt="47"/><use href="#retry-tile-4" transform="translate(822.886 215.148)" color="#79bdf2" opacity="1" data-attempt="55"/><use href="#retry-tile-4" transform="translate(950.966 220.074)" color="#79bdf2" opacity="1" data-attempt="8"/><use href="#retry-tile-4" transform="translate(931.262 220.074)" color="#79bdf2" opacity="1" data-attempt="16"/><use href="#retry-tile-4" transform="translate(911.557 220.074)" color="#79bdf2" opacity="1" data-attempt="24"/><use href="#retry-tile-4" transform="translate(891.852 220.074)" color="#79bdf2" opacity="1" data-attempt="32"/><use href="#retry-tile-4" transform="translate(872.148 220.074)" color="#79bdf2" opacity="1" data-attempt="40"/><use href="#retry-tile-4" transform="translate(852.443 220.074)" color="#79bdf2" opacity="1" data-attempt="48"/><use href="#retry-tile-4" transform="translate(832.738 220.074)" color="#79bdf2" opacity="1" data-attempt="56"/><use href="#retry-tile-4" transform="translate(813.034 220.074)" color="#79bdf2" opacity="1" data-attempt="64"/><use href="#retry-tile-4" transform="translate(960.819 225)" color="#79bdf2" opacity="1" data-attempt="9"/><use href="#retry-tile-4" transform="translate(941.114 225)" color="#79bdf2" opacity="1" data-attempt="17"/><use href="#retry-tile-4" transform="translate(921.409 225)" color="#79bdf2" opacity="1" data-attempt="25"/><use href="#retry-tile-4" transform="translate(901.705 225)" color="#79bdf2" opacity="1" data-attempt="33"/><use href="#retry-tile-4" transform="translate(882 225)" color="#79bdf2" opacity="1" data-attempt="41"/><use href="#retry-tile-4" transform="translate(862.295 225)" color="#79bdf2" opacity="1" data-attempt="49"/><use href="#retry-tile-4" transform="translate(842.591 225)" color="#79bdf2" opacity="1" data-attempt="57"/><use href="#retry-tile-4" transform="translate(822.886 225)" color="#79bdf2" opacity="1" data-attempt="65"/><use href="#retry-tile-4" transform="translate(803.181 225)" color="#79bdf2" opacity="1" data-attempt="73"/><use href="#retry-tile-4" transform="translate(950.966 229.926)" color="#79bdf2" opacity="1" data-attempt="18"/><use href="#retry-tile-4" transform="translate(931.262 229.926)" color="#79bdf2" opacity="1" data-attempt="26"/><use href="#retry-tile-4" transform="translate(911.557 229.926)" color="#79bdf2" opacity="1" data-attempt="34"/><use href="#retry-tile-4" transform="translate(891.852 229.926)" color="#79bdf2" opacity="1" data-attempt="42"/><use href="#retry-tile-4" transform="translate(872.148 229.926)" color="#79bdf2" opacity="1" data-attempt="50"/><use href="#retry-tile-4" transform="translate(852.443 229.926)" color="#79bdf2" opacity="1" data-attempt="58"/><use href="#retry-tile-4" transform="translate(832.738 229.926)" color="#79bdf2" opacity="1" data-attempt="66"/><use href="#retry-tile-4" transform="translate(813.034 229.926)" color="#79bdf2" opacity="1" data-attempt="74"/><use href="#retry-tile-4" transform="translate(941.114 234.852)" color="#79bdf2" opacity="1" data-attempt="27"/><use href="#retry-tile-4" transform="translate(921.409 234.852)" color="#79bdf2" opacity="1" data-attempt="35"/><use href="#retry-tile-4" transform="translate(901.705 234.852)" color="#79bdf2" opacity="1" data-attempt="43"/><use href="#retry-tile-4" transform="translate(882 234.852)" color="#79bdf2" opacity="1" data-attempt="51"/><use href="#retry-tile-4" transform="translate(862.295 234.852)" color="#79bdf2" opacity="1" data-attempt="59"/><use href="#retry-tile-4" transform="translate(842.591 234.852)" color="#79bdf2" opacity="1" data-attempt="67"/><use href="#retry-tile-4" transform="translate(822.886 234.852)" color="#79bdf2" opacity="1" data-attempt="75"/><use href="#retry-tile-4" transform="translate(931.262 239.779)" color="#79bdf2" opacity="1" data-attempt="36"/><use href="#retry-tile-4" transform="translate(911.557 239.779)" color="#79bdf2" opacity="1" data-attempt="44"/><use href="#retry-tile-4" transform="translate(891.852 239.779)" color="#79bdf2" opacity="1" data-attempt="52"/><use href="#retry-tile-4" transform="translate(872.148 239.779)" color="#79bdf2" opacity="1" data-attempt="60"/><use href="#retry-tile-4" transform="translate(852.443 239.779)" color="#79bdf2" opacity="1" data-attempt="68"/><use href="#retry-tile-4" transform="translate(832.738 239.779)" color="#79bdf2" opacity="1" data-attempt="76"/><use href="#retry-tile-4" transform="translate(921.409 244.705)" color="#79bdf2" opacity="1" data-attempt="45"/><use href="#retry-tile-4" transform="translate(901.705 244.705)" color="#79bdf2" opacity="1" data-attempt="53"/><use href="#retry-tile-4" transform="translate(882 244.705)" color="#79bdf2" opacity="1" data-attempt="61"/><use href="#retry-tile-4" transform="translate(862.295 244.705)" color="#79bdf2" opacity="1" data-attempt="69"/><use href="#retry-tile-4" transform="translate(842.591 244.705)" color="#79bdf2" opacity="1" data-attempt="77"/><use href="#retry-tile-4" transform="translate(911.557 249.631)" color="#79bdf2" opacity="1" data-attempt="54"/><use href="#retry-tile-4" transform="translate(891.852 249.631)" color="#79bdf2" opacity="1" data-attempt="62"/><use href="#retry-tile-4" transform="translate(872.148 249.631)" color="#79bdf2" opacity="1" data-attempt="70"/><use href="#retry-tile-4" transform="translate(852.443 249.631)" color="#79bdf2" opacity="1" data-attempt="78"/><use href="#retry-tile-4" transform="translate(901.705 254.557)" color="#79bdf2" opacity="1" data-attempt="63"/><use href="#retry-tile-4" transform="translate(882 254.557)" color="#79bdf2" opacity="1" data-attempt="71"/><use href="#retry-tile-4" transform="translate(862.295 254.557)" color="#79bdf2" opacity="1" data-attempt="79"/><use href="#retry-tile-4" transform="translate(891.852 259.483)" color="#79bdf2" opacity="1" data-attempt="72"/><use href="#retry-tile-4" transform="translate(872.148 259.483)" color="#79bdf2" opacity="1" data-attempt="80"/><use href="#retry-tile-4" transform="translate(882 264.409)" color="#79bdf2" opacity="1" data-attempt="81"/><text x="882" y="112" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">Backend</text><text x="882" y="325" fill="#79bdf2" text-anchor="middle" font-family="Georgia, serif" font-size="54">81</text><text x="882" y="352" fill="#a3b0bf" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">attempts</text><path d="M 712 159 L 850 159" stroke="#efc97b" stroke-width="1.7" marker-end="url(#retry-arrow)" fill="none"/><text x="781.5" y="141" text-anchor="middle" fill="#efc97b" font-family="Georgia, serif" font-size="26">×3</text></g><path d="M38 389 H922" stroke="#344452" stroke-width="0.7"/><text x="38" y="419" fill="#a3b0bf" font-family="system-ui, sans-serif" font-size="13">Each tile = one cumulative downstream attempt.</text><text x="922" y="419" text-anchor="end" fill="#a3b0bf" font-family="system-ui, sans-serif" font-size="13">Spatial arrangement does not represent time or concurrency.</text></svg></div>
+    </div>
+    <div class="transport" data-retry-controls>
+      <label class="timeline-label" for="timeline"><span>Reveal the explanation</span><output data-retry-position for="timeline">19 / 26 s</output></label>
+      <input id="timeline" data-retry-timeline type="range" min="0" max="1000" step="1" value="720" aria-label="Explanation progress" disabled>
+      <div class="transport-buttons">
+        <button type="button" class="play" data-retry-play aria-pressed="false" disabled>Play the explanation</button>
+        <button type="button" class="step-button" data-retry-previous aria-label="Previous explanatory state" disabled>Back</button>
+        <button type="button" class="step-button" data-retry-next aria-label="Next explanatory state" disabled>Next</button>
+        <button type="button" class="text-button reset" data-retry-reset disabled>Reset</button>
+      </div>
+    </div>
+    <div class="comparison" data-retry-comparison data-active="nested" aria-label="Backend attempt comparison">
+      <div class="comparison-item"><strong data-retry-nested-total>81</strong><p><span>Every layer retries</span>backend attempts</p></div>
+      <div class="comparison-item"><strong data-retry-owner-total>3</strong><p><span>One layer owns retries</span>backend attempts</p></div>
+    </div>
+    <p class="conclusion" data-retry-difference>78 fewer backend attempts in this model.</p>
+  </section>
+</div>
+<noscript><p>This is a readable static example. Enable JavaScript to play, change assumptions, or export SVG. The default calculation is 3 × 3 × 3 × 3 = 81, versus 3 × 1 × 1 × 1 = 3.</p></noscript>
+<div class="lower">
+  <section aria-label="Scope and assumptions">
+    <p class="scope"><strong>A visual proof of a small model, not production telemetry.</strong> Every attempt fails. Every retrying layer exhausts its budget. An upstream retry starts fresh downstream budgets. Tiles count cumulative calls, not concurrent requests or elapsed time.</p>
+    <details style="margin-top:18px" open>
+      <summary>What this model assumes</summary>
+      <div>
+        <ul>
+          <li>One original request and serial layers, each calling only the next layer.</li>
+          <li>No early success, deadlines, cancellation, caching, circuit breakers, deduplication, or shared retry budget.</li>
+          <li>In the comparison, only the outermost layer retries. Other layers forward once.</li>
+        </ul>
+        <p>Fewer attempts is not a resilience guarantee or a production policy recommendation. The animation is explanatory pacing, not a simulated request trace.</p>
+      </div>
+    </details>
+  </section>
+  <section aria-label="Exact numbers">
+    <table><caption style="text-align:left;color:var(--ink);margin-bottom:8px">Count only the final boundary for backend load.</caption>
+      <thead><tr><th scope="col">Boundary</th><th scope="col">Nested</th><th scope="col">One owner</th></tr></thead>
+      <tbody data-retry-counts><tr><th scope="row">1</th><td>3</td><td>3</td></tr><tr><th scope="row">2</th><td>9</td><td>3</td></tr><tr><th scope="row">3</th><td>27</td><td>3</td></tr><tr><th scope="row">4 — backend</th><td>81</td><td>3</td></tr></tbody>
+    </table>
+  </section>
+</div>
+<footer><span>STE-Pro Max · Original interactive SVG</span><span>Evidence before embellishment. Intuition before notation.</span></footer>
+<p class="sr-only" role="status" aria-live="polite" data-retry-status></p>
+</div>
+</main>
+<script type="application/json" id="retry-source">{
+  "title": "One request. 81 backend attempts.",
+  "classification": "Illustrative worst-case arithmetic model",
+  "provenance": {
+    "source": "Authored illustrative model for the STE-Pro Max showcase, October 3, 2026",
+    "observed_incident": false,
+    "production_telemetry": false,
+    "benchmark": false,
+    "empirical_data": []
+  },
+  "inputs": {
+    "original_requests": 1,
+    "serial_layers": {
+      "default": 4,
+      "minimum": 1,
+      "maximum": 4,
+      "step": 1
+    },
+    "total_attempts_per_retrying_layer_per_incoming_call": {
+      "default": 3,
+      "minimum": 1,
+      "maximum": 4,
+      "step": 1
+    },
+    "backend_failure": "persistent"
+  },
+  "definitions": {
+    "A": "Total attempts per retrying layer per incoming call, including the initial attempt",
+    "L": "Number of serial layers before the backend",
+    "retries_per_incoming_call": "A - 1",
+    "layer_i": "Layer 1 receives the original request; layer L calls the backend",
+    "attempt_mark": "One cumulative downstream call at the indicated boundary, not a simultaneous call",
+    "backend_attempts": "Only the final boundary count; not the sum of all boundary counts"
+  },
+  "assumptions": [
+    "Every backend attempt fails, and each failure propagates upstream after downstream attempts are exhausted.",
+    "All layers are serial and invoke one next layer, or the backend at the final layer.",
+    "Every retrying layer exhausts its total attempt budget for each incoming call.",
+    "An upstream retry starts the full downstream sequence again with fresh downstream attempt budgets.",
+    "There are no shared retry budgets, early exits, deadlines, cancellation, caching, circuit breakers, or deduplication.",
+    "In the single-owner comparison, layer 1 has the same attempt budget A; every other layer forwards each incoming call exactly once."
+  ],
+  "formulas": {
+    "nested_attempts_at_boundary_i": "A^i",
+    "nested_backend_attempts": "A^L",
+    "single_owner_attempts_at_every_boundary": "A",
+    "single_owner_backend_attempts": "A * 1^(L - 1) = A",
+    "additional_backend_calls_after_first": "A^L - 1"
+  },
+  "default_example": {
+    "retries_per_incoming_call": 2,
+    "nested_boundary_counts": [
+      3,
+      9,
+      27,
+      81
+    ],
+    "single_owner_boundary_counts": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "nested_backend_attempts": 81,
+    "single_owner_backend_attempts": 3,
+    "additional_nested_backend_calls_after_first": 80
+  },
+  "boundary_examples": [
+    {
+      "A": 1,
+      "L": 4,
+      "nested_backend_attempts": 1,
+      "single_owner_backend_attempts": 1
+    },
+    {
+      "A": 4,
+      "L": 4,
+      "nested_backend_attempts": 256,
+      "single_owner_backend_attempts": 4
+    },
+    {
+      "A": 4,
+      "L": 1,
+      "nested_backend_attempts": 4,
+      "single_owner_backend_attempts": 4
+    }
+  ],
+  "limits": [
+    "No real network calls, artificial delays, storage, or automatic playback.",
+    "No estimate of elapsed time, concurrency, throughput, success probability, or production performance.",
+    "Reducing attempt counts is not a resilience guarantee or a production policy recommendation."
+  ]
+}</script>
+<script>/* Original STE Line Studio geometry and motion primitives. Apache-2.0. */
+(function (root, factory) {
+  "use strict";
+  const api = factory();
+  root.STELineMath = api;
+  if (typeof module === "object" && module.exports) module.exports = api;
+})(globalThis, function () {
+  "use strict";
+
+  const DEFAULT_CAMERA = Object.freeze({
+    yaw: Math.PI / 4, elevation: Math.PI / 6, scale: 1, cx: 200, cy: 160
+  });
+  const MAX_POINTS = 10000;
+  const MAX_DT = 0.25;
+  const SPRING_STEP = 1 / 240;
+
+  function finite(value, name) {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new TypeError(name + " must be a finite number");
+    }
+    return value;
+  }
+
+  function result(value) {
+    if (!Number.isFinite(value)) throw new RangeError("Numeric range exceeded");
+    return value;
+  }
+
+  function object(value, name) {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      throw new TypeError(name + " must be an object");
+    }
+    return value;
+  }
+
+  function vector(value, length, name) {
+    if (!Array.isArray(value) || value.length !== length) {
+      throw new TypeError(name + " must have " + length + " coordinates");
+    }
+    const copy = [];
+    for (let i = 0; i < length; i++) copy.push(finite(value[i], name));
+    return copy;
+  }
+
+  function points2(points) {
+    if (!Array.isArray(points)) throw new TypeError("points must be an array");
+    if (points.length > MAX_POINTS) throw new RangeError("Too many points (maximum 10000)");
+    const copy = [];
+    for (let i = 0; i < points.length; i++) copy.push(vector(points[i], 2, "point"));
+    return copy;
+  }
+
+  function cameraFrame(camera) {
+    object(camera, "camera");
+    const c = {};
+    for (const key of Object.keys(DEFAULT_CAMERA)) {
+      c[key] = finite(camera[key] === undefined ? DEFAULT_CAMERA[key] : camera[key], key);
+    }
+    if (c.scale <= 0) throw new RangeError("scale must be positive");
+    c.cosYaw = Math.cos(c.yaw);
+    c.sinYaw = Math.sin(c.yaw);
+    c.cosElevation = Math.cos(c.elevation);
+    c.sinElevation = Math.sin(c.elevation);
+    return c;
+  }
+
+  function projectWithFrame(p, c) {
+    return [
+      result(c.cx + c.scale * (p[0] * c.cosYaw - p[1] * c.sinYaw)),
+      result(c.cy + c.scale * (
+        (p[0] * c.sinYaw + p[1] * c.cosYaw) * c.sinElevation - p[2] * c.cosElevation
+      ))
+    ];
+  }
+
+  function project(point, camera = {}) {
+    return projectWithFrame(vector(point, 3, "point"), cameraFrame(camera));
+  }
+
+  function unprojectOnPlane(point, z = 0, camera = {}) {
+    const p = vector(point, 2, "point");
+    finite(z, "z");
+    const c = cameraFrame(camera);
+    // At a ground-level view the ground plane collapses to a line.
+    if (Math.abs(c.sinElevation) < 1e-12) {
+      throw new RangeError("Cannot invert an edge-on ground plane");
+    }
+    const across = result((p[0] - c.cx) / c.scale);
+    const along = result(((p[1] - c.cy) / c.scale + z * c.cosElevation) / c.sinElevation);
+    return [
+      result(across * c.cosYaw + along * c.sinYaw),
+      result(-across * c.sinYaw + along * c.cosYaw),
+      z
+    ];
+  }
+
+  function depthWithFrame(p, c) {
+    // Positive points toward the viewer. Sort centers ASCENDING to paint back-to-front.
+    // This is the unit vector orthogonal to the screen-right and screen-down axes.
+    return result(
+      (p[0] * c.sinYaw + p[1] * c.cosYaw) * c.cosElevation + p[2] * c.sinElevation
+    );
+  }
+
+  function depth(point, camera = {}) {
+    return depthWithFrame(vector(point, 3, "point"), cameraFrame(camera));
+  }
+
+  function boxFaces(center, size, camera = {}) {
+    const p = vector(center, 3, "center");
+    const s = vector(size, 3, "size");
+    if (s.some(value => value < 0)) throw new RangeError("size must be nonnegative");
+    const c = cameraFrame(camera);
+    // This top-visible pseudo-3D model deliberately does not render bottom faces.
+    if (c.sinElevation <= 0) throw new RangeError("boxFaces requires a view above the ground");
+    const lo = p.map((value, i) => result(value - s[i] / 2));
+    const hi = p.map((value, i) => result(value + s[i] / 2));
+    const x = c.sinYaw * c.cosElevation >= 0 ? hi[0] : lo[0];
+    const y = c.cosYaw * c.cosElevation >= 0 ? hi[1] : lo[1];
+    const face = (kind, vertices, midpoint) => ({
+      kind,
+      points: vertices.map(vertex => projectWithFrame(vertex, c)),
+      depth: depthWithFrame(midpoint, c)
+    });
+    const sides = [
+      face("side", [
+        [x, lo[1], lo[2]], [x, hi[1], lo[2]], [x, hi[1], hi[2]], [x, lo[1], hi[2]]
+      ], [x, p[1], p[2]]),
+      face("side", [
+        [lo[0], y, lo[2]], [hi[0], y, lo[2]], [hi[0], y, hi[2]], [lo[0], y, hi[2]]
+      ], [p[0], y, p[2]])
+    ];
+    sides.sort((a, b) => a.depth - b.depth);
+    sides.push(face("top", [
+      [lo[0], lo[1], hi[2]], [hi[0], lo[1], hi[2]],
+      [hi[0], hi[1], hi[2]], [lo[0], hi[1], hi[2]]
+    ], [p[0], p[1], hi[2]]));
+    return sides;
+  }
+
+  function samePoint(a, b) {
+    return a[0] === b[0] && a[1] === b[1];
+  }
+
+  function roundedPolygon(points, radius = 3) {
+    const input = points2(points);
+    finite(radius, "radius");
+    if (radius < 0) throw new RangeError("radius must be nonnegative");
+    const p = input.filter((point, i) => i === 0 || !samePoint(point, input[i - 1]));
+    if (p.length > 1 && samePoint(p[0], p[p.length - 1])) p.pop();
+    // Empty input has no path. One/two vertices form a closed point/line, without curves.
+    if (!p.length) return "";
+    if (p.length < 3 || radius === 0) {
+      return "M " + p.map(point => point.join(" ")).join(" L ") + " Z";
+    }
+    const corners = p.map((point, i) => {
+      const prev = p[(i + p.length - 1) % p.length];
+      const next = p[(i + 1) % p.length];
+      const before = [result(prev[0] - point[0]), result(prev[1] - point[1])];
+      const after = [result(next[0] - point[0]), result(next[1] - point[1])];
+      const a = result(Math.hypot(...before));
+      const b = result(Math.hypot(...after));
+      // Radius is the corner cut-back distance, not a circular arc radius.
+      // Each corner consumes at most half either adjacent edge, so curves cannot overlap.
+      const trim = Math.min(radius, a / 2, b / 2);
+      const offset = (edge, length) => point.map((v, j) => result(v + edge[j] * (trim / length)));
+      return { entry: offset(before, a), exit: offset(after, b), point };
+    });
+    const path = ["M " + corners[0].entry.join(" ")];
+    for (let i = 0; i < corners.length; i++) {
+      const corner = corners[i];
+      if (i) path.push("L " + corner.entry.join(" "));
+      path.push("Q " + corner.point.join(" ") + " " + corner.exit.join(" "));
+    }
+    path.push("Z");
+    return path.join(" ");
+  }
+
+  function convexHull(points) {
+    const sorted = points2(points).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const unique = sorted.filter((point, i) => i === 0 || !samePoint(point, sorted[i - 1]));
+    // Deterministic: lexicographically smallest start, counterclockwise, no repeated endpoint.
+    // Collinear input reduces to its two extremes; duplicates reduce to a single point.
+    if (unique.length < 3) return unique;
+    function turn(a, b, c) {
+      const dx = result(b[0] - a[0]), dy = result(b[1] - a[1]);
+      const ex = result(c[0] - a[0]), ey = result(c[1] - a[1]);
+      const scale = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(ex), Math.abs(ey));
+      return (dx / scale) * (ey / scale) - (dy / scale) * (ex / scale);
+    }
+    const lower = [], upper = [];
+    for (const point of unique) {
+      while (lower.length >= 2 && turn(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+        lower.pop();
+      }
+      lower.push(point);
+    }
+    for (let i = unique.length - 1; i >= 0; i--) {
+      const point = unique[i];
+      while (upper.length >= 2 && turn(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+        upper.pop();
+      }
+      upper.push(point);
+    }
+    lower.pop();
+    upper.pop();
+    return lower.concat(upper);
+  }
+
+  function stepSpring(state, target, dt, options = {}) {
+    object(state, "state");
+    object(options, "options");
+    let value = finite(state.value, "value");
+    let velocity = finite(state.velocity, "velocity");
+    finite(target, "target");
+    finite(dt, "dt");
+    const stiffness = finite(options.stiffness === undefined ? 120 : options.stiffness, "stiffness");
+    const damping = finite(options.damping === undefined ? 22 : options.damping, "damping");
+    const epsilon = finite(options.epsilon === undefined ? 0.001 : options.epsilon, "epsilon");
+    if (dt < 0 || stiffness <= 0 || damping < 0 || epsilon <= 0) {
+      throw new RangeError("Require dt >= 0, stiffness > 0, damping >= 0 and epsilon > 0");
+    }
+    const settled = () => Math.abs(result(value - target)) <= epsilon && Math.abs(velocity) <= epsilon;
+    if (settled()) return { value: target, velocity: 0, settled: true };
+    // At most 60 implicit-Euler substeps. Unlike explicit Euler, large stiffness/damping
+    // do not make the integrator unstable. A suspended tab cannot trigger unbounded catch-up.
+    const elapsed = Math.min(dt, MAX_DT);
+    const steps = Math.ceil(elapsed / SPRING_STEP);
+    const h = steps ? elapsed / steps : 0;
+    const kh = result(stiffness * h);
+    const divisor = result(1 + damping * h + kh * h);
+    for (let i = 0; i < steps; i++) {
+      velocity = result((velocity - kh * result(value - target)) / divisor);
+      value = result(value + h * velocity);
+    }
+    return settled() ? { value: target, velocity: 0, settled: true } : { value, velocity, settled: false };
+  }
+
+  function clamp(number, min, max) {
+    finite(number, "number");
+    finite(min, "min");
+    finite(max, "max");
+    if (min > max) throw new RangeError("min must not exceed max");
+    return Math.min(max, Math.max(min, number));
+  }
+
+  function ease(t) {
+    t = clamp(t, 0, 1);
+    return clamp(t * t * t * (t * (t * 6 - 15) + 10), 0, 1);
+  }
+
+  return Object.freeze({
+    DEFAULT_CAMERA, project, unprojectOnPlane, depth, boxFaces,
+    roundedPolygon, convexHull, stepSpring, ease, clamp
+  });
+});
+</script>
+<script>/* STE Retry Observatory. Original, deterministic SVG explanation; no dependencies. */
+(function (root, factory) {
+  const math = typeof module === "object" && module.exports
+    ? require("./line-math.js") : root.STELineMath;
+  const api = factory(math);
+  if (typeof module === "object" && module.exports) module.exports = api;
+  else root.STERetryObservatory = api;
+})(typeof globalThis === "object" ? globalThis : this, function (M) {
+  "use strict";
+  const STOPS = Object.freeze([0.16, 0.36, 0.72, 1]);
+  const OWNER_SWITCH = 0.875;
+  const COLORS = Object.freeze({
+    dark: { bg: "#10151b", face: "#151e28", side: "#111922", ink: "#e9edf2",
+      muted: "#a3b0bf", rule: "#344452", blue: "#79bdf2", gold: "#efc97b", mint: "#8ad4be" },
+    light: { bg: "#f7f9fb", face: "#ffffff", side: "#e6ecf2", ink: "#172333",
+      muted: "#526173", rule: "#b0becb", blue: "#176698", gold: "#82600a", mint: "#176b55" },
+  });
+  const escape = value => String(value).replace(/[&<>"']/g, character =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[character]);
+  const smooth = value => {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const number = value => Number(value.toFixed(3));
+
+  function options(input = {}) {
+    if (!input || typeof input !== "object" || Array.isArray(input)) throw new TypeError("Expected model options.");
+    const out = { attempts: 3, layers: 4, progress: 0.72, theme: "dark", ...input };
+    for (const key of ["attempts", "layers"]) {
+      if (!Number.isInteger(out[key]) || out[key] < 1 || out[key] > 4) {
+        throw new RangeError(`${key} must be an integer from 1 to 4.`);
+      }
+    }
+    if (!Number.isFinite(out.progress) || out.progress < 0 || out.progress > 1) {
+      throw new RangeError("progress must be between 0 and 1.");
+    }
+    if (!Object.hasOwn(COLORS, out.theme)) throw new RangeError("theme must be dark or light.");
+    return out;
+  }
+
+  function model(input) {
+    const { attempts: A, layers: L } = options(input);
+    return {
+      attempts: A, layers: L, retries: A - 1,
+      nested: Array.from({ length: L }, (_, index) => A ** (index + 1)),
+      owner: Array(L).fill(A),
+      nestedBackend: A ** L, ownerBackend: A,
+      repeated: A ** L - A,
+    };
+  }
+
+  function validateSource(source) {
+    const fail = field => { throw new Error(`Retained source disagrees with the model: ${field}.`); };
+    const defaults = options(), inputs = source?.inputs;
+    if (inputs?.original_requests !== 1 || inputs?.backend_failure !== "persistent") fail("request/failure assumptions");
+    for (const [key, value] of [
+      ["serial_layers", defaults.layers],
+      ["total_attempts_per_retrying_layer_per_incoming_call", defaults.attempts],
+    ]) {
+      const input = inputs[key];
+      if (!input || input.default !== value || input.minimum !== 1 || input.maximum !== 4 || input.step !== 1) fail(key);
+    }
+    const expected = model(), sample = source.default_example;
+    const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    if (!sample || !equal(sample.nested_boundary_counts, expected.nested)
+        || !equal(sample.single_owner_boundary_counts, expected.owner)
+        || sample.nested_backend_attempts !== expected.nestedBackend
+        || sample.single_owner_backend_attempts !== expected.ownerBackend
+        || sample.retries_per_incoming_call !== expected.retries
+        || sample.additional_nested_backend_calls_after_first !== expected.nestedBackend - 1) fail("default counts");
+    if (!Array.isArray(source.boundary_examples) || source.boundary_examples.length < 1
+        || source.boundary_examples.length > 64) fail("boundary examples");
+    for (const example of source.boundary_examples) {
+      const result = model({ attempts: example?.A, layers: example?.L });
+      if (example.nested_backend_attempts !== result.nestedBackend
+          || example.single_owner_backend_attempts !== result.ownerBackend) fail("boundary counts");
+    }
+    return true;
+  }
+
+  function chapter(progress) {
+    return progress < 0.23 ? 0 : progress < 0.48 ? 1 : progress < OWNER_SWITCH ? 2 : 3;
+  }
+
+  function explanation(input) {
+    const state = options(input), result = model(state), index = chapter(state.progress);
+    const A = result.attempts, L = result.layers;
+    if (A === 1) return {
+      index, title: "No retries. No amplification.",
+      text: "One total attempt means zero retries. More layers lengthen the path, but the backend still receives one attempt.",
+      formula: `1${L > 1 ? `^${L}` : ""} = 1`,
+    };
+    if (L === 1) return {
+      index, title: "One layer has one budget.",
+      text: `With just one retrying layer, both designs make ${A} backend attempts. Multiplication across owners requires more than one layer.`,
+      formula: `${A} = ${A}`,
+    };
+    return [
+      { index, title: "First, give one call a budget.",
+        text: `${A} total attempts means one initial call and ${A - 1} ${A === 2 ? "retry" : "retries"}. Assume every attempt fails, so the whole budget is used.`,
+        formula: `1 × ${A} = ${A}` },
+      { index, title: "Now put a budget inside it.",
+        text: `Each of those ${A} calls gets a fresh ${A}-attempt budget downstream. The second boundary sees ${A} groups of ${A}, not ${A} plus ${A}.`,
+        formula: `${A} × ${A} = ${A * A}` },
+      { index, title: "The next layer repeats the work.",
+        text: `At every boundary, each incoming call can start ${A} more. After ${L} layers, the backend can receive ${result.nestedBackend} attempts from one original request.`,
+        formula: `${A}^${L} = ${result.nestedBackend}` },
+      { index, title: "Give the retry budget one owner.",
+        text: `Only the outermost layer retries. Every other layer forwards once. Same ${A}-attempt budget; ${result.ownerBackend} backend attempts, not ${result.nestedBackend}.`,
+        formula: [A, ...Array(L - 1).fill(1)].join(" × ") + ` = ${A}` },
+    ][index];
+  }
+
+  function renderSVG(input = {}) {
+    const state = options(input), result = model(state), palette = COLORS[state.theme];
+    const ownerMix = smooth((state.progress - 0.80) / 0.15);
+    const isOwner = chapter(state.progress) === 3;
+    const title = isOwner ? "One retry owner. One shared path." : "A retry budget inside a retry budget.";
+    const description = `${result.layers} serial retry layers; ${result.attempts} total attempts per retrying layer, including the initial call. `
+      + `Under persistent failure, nested retries produce ${result.nestedBackend} backend attempts; one retry owner produces ${result.ownerBackend}. `
+      + "Each tile is one cumulative attempt, not a simultaneous request or a unit of time. This timeline reveals the explanation, not production telemetry."
+      + (ownerMix > 0 && ownerMix < 1 ? " The policy transition is in progress; fading tiles illustrate calls removed, not an intermediate production measurement." : "");
+    const pieces = [
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" role="img" aria-labelledby="retry-title retry-description">`,
+      `<title id="retry-title">${escape(title)}</title><desc id="retry-description">${escape(description)}</desc>`,
+      `<metadata>${escape(JSON.stringify({ type: "illustrative-model", ...result, progress: state.progress,
+        limits: "Persistent failure; exhausted budgets; no shared deadline, cancellation, caching, circuit breaker or deduplication; not a resilience guarantee." }))}</metadata>`,
+      `<rect width="960" height="440" fill="${palette.bg}"/>`,
+      `<defs><marker id="retry-arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L6 4 L1 7" fill="none" stroke="${palette.muted}" stroke-width="1.2"/></marker></defs>`,
+      `<text x="38" y="42" fill="${palette.muted}" font-family="system-ui, sans-serif" font-size="14">One original request</text>`,
+      `<text x="922" y="42" fill="${palette.muted}" text-anchor="end" font-family="system-ui, sans-serif" font-size="14">Every backend attempt fails</text>`,
+    ];
+    const positions = Array.from({ length: result.layers + 1 }, (_, i) => 78 + i * 804 / result.layers);
+    const activeBoundary = Math.min(result.layers, Math.floor(Math.max(0, state.progress - 0.015) / (0.65 / result.layers)) + 1);
+    for (let i = 0; i <= result.layers; i++) {
+      const isLast = i === result.layers, x = positions[i];
+      const nestedCount = i === 0 ? 1 : result.nested[i - 1];
+      const ownerCount = i === 0 ? 1 : result.attempts;
+      const reveal = i === 0 ? 1 : smooth((state.progress - (i - 1) * (0.65 / result.layers)) / (0.55 / result.layers));
+      const columns = i === 0 ? 1 : result.attempts ** Math.ceil(i / 2);
+      const rows = Math.ceil(nestedCount / columns);
+      const cell = Math.min(21, 110 / Math.max(columns, rows));
+      const gap = cell * 0.14;
+      const stride = cell + gap;
+      const halfX = columns * stride / 2, halfY = rows * stride / 2;
+      const camera = { cx: x, cy: 225, yaw: Math.PI / 4, elevation: Math.PI / 6, scale: 1 };
+      const ink = i === 0 ? palette.ink : (isOwner ? palette.mint : palette.blue);
+      const dim = i === 0 ? 1 : lerp(0.12, 1, reveal);
+      const floor = [[-halfX - 7, -halfY - 7, -7], [halfX + 7, -halfY - 7, -7],
+        [halfX + 7, halfY + 7, -7], [-halfX - 7, halfY + 7, -7]].map(p => M.project(p, camera));
+      pieces.push(`<g data-boundary="${i}" opacity="${number(dim)}">`);
+      pieces.push(`<path d="${M.roundedPolygon(floor, 5)}" fill="none" stroke="${palette.rule}" stroke-width="1" stroke-dasharray="3 5"/>`);
+      const tileCamera = { ...camera, cx: 0, cy: 0 };
+      const faces = M.boxFaces([0, 0, 0], [cell, cell, 5], tileCamera);
+      pieces.push(`<defs><g id="retry-tile-${i}" stroke="currentColor" stroke-width="${nestedCount > 100 ? 0.65 : 0.9}" stroke-linejoin="round">`);
+      for (const face of faces) pieces.push(`<path d="${M.roundedPolygon(face.points, 1.1)}" fill="${face.kind === "top" ? palette.face : palette.side}"/>`);
+      pieces.push(`</g></defs>`);
+      const cells = Array.from({ length: nestedCount }, (_, index) => {
+        const col = index % columns, row = Math.floor(index / columns);
+        return { index, col, row, z: col + row };
+      }).sort((a, b) => a.z - b.z || a.index - b.index);
+      for (const tile of cells) {
+        const stays = tile.index < ownerCount;
+        const tileProgress = smooth((reveal * 1.28 - tile.index / Math.max(1, nestedCount) * 0.28) / 0.92);
+        const fade = (stays ? 1 : 1 - ownerMix) * (i === 0 ? 1 : lerp(0.06, 1, tileProgress));
+        const baseX = (tile.col + 0.5) * stride - halfX;
+        const baseY = (tile.row + 0.5) * stride - halfY;
+        const finalX = (tile.index - (ownerCount - 1) / 2) * (cell + gap);
+        const position = M.project([
+          stays ? lerp(baseX, finalX, ownerMix) : baseX,
+          stays ? lerp(baseY, 0, ownerMix) : baseY,
+          (1 - tileProgress) * 18 + (stays ? ownerMix * 9 : 0),
+        ], camera);
+        pieces.push(`<use href="#retry-tile-${i}" transform="translate(${number(position[0])} ${number(position[1])})" color="${ink}" opacity="${number(fade)}" data-attempt="${tile.index + 1}"/>`);
+      }
+      const count = isOwner ? ownerCount : nestedCount;
+      pieces.push(`<text x="${number(x)}" y="112" fill="${palette.muted}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14">${i === 0 ? "Input" : isLast ? "Backend" : `After layer ${i}`}</text>`);
+      pieces.push(`<text x="${number(x)}" y="325" fill="${ink}" text-anchor="middle" font-family="Georgia, serif" font-size="${isLast ? 54 : 40}">${count}</text>`);
+      pieces.push(`<text x="${number(x)}" y="352" fill="${palette.muted}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13">${count === 1 ? "attempt" : "attempts"}</text>`);
+      if (i > 0) {
+        const previous = positions[i - 1], middle = (previous + x) / 2;
+        const factor = isOwner && i > 1 ? 1 : result.attempts;
+        const focus = i === activeBoundary && ownerMix < 0.5;
+        pieces.push(`<path d="M ${number(previous + 31)} 159 L ${number(x - 32)} 159" stroke="${focus ? palette.gold : palette.rule}" stroke-width="${focus ? 1.7 : 1.1}" marker-end="url(#retry-arrow)" fill="none"/>`);
+        pieces.push(`<text x="${number(middle)}" y="141" text-anchor="middle" fill="${factor === 1 ? palette.mint : palette.gold}" font-family="Georgia, serif" font-size="26">×${factor}</text>`);
+      }
+      pieces.push(`</g>`);
+    }
+    pieces.push(`<path d="M38 389 H922" stroke="${palette.rule}" stroke-width="0.7"/>`);
+    pieces.push(`<text x="38" y="419" fill="${palette.muted}" font-family="system-ui, sans-serif" font-size="13">Each tile = one cumulative downstream attempt.</text>`);
+    pieces.push(`<text x="922" y="419" text-anchor="end" fill="${palette.muted}" font-family="system-ui, sans-serif" font-size="13">Spatial arrangement does not represent time or concurrency.</text></svg>`);
+    return pieces.join("");
+  }
+
+  const mounted = new WeakMap();
+  function mount(root) {
+    if (!root || !root.querySelector) throw new TypeError("Expected an observatory element.");
+    const document = root.ownerDocument, view = document.defaultView;
+    const select = name => root.querySelector(`[data-retry-${name}]`);
+    const required = ["drawing", "timeline", "attempts", "layers", "play", "next", "previous",
+      "reset", "theme", "export", "drawing-region", "formula", "comparison", "counts"];
+    if (required.some(name => !select(name))) throw new Error("Incomplete observatory markup.");
+    if (mounted.has(root)) mounted.get(root).destroy();
+    const drawing = select("drawing"), timeline = select("timeline");
+    const attempts = select("attempts"), layers = select("layers");
+    let state = options(), destroyed = false, playing = false, frame = 0, last = 0;
+    let printing = false, printTheme = state.theme, onScreen = true, printDetails = [];
+    let firstPlay = true, observer, blobUrl = null;
+    const cleanups = [], reduced = view.matchMedia("(prefers-reduced-motion: reduce)");
+    const duration = 26;
+    function listen(target, type, handler, settings) {
+      target.addEventListener(type, handler, settings);
+      cleanups.push(() => target.removeEventListener(type, handler, settings));
+    }
+    function motionInstructions() {
+      select("drawing-region").setAttribute("aria-label",
+        "Attempt map. Scroll horizontally on small screens. " +
+        (reduced.matches ? "Space advances to the next idea; " : "Space plays or pauses; ") +
+        "Home and End seek.");
+    }
+    function pause() {
+      playing = false; last = 0;
+      if (frame) view.cancelAnimationFrame(frame);
+      frame = 0;
+      const play = select("play");
+      play.textContent = reduced.matches ? "Next idea" : "Play the explanation";
+      play.setAttribute("aria-pressed", "false");
+      motionInstructions();
+    }
+    function text(name, value) { const node = select(name); if (node) node.textContent = String(value); }
+    function update(announce = true) {
+      if (destroyed) return;
+      const result = model(state), copy = explanation(state), owner = chapter(state.progress) === 3;
+      drawing.innerHTML = renderSVG(state); // only our escaped, bounded renderer; never source markup
+      root.dataset.theme = state.theme;
+      motionInstructions();
+      timeline.value = String(Math.round(state.progress * 1000));
+      timeline.setAttribute("aria-valuetext", `${Math.round(state.progress * 100)} percent; ${copy.title}`);
+      attempts.value = String(state.attempts); layers.value = String(state.layers);
+      text("attempt-value", `${state.attempts} total`);
+      text("layer-value", state.layers);
+      text("headline", copy.title); text("copy", copy.text);
+      const formula = select("formula");
+      formula.replaceChildren();
+      formula.setAttribute("aria-label", copy.formula.replace(/\^(\d+)/g, " to the power $1").replace(/×/g, " times ").replace(/=/g, " equals "));
+      for (const part of copy.formula.split(/(\^\d+)/)) {
+        if (/^\^\d+$/.test(part)) {
+          const sup = document.createElement("sup"); sup.textContent = part.slice(1); formula.append(sup);
+        } else {
+          const span = document.createElement("span"); span.textContent = part; formula.append(span);
+        }
+      }
+      text("nested-total", result.nestedBackend); text("owner-total", result.ownerBackend);
+      text("difference", result.repeated === 0 ? "No amplification in this setting."
+        : `${result.repeated} fewer backend attempts in this model.`);
+      select("comparison").dataset.active = owner ? "owner" : "nested";
+      const table = select("counts");
+      table.replaceChildren();
+      for (let i = 0; i < state.layers; i++) {
+        const row = document.createElement("tr");
+        for (const value of [`${i + 1}${i === state.layers - 1 ? " — backend" : ""}`, result.nested[i], result.owner[i]]) {
+          const cell = document.createElement(row.children.length === 0 ? "th" : "td");
+          if (row.children.length === 0) cell.scope = "row";
+          cell.textContent = String(value); row.append(cell);
+        }
+        table.append(row);
+      }
+      for (const button of root.querySelectorAll("[data-retry-chapter]")) {
+        const selected = Number(button.dataset.retryChapter) === copy.index;
+        button.setAttribute("aria-current", selected ? "step" : "false");
+      }
+      const next = select("next"), previous = select("previous");
+      next.disabled = state.progress >= 1; previous.disabled = state.progress <= 0;
+      text("position", `${Math.round(state.progress * duration)} / ${duration} s`);
+      const theme = select("theme");
+      theme.textContent = state.theme === "dark" ? "Light canvas" : "Dark canvas";
+      theme.setAttribute("aria-pressed", state.theme === "light" ? "true" : "false");
+      if (announce) text("status", `${copy.title} Nested: ${result.nestedBackend}. One owner: ${result.ownerBackend}.`);
+    }
+    function set(patch, announce = true) {
+      if (destroyed) return;
+      const next = options({ ...state, ...patch });
+      pause(); state = next; firstPlay = false; update(announce);
+    }
+    function advance(direction) {
+      if (direction > 0) set({ progress: STOPS.find(stop => stop > state.progress + 0.008) ?? 1 });
+      else set({ progress: [...STOPS, 0].sort((a, b) => b - a).find(stop => stop < state.progress - 0.008) ?? 0 });
+    }
+    function tick(timestamp) {
+      frame = 0;
+      if (destroyed || !playing || printing || reduced.matches || document.hidden || !onScreen) { pause(); return; }
+      const delta = last ? Math.min((timestamp - last) / 1000, 0.08) : 0;
+      if (last && delta < 1 / 32) { frame = view.requestAnimationFrame(tick); return; }
+      last = timestamp;
+      state = options({ ...state, progress: Math.min(1, state.progress + delta / duration) });
+      update(false);
+      if (state.progress >= 1) { pause(); update(true); }
+      else frame = view.requestAnimationFrame(tick);
+    }
+    function togglePlay() {
+      if (reduced.matches) { advance(1); return; }
+      if (playing) { pause(); return; }
+      if (state.progress >= 0.99 || firstPlay) state = options({ ...state, progress: 0 });
+      firstPlay = false;
+      update(false); // The visible/exported state agrees even if paused before the first frame.
+      playing = true; last = 0;
+      select("play").textContent = "Pause";
+      select("play").setAttribute("aria-pressed", "true");
+      frame = view.requestAnimationFrame(tick);
+    }
+    function restorePrint() {
+      if (!printing) return;
+      for (const { node, open } of printDetails) node.open = open;
+      printDetails = []; printing = false;
+      state = options({ ...state, theme: printTheme }); update(false);
+    }
+    try {
+    listen(select("play"), "click", togglePlay);
+    listen(timeline, "input", () => set({ progress: Number(timeline.value) / 1000 }));
+    listen(attempts, "input", () => set({ attempts: Number(attempts.value) }));
+    listen(layers, "input", () => set({ layers: Number(layers.value) }));
+    listen(select("next"), "click", () => advance(1));
+    listen(select("previous"), "click", () => advance(-1));
+    listen(select("reset"), "click", () => {
+      set({ attempts: 3, layers: 4, progress: 0.72 }); firstPlay = true;
+    });
+    listen(select("theme"), "click", () => set({ theme: state.theme === "dark" ? "light" : "dark" }));
+    for (const button of root.querySelectorAll("[data-retry-chapter]")) {
+      listen(button, "click", () => set({ progress: STOPS[Number(button.dataset.retryChapter)] }));
+    }
+    listen(select("drawing-region"), "keydown", event => {
+      if (event.key === " " || event.key === "Enter") { event.preventDefault(); togglePlay(); }
+      else if (event.key === "Home") { event.preventDefault(); set({ progress: 0 }); }
+      else if (event.key === "End") { event.preventDefault(); set({ progress: 1 }); }
+      else if (event.key === "Escape") { event.preventDefault(); pause(); }
+    });
+    listen(select("export"), "click", () => {
+      pause();
+      if (blobUrl) view.URL.revokeObjectURL(blobUrl);
+      blobUrl = view.URL.createObjectURL(new view.Blob([renderSVG(state)], { type: "image/svg+xml;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = blobUrl; link.download = `ste-retry-${state.attempts}-attempts-${state.layers}-layers.svg`;
+      root.append(link); link.click(); link.remove();
+      text("status", "Saved the current static SVG, including model assumptions.");
+    });
+    listen(reduced, "change", () => { pause(); update(); });
+    listen(document, "visibilitychange", () => { if (document.hidden) pause(); });
+    listen(view, "beforeprint", () => {
+      pause();
+      if (!printing) {
+        printTheme = state.theme;
+        printDetails = [...root.querySelectorAll("details")].map(node => ({ node, open: node.open }));
+      }
+      printing = true;
+      for (const { node } of printDetails) node.open = true;
+      state = options({ ...state, theme: "light" }); update(false);
+    });
+    listen(view, "afterprint", () => {
+      pause(); restorePrint();
+    });
+    if (view.IntersectionObserver) {
+      observer = new view.IntersectionObserver(entries => {
+        onScreen = Boolean(entries[0]?.isIntersecting);
+        if (!onScreen) pause();
+      });
+      observer.observe(root);
+    }
+    const api = {
+      get state() { return { ...state, playing, reducedMotion: reduced.matches }; },
+      set,
+      toSVG: () => renderSVG(state),
+      destroy() {
+        if (destroyed) return;
+        pause(); restorePrint(); destroyed = true; observer?.disconnect();
+        for (const cleanup of cleanups) cleanup();
+        if (blobUrl) view.URL.revokeObjectURL(blobUrl);
+        for (const control of root.querySelectorAll("[data-retry-controls] button,[data-retry-controls] input")) control.disabled = true;
+        mounted.delete(root);
+      },
+    };
+    for (const control of root.querySelectorAll("[data-retry-controls] button,[data-retry-controls] input")) control.disabled = false;
+    mounted.set(root, api);
+    pause(); update(false);
+    return api;
+    } catch (error) {
+      pause(); restorePrint(); destroyed = true; observer?.disconnect();
+      for (const cleanup of cleanups) cleanup();
+      if (blobUrl) view.URL.revokeObjectURL(blobUrl);
+      mounted.delete(root);
+      throw error;
+    }
+  }
+  return Object.freeze({ model, options, validateSource, chapter, explanation, renderSVG, mount, STOPS });
+});
+</script>
+<script>window.steRetryExample = STERetryObservatory.mount(document.querySelector("[data-retry-observatory]"));</script>
+</body>
+</html>

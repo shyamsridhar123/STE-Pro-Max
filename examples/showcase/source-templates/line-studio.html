@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Line Studio · STE-Pro Max</title>
+<style>
+:root{color-scheme:dark;font-family:"Segoe UI",Arial,sans-serif;background:#10151b;color:#e9edf2}
+*{box-sizing:border-box}body{margin:0;padding:clamp(18px,4vw,60px)}
+main{max-width:1360px;margin:auto}header{display:flex;justify-content:space-between;gap:25px;align-items:center;border-bottom:1px solid #344452;padding-bottom:25px}
+h1{font:400 clamp(40px,5vw,68px)/1.1 Georgia,serif;letter-spacing:-1.5px;margin:30px 0 15px}
+.intro{max-width:680px;font-size:16px;line-height:1.8;color:#a3b0bf;margin-bottom:30px}
+a{color:#79bdf2;text-underline-offset:4px}button,select,input{font:inherit}button,select{padding:7px 10px;border:1px solid #607082;border-radius:4px;background:#19232d;color:#e9edf2}input{accent-color:#79bdf2}
+:focus-visible{outline:2px solid #efc97b;outline-offset:4px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 50px}
+.figure-card{min-width:0;border-top:1px solid #344452;padding-top:15px}
+.figure-mount{min-width:0}.figure-mount svg{display:block;width:100%;height:auto}
+.figure-mount label{font-size:12px;line-height:1.6}.figure-mount p{font-size:13px;line-height:1.7;color:#a3b0bf;max-width:65ch}.figure-mount select{max-width:100%}.figure-mount input{max-width:100%}
+.export{margin:12px 0 0;background:none;border-color:#344452;color:#a3b0bf;cursor:pointer;font-size:12px}
+.legend{font-size:12px;line-height:1.8;color:#a3b0bf;border-top:1px solid #344452;padding-top:25px;margin-top:35px}
+details{margin:18px 0;font-size:13px;color:#a3b0bf}summary{color:#e9edf2;cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:10px;border-bottom:1px solid #344452;text-align:left;line-height:1.6}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:760px){.grid{grid-template-columns:1fr}header{align-items:flex-start;font-size:13px}.intro{font-size:14px}h1{font-size:43px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media print{:root,body{background:#fff;color:#172333}.grid{display:block}.figure-card{break-inside:avoid;margin-bottom:25px}.figure-mount button,.figure-mount label,.export{display:none!important}.figure-mount svg{max-height:280px}header a{display:none}.intro,.legend,.figure-mount p{color:#172333}}
+</style>
+</head>
+<body>
+<main>
+<header><strong>STE-Pro Max / Line Studio</strong><a href="retry-observatory.html">See the complete Retry Observatory</a></header>
+<h1>Make the mechanism visible.</h1>
+<p class="intro">Six original, editable SVG patterns. A pointer reveals relationships; a keyboard can do the same. Use a pattern when it explains your material—not just because it moves.</p>
+<div class="grid"><!--__STE_FIGURES__--></div>
+<noscript><p>Static figures are shown. Enable JavaScript for controls and SVG export. All examples are illustrative; the source descriptions below remain readable.</p></noscript>
+<details open><summary>What these examples mean</summary>
+<table><thead><tr><th>Pattern</th><th>Purpose and limitation</th></tr></thead><tbody>
+<tr><th>Stack</th><td>Inspect source notes. Height is not confidence or importance.</td></tr>
+<tr><th>Field</th><td>Explore pointer proximity. Columns are not measured values.</td></tr>
+<tr><th>Layers</th><td>Separate review responsibilities, not a processing timeline.</td></tr>
+<tr><th>Signal</th><td>Draw a bounded trail, not a measured signal.</td></tr>
+<tr><th>Orbit</th><td>Change the viewpoint without changing the evidence.</td></tr>
+<tr><th>Flow</th><td>Follow a conceptual handoff, not latency or throughput.</td></tr>
+</tbody></table></details>
+<p class="legend">Local-only, dependency-free HTML. No external requests, analytics, or stored user input. Motion starts only with interaction. Save SVG captures the current static state with its description. This is not a video export.</p>
+<p class="sr-only" role="status" data-export-status></p>
+</main>
+<script type="application/json" id="line-source">__STE_SOURCE__</script>
+<script>/*__STE_MATH__*/</script>
+<script>/*__STE_STUDIO__*/</script>
+<script>
+(() => {
+  const source = JSON.parse(document.getElementById("line-source").textContent);
+  const handles = [], urls = [];
+  source.figures.forEach(figure => {
+    const host = document.querySelector('[data-figure="' + figure.kind + '"]');
+    host.replaceChildren();
+    const handle = STELineStudio.mount(host, figure);
+    handles.push(handle);
+    const button = document.createElement("button");
+    button.type = "button"; button.className = "export";
+    button.textContent = "Save " + figure.kind + " SVG";
+    let url = null;
+    button.addEventListener("click", () => {
+      if (url) URL.revokeObjectURL(url);
+      url = URL.createObjectURL(new Blob([handle.toSVG()], {type:"image/svg+xml;charset=utf-8"}));
+      urls.push(url);
+      const link = document.createElement("a");
+      link.href = url; link.download = "ste-line-" + figure.kind + ".svg";
+      document.body.append(link); link.click(); link.remove();
+      document.querySelector("[data-export-status]").textContent = "Saved the current " + figure.kind + " SVG.";
+    });
+    host.append(button);
+  });
+  window.steLineExamples = handles;
+  window.addEventListener("pagehide", () => {
+    for (const url of urls) URL.revokeObjectURL(url);
+  });
+})();
+</script>
+</body>
+</html>

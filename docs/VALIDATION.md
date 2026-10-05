@@ -1,7 +1,44 @@
 # Validation evidence
 
-Verified locally on October 3, 2026. This records what ran, not an assertion of
-formal STE certification or universal host compatibility.
+Dated evidence below records what ran, not an assertion of formal STE
+certification or universal host compatibility.
+
+## Line Studio development 0.5.0
+
+Verified October 4, 2026, in an isolated worktree. This is a local development
+build, not a published release or a change to the existing v0.4.0 tag.
+
+- **361 Python regression tests** passed; Ruff, Pyright and Python compilation
+  passed. The immutable ZIP and two imported source files retained their hashes.
+- **59 Node tests** passed for original geometry, bounded spring motion,
+  six SVG patterns, lifecycle behavior and all 16 retry-budget/depth pairs.
+  The developer builder rejects numerical source/default drift before writing.
+- **29 real Chrome checks** passed on the original runtime and standalone
+  examples: keyboard/pointer/touch behavior, 1440/375/240 px layouts, themes,
+  paused and seekable states, dynamic reduced motion, no-JS reading, collapsed
+  assumptions in print, current-state SVG downloads, inert malicious labels,
+  remount/failed-mount cleanup and destroy-during-print restoration.
+- No outbound runtime requests or browser errors were recorded. Saved SVGs
+  parsed without scripts, external resource URLs or executable source markup.
+- Copilot CLI **1.0.88-2** installed the whitelisted local development bundle
+  through its native marketplace/plugin commands in isolated configuration.
+  A fresh process found version **0.5.0**, enabled, with all four skills.
+  Installed HTML/JavaScript hashes matched the source bundle; four normal-user
+  configuration files retained their hashes.
+- The final README PNG is a real 1440px browser capture of the packaged,
+  paused Retry Observatory. Play is visible in the initial viewport.
+
+Evidence is retained locally under `artifacts/line-studio-20261004/`, including
+source hashes, test logs, screenshots, printed PDFs and exported SVGs.
+Reproduce with `node --test tests/line-math.test.cjs tests/line-studio.test.cjs tests/retry-observatory.test.cjs`,
+`node tools/build_line_studio.mjs --check`, and the existing-tool-only
+`tools/verify_line_studio.mjs`. The last command accepts `--evidence-dir`,
+`--source-root`, `STE_PLAYWRIGHT_MODULE`, and `STE_BROWSER_EXECUTABLE`.
+
+These checks do not establish learning outcomes, full WCAG conformance,
+cross-browser compatibility, live model-generated authoring, or a new
+Claude/Codex installation result. The synthetic retry example is explanatory
+pacing, not observed network traffic or a resilience recommendation.
 
 ## Example-first README refresh
 

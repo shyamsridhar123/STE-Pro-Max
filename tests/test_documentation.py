@@ -40,7 +40,8 @@ class ReadmeTests(unittest.TestCase):
 
     def test_moved_reference_material_remains_discoverable_and_linked(self):
         for document in ("docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
-                         "examples/showcase/README.md"):
+                         "examples/showcase/README.md", "docs/LINE_STUDIO.md",
+                         "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md"):
             self.assert_local_links_resolve(document)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("docs/README.md", readme)

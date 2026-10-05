@@ -35,7 +35,8 @@ class PluginTests(unittest.TestCase):
         self.source.mkdir()
         files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
                  ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
-                 ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip")
+                 ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip",
+                 "tools/build_line_studio.mjs")
         for relative in files:
             target = self.source / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -54,14 +55,14 @@ class PluginTests(unittest.TestCase):
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.4.0")
+            self.assertEqual(manifest["version"], "0.5.0")
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
             self.assertNotIn("skills", manifest)
             self.assertNotIn("mcpServers", manifest)
             self.assertNotIn("hooks", manifest)
-        for skill in ("ste-promax", "ste-visual-docs", "ste-storytelling"):
+        for skill in ("ste-promax", "ste-visual-docs", "ste-storytelling", "ste-line-studio"):
             self.assertTrue((self.source / "skills" / skill / "SKILL.md").is_file())
         allowed = {"$schema", "name", "version", "description", "author", "homepage",
                    "repository", "license", "keywords", "extensions"}
@@ -72,7 +73,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.4.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.5.0", "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -123,6 +124,13 @@ class PluginTests(unittest.TestCase):
             "examples/showcase/retry-storm.html", "examples/showcase/sources/retry-storm.json",
             "docs/assets/brief-transformation.png", "docs/assets/retry-storm.png",
             "docs/assets/retry-storm.gif",
+            "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/agents/openai.yaml",
+            "skills/ste-line-studio/references/authoring.md", "docs/LINE_STUDIO.md",
+            "ste_promax/assets/line-math.js", "ste_promax/assets/line-studio.js",
+            "ste_promax/assets/retry-observatory.js",
+            "examples/showcase/line-studio.html", "examples/showcase/retry-observatory.html",
+            "examples/showcase/sources/line-studio.json", "docs/assets/retry-observatory.svg",
+            "docs/assets/retry-observatory.png",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))
@@ -184,7 +192,8 @@ class PluginTests(unittest.TestCase):
         manifest = self.build()
         bundle = self.output / manifest["bundle_dir"]
         documents = ("README.md", "docs/README.md", "docs/APPROACH.md",
-                     "docs/EXAMPLES.md", "examples/showcase/README.md")
+                     "docs/EXAMPLES.md", "examples/showcase/README.md", "docs/LINE_STUDIO.md",
+                     "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md")
         for document in documents:
             source = (bundle / document).read_text(encoding="utf-8")
             for href in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", source):
@@ -268,7 +277,7 @@ class PluginTests(unittest.TestCase):
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.4.0")
+        self.assertEqual(version.stdout.strip(), "0.5.0")
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)

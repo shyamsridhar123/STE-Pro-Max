@@ -1,5 +1,19 @@
 # README visual assets
 
+## Line Studio
+
+`retry-observatory.svg` is a deterministic, script-free frame of the original
+interactive retry model, generated from `ste_promax/assets/retry-observatory.js`.
+It shows illustrative cumulative attempts (3, 9, 27, 81), not telemetry,
+concurrency, elapsed time, or a reliability benchmark.
+The editable model is `examples/showcase/sources/retry-storm.json`.
+Regenerate it with the developer-only `node tools/build_line_studio.mjs`.
+No external images, fonts, copied Hairline figures, or generated raster art are
+used by this new example.
+`retry-observatory.png` is a real browser screenshot of the packaged HTML at
+1440 × 940, paused on the default 3-attempt, 4-layer example. It is not an
+AI-generated mockup. The play control, assumptions and counters are real UI.
+
 ## Hero
 
 `hero.png` is conceptual brand artwork, not a product screenshot, data
