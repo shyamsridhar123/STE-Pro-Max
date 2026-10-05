@@ -39,9 +39,15 @@ Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 ## Show, don't tell
 
-**Development preview:** [Line Studio’s Retry Observatory](examples/showcase/retry-observatory.html)—scrub the math, change the rules. [Feature guide](docs/LINE_STUDIO.md).
+### Line Studio: see the mechanism
+
+> “Make 81 → 3 explorable.”
 
 [![Retry Observatory: 81 versus 3](docs/assets/retry-observatory.png)](examples/showcase/retry-observatory.html)
+
+Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-observatory.html) · [Guide](docs/LINE_STUDIO.md).
+
+*Development preview—not in v0.4.0.*
 
 ### One request. 81 backend attempts.
 
