@@ -8,6 +8,7 @@ evidence of a real system's safety or a measured learning outcome.
 | Example | Try it | What to preserve when adapting |
 | --- | --- | --- |
 | [Retry Observatory — Line Studio](retry-observatory.html) | Play or scrub the isometric explanation; change budgets and layers; save SVG | Cumulative attempt counts, initial attempt included, persistent failure, no timing or concurrency claim |
+| [Token bucket as a hopper and valve](token-bucket-mechanism.html) | Scrub time, change arrivals, play or reset; drag or use arrow keys on the figure | Illustrative mechanism; C = 10, r = 2 per 1 s tick, refill before admit; rejected requests are dropped, not queued |
 | [Line Studio patterns](line-studio.html) | Inspect six original line-art interactions by pointer or keyboard | Metaphors are illustrative, not measured data; retain equivalent controls and full descriptions |
 | [From dense note to sharp brief](brief-transformation.html) | Trace the outcome, scope, and proposal to the original note | 240 total questions; 186 accepted, 38 requiring edits, 16 unanswered; limited scope; proposed, unstarted pilot |
 | [One request. 81 backend attempts.](retry-storm.html) | Change layers and attempts; compare a single retry owner | Persistent-failure model, attempts including the initial call, worst-case counts rather than timing or telemetry |

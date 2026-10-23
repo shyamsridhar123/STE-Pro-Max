@@ -131,6 +131,8 @@ class PluginTests(unittest.TestCase):
             "examples/showcase/line-studio.html", "examples/showcase/retry-observatory.html",
             "examples/showcase/sources/line-studio.json", "docs/assets/retry-observatory.svg",
             "docs/assets/retry-observatory.png",
+            "examples/showcase/token-bucket-mechanism.html", "examples/showcase/sources/token-bucket.json",
+            "skills/ste-line-studio/references/mechanism-figures.md",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))

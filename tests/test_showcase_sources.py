@@ -62,7 +62,7 @@ class ShowcaseSourceTests(unittest.TestCase):
         self.assertNotIn("Ready for a shadow pilot", html)
 
     def test_new_examples_have_unique_control_and_source_ids(self):
-        for name in ("brief-transformation", "retry-storm"):
+        for name in ("brief-transformation", "retry-storm", "token-bucket-mechanism"):
             with self.subTest(name=name):
                 facts = ExampleFacts()
                 facts.feed((ROOT / f"{name}.html").read_text(encoding="utf-8"))
@@ -95,6 +95,28 @@ class ShowcaseSourceTests(unittest.TestCase):
             with self.subTest(example=example):
                 self.assertEqual(example["nested_backend_attempts"], example["A"] ** example["L"])
                 self.assertEqual(example["single_owner_backend_attempts"], example["A"])
+
+    def test_token_bucket_source_is_illustrative_and_its_arithmetic_holds(self):
+        model = json.loads((ROOT / "sources/token-bucket.json").read_text(encoding="utf-8"))
+        provenance = model["provenance"]
+        for flag in ("observed_incident", "production_telemetry", "benchmark"):
+            self.assertIs(provenance[flag], False)
+        self.assertIn("Illustrative", model["metaphor"]["status"])
+        inputs, default = model["inputs"], model["default_example"]
+        capacity, refill = inputs["capacity_tokens"], inputs["refill_tokens_per_second"]
+        tokens, a = inputs["initial_tokens"], inputs["arrivals_per_second"]["default"]
+        for i in range(inputs["seconds"]["default"]):
+            available = min(capacity, tokens + refill)
+            admitted = min(a, available)
+            tokens = available - admitted
+            self.assertEqual((available, admitted, a - admitted, tokens),
+                             (default["available"][i], default["admitted"][i],
+                              default["rejected"][i], default["tokens_after"][i]))
+        self.assertEqual(sum(default["admitted"]), default["total_admitted"])
+        self.assertEqual(sum(default["admitted"]) + sum(default["rejected"]), default["total_arrivals"])
+        html = (ROOT / "token-bucket-mechanism.html").read_text(encoding="utf-8")
+        self.assertIn("50 arrivals, 28 admitted, 22 rejected", html)
+        self.assertIn("sources/token-bucket.json", html)
 
 
 if __name__ == "__main__":

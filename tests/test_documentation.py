@@ -43,7 +43,9 @@ class ReadmeTests(unittest.TestCase):
     def test_moved_reference_material_remains_discoverable_and_linked(self):
         for document in ("docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
                          "examples/showcase/README.md", "docs/LINE_STUDIO.md",
-                         "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md"):
+                         "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md",
+                         "skills/ste-line-studio/references/mechanism-figures.md",
+                         "skills/ste-promax/SKILL.md", "skills/ste-promax/references/output-modes.md"):
             self.assert_local_links_resolve(document)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("docs/README.md", readme)
@@ -103,6 +105,17 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("No Python setup", readme)
         self.assertIn("not ASD-STE100 certification", readme)
         self.assertNotIn("pip install ste-pro-max", readme)
+
+    def test_mechanism_figure_guide_is_linked_and_keeps_guardrails(self):
+        guide = "mechanism-figures.md"
+        for document in ("skills/ste-line-studio/SKILL.md", "skills/ste-promax/SKILL.md",
+                         "skills/ste-promax/references/output-modes.md"):
+            self.assertIn(guide, (ROOT / document).read_text(encoding="utf-8"), document)
+        text = (ROOT / "skills/ste-line-studio/references" / guide).read_text(encoding="utf-8")
+        for phrase in ("illustrative", "prefers-reduced-motion", "Self-check", "back to front"):
+            self.assertIn(phrase, text)
+        self.assertIn("token-bucket-mechanism.html", (ROOT / "examples/showcase/README.md").read_text(encoding="utf-8"))
+        self.assertIn("wheresryan22/anatomy", (ROOT / "NOTICE").read_text(encoding="utf-8"))
 
     def test_line_studio_uses_the_existing_showcase_structure(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

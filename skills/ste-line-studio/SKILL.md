@@ -37,6 +37,9 @@ Read the selected template and its source before editing:
   defines the arithmetic and limits.
 - [Line Studio](../../examples/showcase/line-studio.html) demonstrates six
   reusable patterns, not six limits on what can be explained.
+- [Token bucket mechanism](../../examples/showcase/token-bucket-mechanism.html)
+  builds a concept as a small working object. Read
+  [mechanism figures](references/mechanism-figures.md) before adapting it.
 
 Use the host's file and browser tools to adapt self-contained HTML/SVG into a
 fresh `artifacts/` subdirectory in the user's workspace. Preserve the supplied

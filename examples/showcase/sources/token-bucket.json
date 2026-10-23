@@ -1,0 +1,69 @@
+{
+  "title": "A full hopper absorbs a burst. The refill sets the long-run rate.",
+  "classification": "Illustrative discrete token-bucket model",
+  "provenance": {
+    "source": "Authored illustrative model for the STE-Pro Max showcase, October 23, 2026",
+    "observed_incident": false,
+    "production_telemetry": false,
+    "benchmark": false,
+    "empirical_data": []
+  },
+  "metaphor": {
+    "object": "A hopper of tokens above a valve",
+    "status": "Illustrative mechanism; the hopper and valve do not exist in any rate limiter",
+    "mapping": {
+      "hopper": "Bucket with capacity C tokens",
+      "spout": "Refill of r tokens at each 1 s tick, capped at C",
+      "token disc": "One unit of permission for one request",
+      "valve": "Admission: one token is spent for each admitted request",
+      "reject bin": "Requests that find no token in that tick"
+    }
+  },
+  "inputs": {
+    "capacity_tokens": 10,
+    "refill_tokens_per_second": 2,
+    "initial_tokens": 10,
+    "arrivals_per_second": { "default": 5, "minimum": 1, "maximum": 8, "step": 1 },
+    "seconds": { "default": 10, "minimum": 0, "maximum": 10, "step": 1 }
+  },
+  "definitions": {
+    "C": "Bucket capacity in tokens",
+    "r": "Tokens added at each 1 s tick",
+    "a": "Requests that arrive at each 1 s tick",
+    "tick_order": "At each tick: refill first (capped at C), then admit up to the available tokens",
+    "rejected": "Requests that find no token; they are not queued or retried"
+  },
+  "assumptions": [
+    "Time advances in whole 1 s ticks; arrivals and refill occur once per tick.",
+    "Arrivals are constant and identical at every tick.",
+    "Each request costs exactly one token.",
+    "Rejected requests are dropped; there is no queue, retry, or backoff.",
+    "The bucket starts full."
+  ],
+  "formulas": {
+    "available_at_tick": "min(C, tokens_before + r)",
+    "admitted_at_tick": "min(a, available_at_tick)",
+    "rejected_at_tick": "a - admitted_at_tick",
+    "tokens_after_tick": "available_at_tick - admitted_at_tick",
+    "long_run_admitted_per_tick_when_a_exceeds_r": "r"
+  },
+  "default_example": {
+    "available": [10, 7, 4, 2, 2, 2, 2, 2, 2, 2],
+    "admitted": [5, 5, 4, 2, 2, 2, 2, 2, 2, 2],
+    "rejected": [0, 0, 1, 3, 3, 3, 3, 3, 3, 3],
+    "tokens_after": [5, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+    "total_arrivals": 50,
+    "total_admitted": 28,
+    "total_rejected": 22
+  },
+  "boundary_examples": [
+    { "a": 1, "total_admitted": 10, "total_rejected": 0, "final_tokens": 9 },
+    { "a": 2, "total_admitted": 20, "total_rejected": 0, "final_tokens": 8 },
+    { "a": 8, "total_admitted": 28, "total_rejected": 52, "final_tokens": 0 }
+  ],
+  "limits": [
+    "No real requests, clocks, network calls, storage, or automatic playback.",
+    "No claim about latency, fairness, distributed limits, or a specific product's limiter.",
+    "Whole-second ticks simplify continuous refill; real limiters may refill continuously."
+  ]
+}
