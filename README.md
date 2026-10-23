@@ -47,6 +47,8 @@ Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-observatory.html) · [Guide](docs/LINE_STUDIO.md).
 
+[![Token-bucket mechanism](docs/assets/token-bucket-mechanism.png)](examples/showcase/token-bucket-mechanism.html)
+
 *New in v0.5.0.*
 
 ### One request. 81 backend attempts.

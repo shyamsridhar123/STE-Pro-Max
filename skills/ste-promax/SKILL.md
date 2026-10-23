@@ -62,6 +62,7 @@ based on what the reader needs to understand—not a quota of media types.
 | An explanation, decision brief, research digest, or incident review with linked evidence | Reader-controlled story through [ste-storytelling](../ste-storytelling/SKILL.md) |
 | A “what if” or parameter change | Reviewed authored HTML when native shapes do not serve the request |
 | A spatial mechanism or interactive line-art figure | Original SVG through [ste-line-studio](../ste-line-studio/SKILL.md) |
+| A concept best explained as a working object | Illustrative [mechanism figure](../ste-line-studio/references/mechanism-figures.md) through ste-line-studio |
 | Requested speech or video | Reviewed story narration preparation; video export is a separate workflow |
 
 Do not generate every medium for each request. A disposable, single-purpose example

@@ -28,6 +28,19 @@ scrub, change the assumptions, or save a static SVG. It uses the
 [same illustrative source model](../examples/showcase/sources/retry-storm.json)
 as the existing retry example—not newly observed system behavior.
 
+### Mechanism figure: token bucket as a hopper and valve
+
+[![Token bucket hopper and valve figure](assets/token-bucket-mechanism.png)](../examples/showcase/token-bucket-mechanism.html)
+
+[Open the figure](../examples/showcase/token-bucket-mechanism.html) ·
+[Dark theme still](assets/token-bucket-mechanism-dark.png) ·
+[Source model](../examples/showcase/sources/token-bucket.json) ·
+[Pattern guide](../skills/ste-line-studio/references/mechanism-figures.md)
+
+A full hopper of 10 tokens absorbs a burst; the spout refill of 2 per tick then
+sets the long-run rate. The hopper and valve are an illustrative metaphor, not
+a real device or a measurement of any product's limiter.
+
 Line Studio and these examples are included in v0.5.0. Install that release
 or use the examples-only ZIP; an installation pinned to v0.4.0 stays unchanged.
 

@@ -86,6 +86,13 @@ Inspect the generated triple, gallery links, manifest warnings, external assets,
 and actual browser output. A clean asset scan is not proof of offline operation;
 dynamic and relative assets still need review. Design-token lint is not visual QA.
 
+## Mechanism figures
+
+When a concept is clearer as a small working object, use the Line Studio
+[mechanism figure pattern](../../ste-line-studio/references/mechanism-figures.md).
+Label the object as illustrative, keep source numbers exact, and drive the parts
+and readout from one tested model.
+
 ## Narration preparation, not automatic video export
 
 After reviewing the story and draft speech, use `narrate` on the original story

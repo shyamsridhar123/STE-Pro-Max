@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="An illustrative mechanism figure: a token-bucket rate limiter drawn as a hopper of tokens above a valve.">
+<title>Token bucket as a hopper and valve · STE Line Studio</title>
+<!-- Original STE Line Studio mechanism figure. SPDX-License-Identifier: Apache-2.0 -->
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0}
+button,input{font:inherit}
+button{cursor:pointer}
+.page{--bg:#f6f7f4;--card:#fff;--ink:#1b1f24;--muted:#56606b;--rule:#c9cec7;--accent:#8a5a00;--ok:#1d6b4f;--no:#a3342a;
+  --top:#eceee8;--left:#c9cdc4;--right:#a9aea4;--edge:#2a2f35;--token:#d9a441;--token-side:#a8761d;--glass:rgba(120,160,190,.16);
+  background:var(--bg);color:var(--ink);min-height:100vh;padding:24px clamp(14px,4vw,56px) 40px}
+.page[data-theme=dark]{--bg:#11161b;--card:#171e25;--ink:#e8ecef;--muted:#a3adb7;--rule:#34404b;--accent:#efc97b;--ok:#8ad4be;--no:#f2a093;
+  --top:#3a444e;--left:#2a323a;--right:#1f262d;--edge:#c9d2da;--token:#e7b75a;--token-side:#9c6f1c;--glass:rgba(150,190,220,.12)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.wrap{max-width:1180px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid var(--rule);padding-bottom:16px}
+h1{font:400 clamp(28px,3.4vw,46px)/1.12 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.8px}
+.lede{color:var(--muted);max-width:68ch;line-height:1.6;margin:10px 0 0}
+.badge{border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:12px;white-space:nowrap}
+.card{margin:22px 0;background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.card-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.card-head strong{color:var(--ink);font-weight:600}
+#figure{display:block;width:100%;height:auto;touch-action:none;cursor:ew-resize;border-radius:4px}
+#figure:focus-visible{outline-offset:-2px}
+.t-top{fill:var(--top)}.t-left{fill:var(--left)}.t-right{fill:var(--right)}
+.t-top,.t-left,.t-right,.edge{stroke:var(--edge);stroke-width:.9;stroke-linejoin:round}
+.token .t-top{fill:var(--token)}.token .t-left,.token .t-right{fill:var(--token-side)}
+.req .t-top{fill:var(--top)}.ok .t-top{fill:var(--ok)}.no .t-top{fill:var(--no)}
+.glass .t-top,.glass .t-left,.glass .t-right,.glass-back{fill:var(--glass)}
+.glass-back{stroke:var(--edge);stroke-width:.6;stroke-dasharray:3 3}
+.label{fill:var(--ink);font-size:12px}.leader{stroke:var(--muted);stroke-width:.7}
+@media (prefers-reduced-motion:no-preference){.fresh{animation:drop .35s ease-out}}
+@keyframes drop{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+.readout{font:14px/1.6 ui-monospace,Consolas,monospace;margin:10px 0 0;min-height:3.2em}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end;margin-top:12px}
+.controls label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.buttons{display:flex;gap:8px;flex-wrap:wrap}
+.buttons button{background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:6px 12px}
+.hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+table{border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{border:1px solid var(--rule);padding:4px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+.notes{color:var(--muted);font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+<main class="page" id="page">
+<div class="wrap">
+<header>
+  <div>
+    <h1>A full hopper absorbs a burst. The refill sets the long-run rate.</h1>
+    <p class="lede">A token-bucket rate limiter, drawn as a hopper of tokens above a valve.
+      The hopper holds C = 10 tokens. The spout adds r = 2 tokens at each 1 s tick, capped at 10.
+      Each admitted request spends one token at the valve. A request that finds no token is rejected.</p>
+  </div>
+  <span class="badge">Illustrative mechanism, not a real device</span>
+</header>
+
+<section class="card" aria-labelledby="fig-title">
+  <div class="card-head">
+    <span><strong id="fig-title">Fig. 1</strong> Token bucket as a hopper and valve</span>
+    <span>Model: refill first, then admit, once per 1 s tick</span>
+  </div>
+  <svg id="figure" viewBox="0 0 760 470" role="img" tabindex="0" aria-labelledby="fig-title fig-desc">
+    <desc id="fig-desc">Isometric hopper of token discs above a valve. Requests wait on the left tray; admitted requests move to the upper right tray; rejected requests move to the lower right tray.</desc>
+  </svg>
+  <p class="readout" id="readout" aria-live="polite">Enable JavaScript to drive the figure. The table below gives every tick of the default run.</p>
+  <div class="controls">
+    <label for="time">Time, s <input id="time" type="range" min="0" max="10" step="1" value="0"></label>
+    <label for="arrivals">Arrivals per tick, a <input id="arrivals" type="range" min="1" max="8" step="1" value="5"></label>
+    <div class="buttons">
+      <button id="play" type="button">Play</button>
+      <button id="reset" type="button">Reset</button>
+      <button id="theme" type="button">Dark theme</button>
+    </div>
+  </div>
+  <p class="hint">Drag across the figure, or focus it and use ← → for time and ↑ ↓ for arrivals. Home resets.</p>
+</section>
+
+<section class="card" aria-labelledby="still-title">
+  <h2 id="still-title" style="font-size:16px;margin:0">Still reading: default run, a = 5</h2>
+  <table id="still">
+    <thead><tr><th>Tick (s)</th><th>Available</th><th>Admitted</th><th>Rejected</th><th>Tokens after</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>10</td><td>5</td><td>0</td><td>5</td></tr>
+      <tr><td>2</td><td>7</td><td>5</td><td>0</td><td>2</td></tr>
+      <tr><td>3</td><td>4</td><td>4</td><td>1</td><td>0</td></tr>
+      <tr><td>4–10</td><td>2</td><td>2</td><td>3</td><td>0</td></tr>
+    </tbody>
+  </table>
+  <p class="notes">Over 10 s: 50 arrivals, 28 admitted, 22 rejected. The full hopper admits a burst;
+    after it empties, admissions settle at r = 2 per tick.</p>
+  <p class="notes"><strong>Limits.</strong> The hopper and valve are an illustrative metaphor. Whole-second ticks
+    simplify continuous refill. Rejected requests are dropped, not queued or retried. The model makes no claim about
+    latency, fairness, distributed limits, or any product's limiter. Source:
+    <a href="sources/token-bucket.json">sources/token-bucket.json</a>.</p>
+</section>
+</div>
+</main>
+
+<script id="mechanism-model">
+(function (root) {
+  "use strict";
+  var COS = Math.cos(Math.PI / 6), SIN = 0.5;
+  var CAMERA = Object.freeze({ scale: 21, cx: 340, cy: 196 });
+  var SOURCE = Object.freeze({ capacity: 10, refill: 2, initial: 10, maxArrivals: 8, maxSeconds: 10 });
+
+  function project(p, camera) {
+    var c = camera || CAMERA;
+    return [c.cx + (p[0] - p[1]) * COS * c.scale, c.cy + (p[0] + p[1]) * SIN * c.scale - p[2] * c.scale];
+  }
+  function depth(part) {
+    return part.depth != null ? part.depth : (part.x + part.w / 2) + (part.y + part.d / 2) + (part.z + part.h / 2);
+  }
+  function simulate(arrivals, seconds) {
+    var tokens = SOURCE.initial, steps = [], t;
+    for (t = 1; t <= seconds; t++) {
+      var available = Math.min(SOURCE.capacity, tokens + SOURCE.refill);
+      var admitted = Math.min(arrivals, available);
+      tokens = available - admitted;
+      steps.push({ t: t, available: available, admitted: admitted, rejected: arrivals - admitted, after: tokens });
+    }
+    var total = steps.reduce(function (s, x) { return { admitted: s.admitted + x.admitted, rejected: s.rejected + x.rejected }; },
+      { admitted: 0, rejected: 0 });
+    return { steps: steps, tokens: tokens, arrivals: arrivals * seconds, admitted: total.admitted, rejected: total.rejected };
+  }
+  function box(name, x, y, z, w, d, h, extra) {
+    var part = { name: name, kind: "box", x: x, y: y, z: z, w: w, d: d, h: h };
+    for (var k in extra || {}) part[k] = extra[k];
+    return part;
+  }
+  function blocks(tray, n, cls) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      out.push(box(cls + " " + (i + 1), tray.x + 0.3 + (i % 4) * 0.9, tray.y + 0.3 + Math.floor(i / 4) * 0.9,
+        tray.z + tray.h, 0.6, 0.6, 0.5, { cls: cls }));
+    }
+    return out;
+  }
+  var TRAYS = {
+    inbound: box("inbound tray", 0.5, 3, 0, 4, 2, 0.6),
+    admitted: box("admitted tray", 9.6, 1.4, 0, 4, 2, 0.6),
+    rejected: box("rejected tray", 9.6, 4.6, 0, 4, 2, 0.6)
+  };
+  var HOPPER = box("hopper", 5, 2, 4, 4, 4, 5.5, { cls: "glass", container: true, depth: 9 + 6 + 9.5 });
+  function parts(state) {
+    var list = [
+      box("base plate", 0, 0, -0.4, 14, 8, 0.4, { depth: -1 }),
+      box("leg back-left", 5, 2, 0, 0.4, 0.4, 4), box("leg back-right", 8.6, 2, 0, 0.4, 0.4, 4),
+      box("leg front-left", 5, 5.6, 0, 0.4, 0.4, 4), box("leg front-right", 8.6, 5.6, 0, 0.4, 0.4, 4),
+      box("valve", 6.2, 3.2, 2.6, 1.6, 1.6, 1.4),
+      TRAYS.inbound, TRAYS.admitted, TRAYS.rejected, HOPPER,
+      { name: "spout", kind: "cylinder", x: 6.5, y: 3.5, z: 10, w: 1, d: 1, h: 2 }
+    ];
+    for (var i = 0; i < state.tokens; i++) {
+      list.push({ name: "token " + (i + 1), kind: "cylinder", cls: "token", inside: "hopper",
+        x: (i % 2 ? 7.0 : 5.4), y: 3.2, z: 4.1 + Math.floor(i / 2) * 0.5, w: 1.6, d: 1.6, h: 0.45 });
+    }
+    return list.concat(blocks(TRAYS.inbound, state.arrivals, "req"),
+      blocks(TRAYS.admitted, state.admitted, "ok"), blocks(TRAYS.rejected, state.rejected, "no"));
+  }
+  function stateAt(arrivals, t) {
+    var run = simulate(arrivals, t), last = run.steps[t - 1];
+    return { t: t, arrivals: arrivals, tokens: t ? last.after : SOURCE.initial,
+      available: t ? last.available : null, admitted: t ? last.admitted : 0, rejected: t ? last.rejected : 0, run: run };
+  }
+  function behind(a, b) {
+    if (b.inside === a.name) return false;
+    if (a.inside === b.name) return true;
+    return a.x + a.w <= b.x || a.y + a.d <= b.y || a.z + a.h <= b.z;
+  }
+  function order(list) {
+    var rest = list.slice().sort(function (a, b) { return depth(a) - depth(b); }), out = [];
+    while (rest.length) {
+      var pick = 0;
+      for (var i = 0; i < rest.length; i++) {
+        var blocked = false;
+        for (var j = 0; j < rest.length && !blocked; j++) {
+          if (i !== j && behind(rest[j], rest[i]) && !behind(rest[i], rest[j])) blocked = true;
+        }
+        if (!blocked) { pick = i; break; }
+      }
+      out.push(rest.splice(pick, 1)[0]);
+    }
+    return out;
+  }
+  function intersects(a, b) {
+    return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.d && b.y < a.y + a.d && a.z < b.z + b.h && b.z < a.z + a.h;
+  }
+  function overlaps(list) {
+    var found = [];
+    for (var i = 0; i < list.length; i++) for (var j = i + 1; j < list.length; j++) {
+      var a = list[i], b = list[j];
+      if (a.inside === b.name || b.inside === a.name) continue;
+      if (intersects(a, b)) found.push([a.name, b.name]);
+    }
+    return found;
+  }
+  function pts(list) { return list.map(function (p) { var s = project(p); return s[0].toFixed(1) + "," + s[1].toFixed(1); }).join(" "); }
+  function boxSVG(b) {
+    var x = b.x, y = b.y, z = b.z, X = x + b.w, Y = y + b.d, Z = z + b.h;
+    return '<polygon class="t-right" points="' + pts([[X, y, z], [X, Y, z], [X, Y, Z], [X, y, Z]]) + '"/>' +
+      '<polygon class="t-left" points="' + pts([[x, Y, z], [X, Y, z], [X, Y, Z], [x, Y, Z]]) + '"/>' +
+      '<polygon class="t-top" points="' + pts([[x, y, Z], [X, y, Z], [X, Y, Z], [x, Y, Z]]) + '"/>';
+  }
+  function cylinderSVG(c) {
+    var r = c.w / 2, ox = c.x + r, oy = c.y + r, s = CAMERA.scale;
+    var rx = r * Math.SQRT2 * COS * s, ry = r * Math.SQRT2 * SIN * s;
+    var top = project([ox, oy, c.z + c.h]), bot = project([ox, oy, c.z]);
+    var f = function (n) { return n.toFixed(1); };
+    return '<path class="t-left" d="M' + f(top[0] - rx) + ' ' + f(top[1]) + 'L' + f(bot[0] - rx) + ' ' + f(bot[1]) +
+      'A' + f(rx) + ' ' + f(ry) + ' 0 0 0 ' + f(bot[0] + rx) + ' ' + f(bot[1]) + 'L' + f(top[0] + rx) + ' ' + f(top[1]) + 'Z"/>' +
+      '<ellipse class="t-top" cx="' + f(top[0]) + '" cy="' + f(top[1]) + '" rx="' + f(rx) + '" ry="' + f(ry) + '"/>';
+  }
+  function glassBackSVG(b) {
+    var x = b.x, y = b.y, z = b.z, X = x + b.w, Y = y + b.d, Z = z + b.h;
+    return '<polygon class="glass-back" points="' + pts([[x, y, z], [X, y, z], [X, y, Z], [x, y, Z]]) + '"/>' +
+      '<polygon class="glass-back" points="' + pts([[x, y, z], [x, Y, z], [x, Y, Z], [x, y, Z]]) + '"/>';
+  }
+  function label(text, p, dx, dy) {
+    var a = project(p), b = [a[0] + dx, a[1] + dy];
+    return '<line class="leader" x1="' + a[0].toFixed(1) + '" y1="' + a[1].toFixed(1) + '" x2="' + b[0].toFixed(1) + '" y2="' + b[1].toFixed(1) + '"/>' +
+      '<text class="label" x="' + (b[0] + (dx < 0 ? -4 : 4)).toFixed(1) + '" y="' + (b[1] + 4).toFixed(1) + '"' +
+      (dx < 0 ? ' text-anchor="end"' : '') + '>' + text + '</text>';
+  }
+  function renderSVG(state, fresh) {
+    var list = order(parts(state));
+    var body = glassBackSVG(HOPPER);
+    list.forEach(function (p) {
+      var cls = (p.cls || "") + (fresh && fresh.test(p.cls || "") ? " fresh" : "");
+      body += '<g class="' + cls.trim() + '" data-part="' + p.name + '">' + (p.kind === "cylinder" ? cylinderSVG(p) : boxSVG(p)) + '</g>';
+    });
+    body += label("spout: +" + SOURCE.refill + " tokens per tick", [7, 4, 12], 60, -20) +
+      label("hopper: " + state.tokens + " / " + SOURCE.capacity + " tokens", [9, 2, 9.5], 50, 10) +
+      label("valve: 1 token per request", [6.2, 4.8, 3.3], -150, -40) +
+      label("waiting: a = " + state.arrivals, [0.5, 5, 0.3], -20, 50) +
+      label("admitted: " + state.admitted, [13.6, 1.4, 0.6], 30, -10) +
+      label("rejected: " + state.rejected, [13.6, 6.6, 0.6], 30, 10);
+    return body;
+  }
+  root.MechanismFigure = { CAMERA: CAMERA, SOURCE: SOURCE, project: project, depth: depth, behind: behind, order: order, simulate: simulate,
+    parts: parts, stateAt: stateAt, overlaps: overlaps, renderSVG: renderSVG };
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script>
+(function () {
+  "use strict";
+  var M = window.MechanismFigure;
+  var svg = document.getElementById("figure"), desc = svg.querySelector("desc").outerHTML;
+  var time = document.getElementById("time"), arrivals = document.getElementById("arrivals");
+  var readout = document.getElementById("readout"), play = document.getElementById("play");
+  var page = document.getElementById("page"), theme = document.getElementById("theme");
+  var timer = null, previous = null;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark"); else setTheme("light");
+
+  function setTheme(name) {
+    page.dataset.theme = name;
+    theme.textContent = name === "dark" ? "Light theme" : "Dark theme";
+  }
+  function draw() {
+    var t = +time.value, a = +arrivals.value, s = M.stateAt(a, t);
+    var stepped = previous && previous.a === a && previous.t !== t;
+    svg.innerHTML = desc + M.renderSVG(s, stepped && !reduce.matches ? /^(ok|no)$/ : null);
+    previous = { a: a, t: t };
+    readout.textContent = t === 0
+      ? "t = 0 s. Hopper full: 10 / 10 tokens. No tick has run yet. Arrivals per tick: a = " + a + "."
+      : "t = " + t + " s. Refill gives " + s.available + " tokens; " + s.admitted + " admitted, " + s.rejected +
+        " rejected; " + s.tokens + " remain. Totals: " + s.run.admitted + " of " + s.run.arrivals + " admitted, " +
+        s.run.rejected + " rejected.";
+  }
+  function stop() { clearInterval(timer); timer = null; play.textContent = "Play"; }
+  function set(input, v) { input.value = Math.max(+input.min, Math.min(+input.max, v)); draw(); }
+  play.addEventListener("click", function () {
+    if (timer) return stop();
+    if (+time.value >= 10) time.value = 0;
+    play.textContent = "Pause";
+    timer = setInterval(function () { set(time, +time.value + 1); if (+time.value >= 10) stop(); }, reduce.matches ? 1400 : 800);
+  });
+  document.getElementById("reset").addEventListener("click", function () { stop(); time.value = 0; arrivals.value = 5; draw(); });
+  theme.addEventListener("click", function () { setTheme(page.dataset.theme === "dark" ? "light" : "dark"); });
+  time.addEventListener("input", function () { stop(); draw(); });
+  arrivals.addEventListener("input", draw);
+  svg.addEventListener("keydown", function (e) {
+    var map = { ArrowRight: [time, 1], ArrowLeft: [time, -1], ArrowUp: [arrivals, 1], ArrowDown: [arrivals, -1] };
+    if (map[e.key]) { stop(); set(map[e.key][0], +map[e.key][0].value + map[e.key][1]); e.preventDefault(); }
+    else if (e.key === "Home") { stop(); time.value = 0; arrivals.value = 5; draw(); e.preventDefault(); }
+  });
+  var dragging = false;
+  function scrub(e) {
+    var r = svg.getBoundingClientRect();
+    stop(); set(time, Math.round((e.clientX - r.left) / r.width * 10));
+  }
+  svg.addEventListener("pointerdown", function (e) { dragging = true; svg.setPointerCapture(e.pointerId); scrub(e); });
+  svg.addEventListener("pointermove", function (e) { if (dragging) scrub(e); });
+  svg.addEventListener("pointerup", function () { dragging = false; });
+  draw();
+})();
+</script>
+</body>
+</html>
