@@ -13,6 +13,15 @@ implementation; release-specific checks are attached to the
 [release](https://github.com/shyamsridhar123/STE-Pro-Max/releases/tag/v0.5.0).
 They are not a universal compatibility claim.
 
+## Mechanism figures
+
+When a concept is clearer as a small working object, follow the
+[mechanism figure pattern](../skills/ste-line-studio/references/mechanism-figures.md).
+The [token bucket starter](../examples/showcase/token-bucket-mechanism.html)
+draws a rate limiter as an illustrative hopper and valve driven by one tested model.
+
+![Token bucket hopper and valve figure](assets/token-bucket-mechanism.png)
+
 ## Start with a complete explanation
 
 [Retry Observatory](../examples/showcase/retry-observatory.html) is the flagship:

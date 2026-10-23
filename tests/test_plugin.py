@@ -133,6 +133,7 @@ class PluginTests(unittest.TestCase):
             "docs/assets/retry-observatory.png",
             "examples/showcase/token-bucket-mechanism.html", "examples/showcase/sources/token-bucket.json",
             "skills/ste-line-studio/references/mechanism-figures.md",
+            "docs/assets/token-bucket-mechanism.png", "docs/assets/token-bucket-mechanism-dark.png",
         }
         self.assertLessEqual(required, set(manifest["files"]))
         self.assertFalse(set(forbidden) & set(manifest["files"]))

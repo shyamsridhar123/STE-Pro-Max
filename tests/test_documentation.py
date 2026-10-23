@@ -116,6 +116,10 @@ class ReadmeTests(unittest.TestCase):
             self.assertIn(phrase, text)
         self.assertIn("token-bucket-mechanism.html", (ROOT / "examples/showcase/README.md").read_text(encoding="utf-8"))
         self.assertIn("wheresryan22/anatomy", (ROOT / "NOTICE").read_text(encoding="utf-8"))
+        for name in ("token-bucket-mechanism.png", "token-bucket-mechanism-dark.png"):
+            self.assertEqual((ROOT / "docs/assets" / name).read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
+        for document in ("README.md", "docs/EXAMPLES.md", "docs/LINE_STUDIO.md"):
+            self.assertIn("assets/token-bucket-mechanism.png", (ROOT / document).read_text(encoding="utf-8"))
 
     def test_line_studio_uses_the_existing_showcase_structure(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
