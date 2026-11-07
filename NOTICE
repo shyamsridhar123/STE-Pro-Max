@@ -13,3 +13,20 @@ The Line Studio mechanism-figure pattern is inspired by the method of
 Anatomy by Ryan (https://github.com/wheresryan22/anatomy, MIT License).
 No Anatomy code or text is included; the guidance and starter are original.
 The original STE-ProMAX archive and extracted writing skill are preserved imports.
+
+SkillC automatic-policy backend
+The native automatic workflow uses skill-achievability-compiler (SkillC),
+developed by Gina Tcchen and contributors and licensed separately under MIT:
+Copyright (c) 2026 Gina Tcchen and contributors
+https://github.com/ginaecho/skill-achievability-compiler
+
+SkillC supplies its original checker and runtime Monitor. The superseded manual
+prototype also used upstream Delivery and ApprovalGate.
+STE-Pro-Max adds the STE-specific workflow, artifact/evidence validation, local
+integration, and documentation. SkillC source is not vendored in this repository;
+its authorship and license are not replaced by STE-Pro-Max's Apache-2.0 notice.
+Copies or substantial portions of SkillC must retain its MIT copyright and
+permission notice when redistributed.
+
+Tested-source attribution, upstream citation metadata, manuscript qualifications,
+and dependency credits are recorded in docs/SKILLC_CREDITS.md.

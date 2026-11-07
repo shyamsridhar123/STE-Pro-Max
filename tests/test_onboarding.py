@@ -505,6 +505,19 @@ class OnboardingTests(unittest.TestCase):
         renderer.assert_called_once()
         browser.assert_not_called()
 
+    def test_start_forwards_evidence_arguments_and_rejects_empty_or_missing_evidence_before_output(self):
+        for bad_args in (
+            [str(self.source), "--evidence", ""],
+            [str(self.source), "--evidence", "   "],
+            [str(self.source), "--evidence-root", ""],
+            [str(self.source), "--evidence", str(self.root / "missing-evidence.json")],
+        ):
+            with self.subTest(bad_args=bad_args):
+                code, _, error = self.run_cli("start", *bad_args)
+                self.assertEqual(code, 2)
+                self.assertTrue(error.strip())
+                self.assertFalse((self.root / "artifacts").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,6 +3,148 @@
 Dated evidence below records what ran, not an assertion of formal STE
 certification or universal host compatibility.
 
+## Automatic SkillC integration 2026-11-07
+
+**Source and client validation passed after security corrections.** These checks
+were completed before preparing the v0.6.0 release. The manual-gate
+record below is historical; the current workflow has no manual STE approval step.
+Local installation and activation have their own retained deployment receipts.
+Do not infer activation on another machine from these source-test results.
+
+Test environment: Windows, CPython 3.13, real SkillC 0.3.0 at
+`25cc63bf82e968da7d01e204dc6d99879b76c45b`, GitHub Copilot CLI 1.0.103, and OpenCode
+2.2.6. Runtime dependencies were provisioned offline from verified installed
+distribution records and pristine pinned source, without weakening TLS.
+
+| Check | Recorded result | Scope |
+| --- | --- | --- |
+| Full integrated Python suite after gate corrections | **426 tests passed in 212.953 seconds; no skips** | Native, helper, packaging, documentation, host unit/contract checks, and real loopback-client dispatch |
+| Static checks | Ruff passed; OpenCode adapter JavaScript syntax checks passed | Not a formal verification or a new type-checker result |
+| Authenticated Copilot workflow on rebuilt bundle | All ten STE tools exercised; nine guarded operation results returned ALLOW; status resolved the correct workspace | Real existing default-provider authentication, no model/workspace override, no manual STE approval |
+| Protected-locator negative control | `policy_refusal` for `.env`; output directory not created | Deliberately invalid story input; no credential file was supplied or read |
+| Output inspection and preservation | Eight exported files matched byte-for-byte; original inputs and 142 candidate payload files retained their hashes | Direct triple/gallery also produced; media retained supplied PCM and did not claim a movie |
+
+The genuine run covered prose checks, host authoring, direct rendering, gallery
+regeneration, full bundle rendering, automatic export, local System.Speech WAV
+synthesis, provided-PCM story preparation, and static inspection. The independent
+WAV check found 301166 bytes, 150560 frames at 22050 Hz, one channel, 16-bit samples,
+and peak-to-peak amplitude 62384. The source and copied beat audio had SHA-256
+`9dab9bf6f74f09c26e2f7357a095660ee1d56378fb7b3b95b868b085d0850e4a`.
+These are actual technical observations, not a fictional incident or a speech
+accuracy claim. No manual listening or word alignment was performed.
+
+Copilot's isolated profile completed install/list/disable/enable/uninstall/reinstall
+through the real CLI, registering all four skills and MCP. For local live-source
+plugins, uninstall disables active components rather than deleting user source.
+The authenticated runs used session-scoped `--plugin-dir`; do not confuse that
+with persistent installation into the normal profile. Runtime activation is a
+separate check on the installed paths.
+
+A separate isolated-profile run installed the candidate through the native
+marketplace commands and ran **without `--plugin-dir`**. A real general-purpose
+child inherited STE scope. Its model-origin prompt beginning `/ste-off` did not
+disable that scope; the child's raw PowerShell write was denied before the owned
+sentinel appeared. CLI events, parent/child IDs, scope records, and unchanged
+bundle hashes are retained in `installed-child-scope-run2/` beneath the final
+evidence directory. This used a local mock provider, not a paid model call.
+
+OpenCode's real standalone loopback tests verified the actual session/location
+workspace without a forced environment override, guarded write/render/inspection,
+pre-execution denial of raw shell/edit/Code Mode and escaping targets, non-STE
+passthrough, and reload recovery. Scope contract tests also cover descendants,
+unresolved ancestry, metadata failures, and explicit user scope exit. Loopback
+provider results are not live-model quality benchmarks.
+
+Independent review initially found strict-boolean, implicit credential-locator,
+host/native receipt, and metadata-failure gaps despite an earlier 417-test pass.
+Those five findings were corrected and cleared at review attempt 2. New tests
+verify protected origins before content reads, exact JSON flag types, unknown-key
+refusal, host-bound outer receipts, retained failed partial output, and stale
+workspace refusal. The Windows narration checks include 8.3 path aliases.
+
+Evidence is retained locally under `artifacts/automatic-skillc-20261107-final/`:
+`full-unittest-after-gate.txt`, `integrated-checks-after-gate.json`,
+`live-after-gate-transcript.md`, `live-after-gate-validation.json`, and
+`lifecycle-result.json`. Earlier failure logs, backups, and source observations
+remain under that directory and `artifacts/automatic-skillc-20261106/`; they are
+not relabeled as final passes. Unretained reconnaissance probes and Copilot coding
+sessions do not count as installed-workflow validation.
+
+The parent separately inspected a real report in the in-app browser: expected
+title/headings, measured values and local evidence/design links were present,
+with no observed console errors. The accessibility snapshot was truncated; no
+comprehensive accessibility or offline-browser certification is claimed. The
+guarded inspection tool performs static analysis only and rejects headless-browser
+execution rather than promising a nonexistent network sandbox.
+
+The historical pending package retained all fourteen payload hashes, zero rows
+in `skillc_approvals`, its original fingerprint, and no export destination. The
+immutable ZIP and two original writing imports retained their documented hashes.
+The reversible deployment helper passed five sandbox tests, including failures
+after mutation and concurrent edits that must not be overwritten. These installer
+tests are separate from the 426-test product suite.
+
+Known limits remain: Copilot outer command-hook timeouts can fail open; the strict
+STE agent and independent executors are separate controls. Streamed prose checks
+are post-generation advisories. Hashes and SkillC admission do not establish
+source truth, general JavaScript safety, numeric/full-protocol enforcement,
+authenticated multi-user approval, or an OS sandbox. No release, external
+publication, provider change, or paid-service purchase follows from these results.
+
+## Native SkillC gate development 2026-11-06
+
+This is **historical manual-gate development evidence**, not the current automatic
+workflow, a published plugin release, or a
+production-safety certification. STE base revision:
+`a7da74e83e5fcf8ea23dce075e64b463e5e24584`, plus the native gate changes in this
+checkout. SkillC backend: 0.3.0 at
+`25cc63bf82e968da7d01e204dc6d99879b76c45b`.
+
+| Check | Recorded outcome | Scope |
+| --- | --- | --- |
+| Native gate tests with configured real backend | 11 passed; final focused run 26.117 seconds | Real rendering and SkillC calls; failure and confirmation branches use explicit test simulations |
+| Optional backend unconfigured | Two always-run checks passed; nine integration tests skipped | Skips are not passes; ordinary STE behavior remains available |
+| Full Python regression run | 376 tests ran; one README-length failure | All gate tests passed within it; the added README prose exceeded the existing brevity contract |
+| Documentation correction | Root README restored; all 10 then-existing documentation tests passed | Separate focused recheck, not a new full-suite result |
+| Final backend-path correction | All 11 gate tests and Ruff passed again | Preserves a configured virtual-environment interpreter path rather than executing its base symlink target |
+| Actual project-research brief | Staged with seven original evidence files and fourteen bound payload files | Reached `pending_approval`; no user approval or real export occurred |
+| Parent artifact/browser inspection | Payload hashes, evidence equality, seven resolving evidence links, title and result table checked; no observed console errors | Not a comprehensive accessibility, semantic, or offline-browser audit |
+
+The 376-test run took 87.015 seconds. Its README failure and the later small
+backend-path change were followed by the focused checks above. **No all-green
+full-suite rerun is claimed.** Do not add overlapping focused and broad counts
+together or call them a factual-accuracy rate.
+
+The actual stage used the native commands and original project evidence, not the
+earlier fictional workshop harness. Independent inspection found zero approval
+rows, no approval-reference file, and no export destination. An unanswered
+approval request did not authorize a live export. Unit-test export success is
+distinct from that deliberately paused real workflow.
+
+Workstation-only evidence is retained under
+`artifacts/native-validation-20261106T194328Z-26048526/`,
+`artifacts/gate-validation-20261106-reconcile/`, and
+`artifacts/skillc-native-20261106/`. These ignored local directories are not
+distributed with the plugin. Source-checkout checks can be repeated after
+configuring the optional backend:
+
+```sh
+python -m unittest tests.test_gate_cli -v
+python -m unittest tests.test_documentation -v
+python -m unittest discover -s tests -v
+```
+
+The observed runtime used Python 3.13 for STE and a configured Python 3.12 worker
+for SkillC. A merged environment installation encountered verified TLS handshake
+failures; verification was not disabled and existing global installations were
+not changed. Windows was exercised locally; this does not establish a new
+cross-platform or host-plugin-installation result for the gate.
+
+No live model-generation benchmark, general source-truth checker, independent
+identity authentication, cost/latency improvement, or real external publication
+was demonstrated. The [implementation guide](SKILLC_GATE.md#impact-what-changes-and-what-does-not)
+and [upstream citations](SKILLC_CREDITS.md) define the narrower claim.
+
 ## Line Studio development 0.5.0
 
 Verified October 4, 2026, in an isolated worktree. This is a local development

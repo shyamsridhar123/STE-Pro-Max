@@ -81,7 +81,13 @@ def doctor_report() -> dict[str, Any]:
     }
 
 
-def _safe_output(path: Path, source: Path, design: str | None) -> Path:
+def _safe_output(
+    path: Path,
+    source: Path,
+    design: str | None,
+    evidence: list[str] | None = None,
+    evidence_root: str | None = None,
+) -> Path:
     """Reject redirection before resolving paths, including Windows junction parents."""
     if ".." in path.parts or (path.drive and not path.root):
         raise ValueError("Output directory must not contain '..' or a drive-relative path.")
@@ -96,9 +102,11 @@ def _safe_output(path: Path, source: Path, design: str | None) -> Path:
         if not stat.S_ISDIR(info.st_mode):
             raise ValueError("Output directory and parents must be directories, not source files.")
     output = absolute.resolve()
-    for input_path in (source, Path(design) if design else None):
-        if input_path is not None and input_path.resolve().is_relative_to(output):
+    for input_path in (source, Path(design) if design else None, *(Path(item) for item in (evidence or []))):
+        if input_path is not None and input_path.exists() and input_path.resolve().is_relative_to(output):
             raise ValueError("Output directory must not contain or collide with an input source or design.")
+    if evidence_root is not None and Path(evidence_root).exists() and Path(evidence_root).resolve() == output:
+        raise ValueError("Output directory must not equal the evidence root directory.")
     if output.exists():
         raise ValueError("Start requires a new output directory; existing files and directories were not changed.")
     return output
@@ -114,10 +122,15 @@ def _slug(title: str) -> str:
 def start(args: argparse.Namespace) -> dict[str, Any]:
     from ste_promax import cli
 
-    for name in ("input", "output_dir", "design"):
-        value = getattr(args, name)
-        if value is not None and not value.strip():
+    for name in ("input", "output_dir", "design", "evidence_root"):
+        value = getattr(args, name, None)
+        if value is not None and not str(value).strip():
             raise ValueError(f"{name.replace('_', '-')} must not be empty.")
+    evidence_list = list(getattr(args, "evidence", None) or [])
+    for item in evidence_list:
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError("evidence must not be empty.")
+    evidence_root = getattr(args, "evidence_root", None)
 
     def render_source(source: Path) -> dict[str, Any]:
         # Reuse normalization to choose a title, with no writes or inferred trust.
@@ -139,10 +152,17 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
             _design_tokens(design_text)
         requested = (Path(args.output_dir) if args.output_dir is not None else
                      Path.cwd() / "artifacts" / f"{_slug(title)}-{secrets.token_hex(8)}")
-        output = _safe_output(requested, source, args.design)
-        render_args = argparse.Namespace(input=str(source), output_dir=str(output), title=args.title,
-                                         design=args.design, trusted_html=args.trusted_html)
-        # cli.render validates input, design and render dependencies before mkdir.
+        output = _safe_output(requested, source, args.design, evidence_list, evidence_root)
+        render_args = argparse.Namespace(
+            input=str(source),
+            output_dir=str(output),
+            title=args.title,
+            design=args.design,
+            trusted_html=args.trusted_html,
+            evidence=evidence_list,
+            evidence_root=evidence_root,
+        )
+        # cli.render validates input, design, evidence, and render dependencies before mkdir.
         return cli.render(render_args)
 
     if args.input is not None:

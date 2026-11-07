@@ -10,21 +10,25 @@ your agent for a clear rewrite, a visual explanation, or an interactive story.
 | Make an original interactive SVG explanation | [Line Studio](LINE_STUDIO.md) |
 | Understand STE and the Karpathy-inspired approach | [How it works](APPROACH.md) |
 | Adapt a self-contained HTML example | [Template guide](../examples/showcase/README.md) |
-| Render structured input or automate batches | [Optional engine](AUTHORING.md) |
+| Render structured input or automate batches | [Native engine](AUTHORING.md) |
+| Run automatic checks without manual approval | [SkillC integration, v0.6.0](SKILLC_GATE.md) |
+| Attribute SkillC correctly and inspect its sources | [Credits, licenses, and citations](SKILLC_CREDITS.md) |
 | Check what was actually tested | [Verification](VALIDATION.md) |
 
 ## Go deeper
 
-- **Release:** [v0.5.0 highlights and downloads](releases/v0.5.0.md).
+- **Release:** [v0.6.0 automatic checks](releases/v0.6.0.md); [v0.5.0 Line Studio](releases/v0.5.0.md).
 
 - **Design and implementation:** [Design direction](../DESIGN.md),
   [implementation](IMPLEMENTATION.md), [suite coverage](SUITE_AUDIT.md).
 - **Research:** [Plugin ecosystems](research/PLUGIN_MANAGEMENT.md),
   [visual learning and storytelling](research/VISUAL_LEARNING_AND_STORYTELLING.md),
   [Open Knowledge Format](research/OPEN_KNOWLEDGE_FORMAT.md).
-- **Sources:** [Original post and STE standard](../skills/ste-promax/references/source-evidence.md),
+- **Sources:** [SkillC software and manuscript](SKILLC_CREDITS.md),
+  [original post and STE standard](../skills/ste-promax/references/source-evidence.md),
   [preserved imports](PROVENANCE.md), [image provenance](assets/README.md).
 
-The plugin's normal authoring path uses the host's existing tools. The Python
-engine is optional; it is not required by the installed authoring skills.
-Narration and video require a separately available media tool and review.
+The published v0.5.0 plugin uses the host's existing tools. Version 0.6.0
+adds automatic policy, a configured runtime, and guarded tools for
+Copilot CLI and OpenCode. See the integration guide before claiming enforcement.
+Narration and video require a separately available media capability.

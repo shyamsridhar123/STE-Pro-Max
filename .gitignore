@@ -2,6 +2,7 @@
 /.omx/
 /omx_wiki/
 /MEMORY.md
+.slim/deepwork/
 
 # Generated artifacts are reproducible from the checked-in examples.
 /artifacts/

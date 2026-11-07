@@ -14,9 +14,10 @@ from typing import cast
 import unicodedata
 import xml.etree.ElementTree as ET
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, Template
 
 from .json_input import loads_json
+from .policy_runtime import check_sensitive_read_path
 from .stories import render_story, story_companions, validate_story
 
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
@@ -51,6 +52,7 @@ def _local_path(value: Path) -> Path:
 
 def _read_bounded(path: Path, limit: int) -> bytes:
     path = _local_path(path)
+    check_sensitive_read_path(path, "Input file")
     if not stat.S_ISREG(path.stat().st_mode):
         raise ValueError(f"Expected a regular file: {path.name}")
     with path.open("rb") as handle:
@@ -110,13 +112,35 @@ def synthesize(text_path: Path, audio_path: Path, voice: str | None) -> None:
     shell = shutil.which("powershell.exe")
     if not shell or not NARRATOR.is_file():
         raise RuntimeError("Local System.Speech helper unavailable; provide --audio-dir with PCM WAV files.")
+    text_path = _local_path(text_path)
+    audio_path = _local_path(audio_path)
+    _read_bounded(text_path, MAX_SOURCE_BYTES)
     command = [shell, "-NoProfile", "-NonInteractive", "-File", str(NARRATOR),
                "-InputPath", str(text_path), "-OutputPath", str(audio_path)]
     if voice is not None:
         command.extend(["-Voice", voice])
-    result = subprocess.run(command, capture_output=True, text=True, timeout=180, check=False)
-    if result.returncode:
-        raise RuntimeError(result.stderr.strip() or "Local System.Speech narration failed.")
+
+    def effect() -> None:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=180, check=False)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "Local System.Speech narration failed.")
+
+    from .gate import run_guarded_operation
+
+    return run_guarded_operation("ste.synthesize_wav", {
+        "caller_kind": "native",
+        "workspace_root": str(Path.cwd().resolve()),
+        "source_paths": [str(text_path)],
+        "target_paths": [str(audio_path)],
+        "source_kind": "text",
+        "text_path": str(text_path),
+        "audio_path": str(audio_path),
+        "audio_dir": None,
+        "voice": voice,
+        "speaker_injected": False,
+        "speech_available": True,
+        "expected_before": {str(audio_path): None},
+    }, effect)
 
 
 def _json(value) -> str:
@@ -232,10 +256,14 @@ def prepare_story_media(source: Path, output: Path, voice: str | None = None,
     Raises on failure; after directory creation, manifest.json records partial
     failure and only successfully validated audio. No speech alignment is inferred.
     """
-    original = _read_bounded(Path(source), MAX_SOURCE_BYTES)
+    source = _local_path(Path(source))
+    original = _read_bounded(source, MAX_SOURCE_BYTES)
     story = loads_json(original.decode("utf-8-sig"))
     validate_story(story)  # Complete native validation precedes ALL output I/O.
     story = cast(dict, story)  # The native validator guarantees an object.
+    for idx, src_entry in enumerate(story.get("sources", [])):
+        if isinstance(src_entry, dict) and "locator" in src_entry:
+            check_sensitive_read_path(src_entry["locator"], f"story.sources[{idx}].locator")
     companions = story_companions(story)
     cues = json.loads(companions["narration.json"])["cues"]
     if audio_dir is not None and (voice is not None or speaker is not None):
@@ -272,6 +300,45 @@ def prepare_story_media(source: Path, output: Path, voice: str | None = None,
               '</style></head><body>'
               '<p>Prepared, not rendered. Review narration and audio against this complete story. '
               'Source registration is not verification.</p>' + render_story(story) + "</body></html>")
+    source_paths = [str(source)]
+    if audio_root is not None:
+        for cue in cues:
+            wav_path = _local_path(audio_root / f"{cue['id']}.wav")
+            source_paths.append(str(wav_path))
+            if wav_path.is_file():
+                _pcm_info(_read_bounded(wav_path, MAX_AUDIO_BYTES))
+    # Declare the outputs observed by the controller's built-in media postcheck.
+    target_paths = [str(output / name) for name in (
+        "manifest.json", "source.json", "story.json", "review.html", "timeline.json",
+        "transcript.txt", "captions.vtt", "video/index.html",
+    )]
+    target_paths.extend(str(output / "video" / f"beat-{cue['id']}.wav") for cue in cues)
+
+    from .gate import run_guarded_operation
+
+    return run_guarded_operation("ste.prepare_story_media", {
+        "caller_kind": "native",
+        "workspace_root": str(Path.cwd().resolve()),
+        "output_root": str(output),
+        "source_paths": source_paths,
+        "source_sha256": hashlib.sha256(original).hexdigest(),
+        "target_paths": target_paths,
+        "source_kind": "story",
+        "audio_dir": str(audio_root) if audio_root is not None else None,
+        "voice": voice,
+        "speaker_injected": speaker is not None,
+        "speech_available": bool(shutil.which("powershell.exe") and NARRATOR.is_file()),
+    }, lambda: _prepare_story_media_effect(
+        output, original, story, companions, cues, audio_root, voice, speaker,
+        warnings, visuals, template, review,
+    ))
+
+
+def _prepare_story_media_effect(output: Path, original: bytes, story: dict,
+                                companions: dict[str, str], cues: list[dict],
+                                audio_root: Path | None, voice: str | None, speaker,
+                                warnings: list[str], visuals: list[dict],
+                                template: Template, review: str) -> dict:
     output.mkdir(exist_ok=False)
     identity = output.stat()
 

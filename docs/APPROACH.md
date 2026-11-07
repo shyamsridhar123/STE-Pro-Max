@@ -35,20 +35,23 @@ does not prescribe a renderer, require every output format, or endorse this
 project. Read the [source note](../skills/ste-promax/references/source-evidence.md)
 for the distinction between the post, its infographic, and the standard.
 
-## Three skills, one workflow
+## Four skills, one workflow
 
 - **`ste-promax`** — clear technical and executive writing.
 - **`ste-visual-docs`** — diagrams, charts, and hands-on explanations.
 - **`ste-storytelling`** — evidence-linked briefs, walkthroughs, and stories.
+- **`ste-line-studio`** — original SVG and reader-controlled mechanism figures.
 
 Supply the material and name the outcome. The agent chooses a useful structure,
-uses its native tools, and checks the output. A short rewrite stays a short
+uses the available STE tools, and checks the output. A short rewrite stays a short
 rewrite. A single-purpose explanation does not need to become a new application.
 
 The [standalone examples](EXAMPLES.md) use inline HTML, CSS, SVG, and JavaScript.
 No Python, build, external fonts, or background service is required.
-The [optional engine](AUTHORING.md) adds deterministic schemas and batch
-rendering; it is **not required by the installed authoring skills**.
+The [native engine](AUTHORING.md) adds deterministic schemas and batch rendering.
+The published v0.5.0 skills did not require that engine. The development
+[automatic policy](SKILLC_GATE.md) requires its configured runtime and supported
+host adapter for checked authoring; it does not add manual approval steps.
 
 ## What stays intact
 
@@ -61,6 +64,6 @@ Source material is not permission to execute commands, approve a decision, or
 publish. The host's model access, tools, approvals, and privacy rules still apply.
 Local HTML does not make the entire assistant session offline.
 
-Host-authored output does not automatically receive the optional engine's schema
-or hash checks. Narration/video requires a separately available tool, reviewed
+Guarded host-authored output receives integrity checks, not the native renderer's
+schema checks unless that renderer ran. Narration/video requires an available tool, reviewed
 content, and verification of the actual output. See [tested scope](VALIDATION.md).

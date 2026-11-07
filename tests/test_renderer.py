@@ -122,7 +122,10 @@ class NativeArtifactTests(unittest.TestCase):
                                output_dir=self.output, **kwargs)
 
     def test_real_triple_and_honest_lint_metadata(self):
-        triple = self.render({"title": "Test Artifact", "body_html": "<p>Hello from the test suite.</p>"})
+        triple = self.render(
+            {"title": "Test Artifact", "body_html": "<p>Hello from the test suite.</p>"},
+            trusted_html=True,
+        )
         self.assertEqual(set(triple), {"html_path", "design_path", "meta_path", "slug"})
         for key in ("html_path", "design_path", "meta_path"):
             self.assertTrue(triple[key].is_file())
@@ -196,12 +199,27 @@ class NativeArtifactTests(unittest.TestCase):
 
     def test_metadata_is_escaped_but_body_html_is_explicitly_trusted(self):
         payload = '"><img src=x onerror=alert(1)>'
-        triple = self.render(dict.fromkeys(("title", "brand", "breadcrumb", "status_tag"), payload) |
-                             {"body_html": '<strong id="trusted">trusted body</strong>'})
+        triple = self.render(
+            dict.fromkeys(("title", "brand", "breadcrumb", "status_tag"), payload)
+            | {"body_html": '<strong id="trusted">trusted body</strong>'},
+            trusted_html=True,
+        )
         html = triple["html_path"].read_text(encoding="utf-8")
         self.assertIn("&lt;img", html)
         self.assertNotIn("<img", html)
         self.assertIn('<strong id="trusted">trusted body</strong>', html)
+
+    def test_raw_html_requires_explicit_boolean_trusted_html_before_output(self):
+        for bad_trusted in (False, "true", 1, None):
+            with self.subTest(bad_trusted=bad_trusted):
+                out_dir = self.root / f"untrusted-{bad_trusted}"
+                with self.assertRaises(ValueError):
+                    render_artifact(
+                        {"title": "Raw", "body_html": "<p>Raw</p>"},
+                        output_dir=out_dir,
+                        trusted_html=bad_trusted,  # type: ignore[arg-type]
+                    )
+                self.assertFalse(out_dir.exists())
 
     def test_custom_design_injects_safe_tokens_and_preserves_exact_sidecar(self):
         design = self.root / "custom.DESIGN.md"
@@ -327,6 +345,39 @@ class NativeArtifactTests(unittest.TestCase):
         self.assertIn("--font-family-body", tokens)
         self.assertIn("--rounded-md", tokens)
         self.assertIn("--spacing-md", tokens)
+
+    def test_render_artifact_and_gallery_enter_guarded_operation_before_mkdir(self):
+        recorded = []
+
+        def spy_guard(op, inputs, effect_fn, *, validate_result=None):
+            # Output directory must not exist before effect_fn on fresh target
+            if op == "ste.render_artifact":
+                self.assertFalse(self.output.exists())
+            result = effect_fn()
+            obs = validate_result(result) if validate_result is not None else None
+            recorded.append((op, inputs, obs))
+            return result
+
+        with patch("ste_promax.gate.run_guarded_operation", side_effect=spy_guard, create=True):
+            self.render({"title": "Guarded Artifact", "body_md": "# Guarded"})
+            gallery = regenerate_gallery(self.output)
+
+        self.assertEqual([item[0] for item in recorded], ["ste.render_artifact", "ste.regenerate_gallery"])
+        art_inputs = recorded[0][1]
+        art_obs = recorded[0][2]
+        self.assertEqual(art_inputs["caller_kind"], "native")
+        self.assertEqual(art_inputs["output_root"], str(self.output.resolve()))
+        self.assertEqual(len(art_inputs["target_paths"]), 3)
+        self.assertEqual(set(art_obs["outputs"]), set(art_inputs["target_paths"]))
+        self.assertEqual(art_obs["native_status"], "complete")
+
+        gal_inputs = recorded[1][1]
+        gal_obs = recorded[1][2]
+        self.assertEqual(gal_inputs["caller_kind"], "native")
+        self.assertEqual(gal_inputs["target_paths"], [str(gallery.resolve())])
+        self.assertEqual(gal_inputs["source_paths"], [])
+        self.assertEqual(set(gal_obs["outputs"]), {str(gallery.resolve())})
+        self.assertEqual(gal_obs["native_status"], "complete")
 
 
 class InputValidationTests(unittest.TestCase):

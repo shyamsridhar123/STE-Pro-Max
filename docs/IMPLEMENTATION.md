@@ -44,3 +44,26 @@ Every prescribed output option has an implemented route and an honest validation
 status. Tests pass, source hashes are unchanged, the new remote is private, and the
 pushed commit matches the validated local source. Optional external providers are
 not claimed to be configured or tested.
+
+## Native SkillC extension, v0.6.0
+
+The current checkout adds automatic checks to native and supported host STE
+workflows, not a second renderer or a reimplementation of SkillC. This supersedes
+the initial manual approval design; the historical package remains untouched.
+
+| Module | Responsibility |
+| --- | --- |
+| [cli.py](../ste_promax/cli.py) | Guard normal render/start and automatic export; remove manual stage/approve routes |
+| [gate.py](../ste_promax/gate.py) | Bind a fixed SkillC plan, check actual source/evidence/output, enforce nested bounds, and record receipts |
+| [_skillc_worker.py](../ste_promax/_skillc_worker.py) | Closed local JSON bridge to the real SkillC backend |
+| [policy_runtime.py](../ste_promax/policy_runtime.py) | Resolve trusted runtime configuration; fail closed on missing capabilities |
+| [host operations](../integrations/mcp/operations.py) | Guarded typed operations shared by host adapters |
+| `tests/test_automatic_policy.py` and `tests/test_gate_cli.py` | Core, native, missing-backend, and false-success regressions |
+
+STE renders in-process. A configured worker supports a separate backend environment;
+it is not a model service or an authentication provider. No manual STE approval is
+required. Existing host permission and external-action boundaries remain intact.
+
+See [usage, implementation, impact, and limits](SKILLC_GATE.md),
+[dated validation evidence](VALIDATION.md#native-skillc-gate-development-2026-11-06),
+and [upstream authorship and licenses](SKILLC_CREDITS.md).

@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 from types import ModuleType
@@ -34,9 +35,17 @@ class RenderTests(unittest.TestCase):
         self.render_module.validate_input = Mock()
         self.gallery_module.regenerate_gallery = self.gallery
 
-    def fake_render(self, input_data, design_path: Path | None = None, output_dir: Path | None = None):
+    def fake_render(
+        self,
+        input_data,
+        design_path: Path | None = None,
+        output_dir: Path | None = None,
+        *,
+        trusted_html: bool = False,
+    ):
         self.input_data = input_data
         self.design_path = design_path
+        self.trusted_html = trusted_html
         self.assertEqual(output_dir, self.output)
         assert output_dir is not None
         triple: dict[str, Any] = {
@@ -292,16 +301,56 @@ class RenderTests(unittest.TestCase):
                 self.assertEqual(error.exception.code, 2)
         self.assertFalse(self.output.exists())
 
+    def test_manual_stage_and_approve_commands_removed_and_automatic_export_wired(self):
+        for removed_cmd in (
+            ["stage", str(self.source), "--output-dir", str(self.output), "--export-dir", str(self.root / "exp")],
+            ["approve", "--stage-dir", str(self.output), "--fingerprint", "a" * 64, "--export-dir", str(self.root / "exp")],
+            ["export", "--stage-dir", str(self.output), "--export-dir", str(self.root / "exp")],
+        ):
+            with self.subTest(removed_cmd=removed_cmd[0]), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    cli.main(removed_cmd)
+                self.assertEqual(error.exception.code, 2)
+
+        in_dir = str(self.root / "bundle-in")
+        out_dir = str(self.root / "bundle-out")
+        with patch("ste_promax.gate.export_bundle", return_value={"status": "exported", "output_dir": out_dir}) as exp_mock, \
+             contextlib.redirect_stdout(io.StringIO()) as stdout, \
+             contextlib.redirect_stderr(io.StringIO()) as stderr:
+            code = cli.main(["export", "--input-dir", in_dir, "--output-dir", out_dir])
+        self.assertEqual(code, 0, stderr.getvalue())
+        exp_mock.assert_called_once_with(in_dir, out_dir)
+        self.assertEqual(json.loads(stdout.getvalue())["status"], "exported")
+
+        # Policy rejection with a complete manifest must never return false success (exit 0)
+        from ste_promax.policy_runtime import PolicyError
+        with patch(
+            "ste_promax.gate.run_guarded_operation",
+            side_effect=PolicyError("Postcheck rejected", partial_result={"status": "complete"}),
+        ):
+            code, out, err = self.run_cli()
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("Postcheck rejected", err)
+
     def test_version(self):
-        self.assertEqual(__version__, "0.5.0")
+        self.assertEqual(__version__, "0.6.0")
         with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as error:
             cli.main(["--version"])
         self.assertEqual(error.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "0.5.0")
+        self.assertEqual(output.getvalue().strip(), __version__)
 
 
 class NativeIntegrationTests(unittest.TestCase):
     def test_real_native_markdown_json_and_trusted_html_without_processes(self):
+        real_popen = subprocess.Popen
+
+        def guard_no_external_renderer(cmd, *p_args, **p_kwargs):
+            args_list = [str(x) for x in cmd] if isinstance(cmd, (list, tuple)) else [str(cmd)]
+            if "-m" in args_list and "ste_promax._skillc_worker" in args_list:
+                return real_popen(cmd, *p_args, **p_kwargs)
+            raise AssertionError(f"Native rendering must not spawn external renderer: {cmd!r}")
+
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
             cases = (
@@ -316,7 +365,7 @@ class NativeIntegrationTests(unittest.TestCase):
                     original = text.encode("utf-8")
                     source.write_bytes(original)
                     output_dir = root / str(number)
-                    with patch("subprocess.Popen", side_effect=AssertionError("Native rendering must not spawn")), \
+                    with patch("subprocess.Popen", side_effect=guard_no_external_renderer), \
                          contextlib.redirect_stdout(io.StringIO()) as stdout, \
                          contextlib.redirect_stderr(io.StringIO()) as stderr:
                         code = cli.main(["render", str(source), "--output-dir", str(output_dir), *flags])

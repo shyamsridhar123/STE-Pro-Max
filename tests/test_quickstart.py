@@ -28,6 +28,11 @@ class QuickstartTests(unittest.TestCase):
         self.cwd = patch("quickstart.Path.cwd", return_value=self.workspace)
         self.cwd.start()
         self.addCleanup(self.cwd.stop)
+        # These tests isolate environment orchestration; subprocess cases below use real policy.
+        self.policy = patch("quickstart.policy_preflight")
+        self.real_policy_preflight = quickstart.policy_preflight
+        self.policy.start()
+        self.addCleanup(self.policy.stop)
 
     def invoke(self, *args):
         with contextlib.redirect_stdout(io.StringIO()) as out, \
@@ -70,6 +75,30 @@ class QuickstartTests(unittest.TestCase):
         self.assertIn("Nothing was installed", err)
         self.assertFalse(self.environment.exists())
         run.assert_not_called()
+
+    def test_missing_policy_stops_before_environment_setup_or_native_effects(self):
+        self.policy.stop()
+        response = SimpleNamespace(returncode=0, stdout=json.dumps({
+            "available": False, "error": {"message": "Backend missing"}}), stderr="")
+        with patch("quickstart.subprocess.run", return_value=response) as run, \
+                patch("quickstart.runtime") as runtime:
+            code, out, err = self.invoke("--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("Configure the SkillC runtime first", err)
+        self.assertEqual(self.snapshot(), {})
+        runtime.assert_not_called()
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.args[0][:4], [sys.executable, "-I", "-B", "-c"])
+
+    def test_policy_probe_rejects_bad_json_and_worker_exit(self):
+        for response in (SimpleNamespace(returncode=0, stdout="invalid", stderr=""),
+                         SimpleNamespace(returncode=2, stdout="", stderr="Backend refused")):
+            with self.subTest(response=response), \
+                    patch("quickstart.subprocess.run", return_value=response):
+                with self.assertRaises(ValueError):
+                    self.real_policy_preflight(ROOT, self.workspace)
+        self.assertEqual(self.snapshot(), {})
 
     def test_valid_owned_environment_reused_without_writes_or_pip(self):
         self.owned_environment()

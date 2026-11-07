@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from contextlib import ExitStack
 import datetime
+import hashlib
 import html as _html_lib
 import json
 from pathlib import Path
@@ -23,6 +24,11 @@ from jinja2 import Environment, FileSystemLoader
 
 from .charts import render_chart
 from .diagrams import render_diagram
+from .policy_runtime import (
+    ERROR_POSTCONDITION_FAILURE,
+    PolicyError,
+    check_sensitive_read_path,
+)
 from .stories import render_story
 from .input_validation import validate_input, _validate_color
 
@@ -33,25 +39,58 @@ _LINT_ENGINE = "ste-promax.local-design-v1"
 _TRIPLE_SUFFIXES = (".html", ".DESIGN.md", ".meta.yaml")
 
 
+def _has_raw_html(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            key == "html" or key.endswith("_html")
+            or (key == "breadcrumb" and isinstance(item, str) and re.search(r"<[^>]+>", item))
+            or _has_raw_html(item)
+            for key, item in value.items()
+            if key != "trusted_html"
+        )
+    if isinstance(value, list):
+        return any(_has_raw_html(item) for item in value)
+    return False
+
+
 def render_artifact(
     input_data: dict[str, Any],
     design_path: Path | None = None,
     output_dir: Path | None = None,
+    *,
+    trusted_html: bool = False,
 ) -> dict[str, Any]:
     """Render a new HTML/DESIGN/meta triple; propagate validation and I/O errors.
 
     body_html is explicitly trusted HTML. All other text inputs are escaped.
     Local lint validates supported token syntax, not design quality or STE.
     """
+    if type(trusted_html) is not bool:
+        raise ValueError("trusted_html must be a boolean.")
     validate_input(input_data)
-    design_path = Path(design_path) if design_path is not None else _DEFAULT_DESIGN
+    raw_html = _has_raw_html(input_data)
+    if raw_html and not trusted_html:
+        raise ValueError(
+            "Raw HTML requires explicit --trusted-html consent; review the authored content first."
+        )
+    if input_data.get("kind") == "story":
+        for idx, src_entry in enumerate(input_data.get("sources", [])):
+            if isinstance(src_entry, dict) and "locator" in src_entry:
+                check_sensitive_read_path(src_entry["locator"], f"story.sources[{idx}].locator")
+    explicit_design = design_path is not None
+    design_path = Path(design_path) if explicit_design else _DEFAULT_DESIGN
+    if explicit_design:
+        check_sensitive_read_path(design_path, "Design file")
     design_content = design_path.read_bytes().decode("utf-8")
     tokens = _design_tokens(design_content)
     title = str(input_data.get("title", "Untitled Artifact"))
     output_dir = Path(output_dir) if output_dir is not None else Path.cwd() / "artifacts" / "ste-promax"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if output_dir.is_symlink():
+        raise ValueError("Output directory must not be a symbolic link.")
+    resolved_output_dir = output_dir.resolve()
     slug = _unique_slug(_slugify(title), output_dir)
     paths = [output_dir / f"{slug}{suffix}" for suffix in _TRIPLE_SUFFIXES]
+    resolved_paths = [resolved_output_dir / f"{slug}{suffix}" for suffix in _TRIPLE_SUFFIXES]
     env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
     html_content = env.get_template("document.html.j2").render(
         title=title, tokens=tokens, body_html=_default_body_html(input_data),
@@ -72,22 +111,107 @@ def render_artifact(
         "lint_scope": "Supported local DESIGN token syntax only; no Node lint or STE/semantic compliance.",
         "lint_findings": [],
     }
-    contents = (html_content, design_content, yaml.safe_dump(meta, sort_keys=True))
-    created: list[Path] = []
+    meta_content = yaml.safe_dump(meta, sort_keys=True)
+    contents = (html_content, design_content, meta_content)
+    canonical_payload = json.dumps(input_data, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")
+    source_digest = hashlib.sha256(canonical_payload + b"\x00" + design_content.encode("utf-8")).hexdigest()
+    source_kind = "raw_html" if raw_html else ("story" if input_data.get("kind") == "story" else "structured")
+    guard_inputs: dict[str, Any] = {
+        "caller_kind": "native",
+        "workspace_root": str(Path.cwd().resolve()),
+        "output_root": str(resolved_output_dir),
+        "target_paths": [str(p) for p in resolved_paths],
+        "source_paths": [],
+        "source_digest": source_digest,
+        "source_kind": source_kind,
+        "trusted_html": trusted_html,
+        "has_raw_html": raw_html,
+        "availability": {"render_dependencies": True},
+        "proposed_contents": {
+            str(resolved_paths[0]): html_content,
+            str(resolved_paths[1]): design_content,
+            str(resolved_paths[2]): meta_content,
+        },
+        "expected_before": {str(p): None for p in resolved_paths},
+    }
+
+    def _effect() -> dict[str, Any]:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        created: list[Path] = []
+        try:
+            with ExitStack() as stack:
+                streams = []
+                for path in paths:
+                    streams.append(stack.enter_context(path.open("x", encoding="utf-8", newline="")))
+                    created.append(path)
+                for stream, content in zip(streams, contents):
+                    stream.write(content)
+        except Exception:
+            # Only paths this call exclusively created; never delete a collision.
+            for path in created:
+                path.unlink()
+            raise
+        return dict(zip(("html_path", "design_path", "meta_path"), paths), slug=slug)
+
+    def _validate(triple: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(triple, dict) or set(triple.keys()) != {"html_path", "design_path", "meta_path", "slug"}:
+            raise PolicyError(
+                "render_artifact must return html_path, design_path, meta_path, and slug.",
+                code=ERROR_POSTCONDITION_FAILURE,
+            )
+        if triple["slug"] != slug:
+            raise PolicyError("render_artifact slug mismatch.", code=ERROR_POSTCONDITION_FAILURE)
+        outputs: dict[str, dict[str, Any]] = {}
+        for key, expected_resolved, expected_text in zip(
+            ("html_path", "design_path", "meta_path"),
+            resolved_paths,
+            contents,
+        ):
+            p = Path(triple[key])
+            if p.is_symlink() or not p.is_file():
+                raise PolicyError(f"Missing or unsafe triple artifact: {p}", code=ERROR_POSTCONDITION_FAILURE)
+            resolved_p = p.resolve()
+            if resolved_p != expected_resolved or resolved_p.parent != resolved_output_dir:
+                raise PolicyError(f"Triple artifact path mismatch: {p}", code=ERROR_POSTCONDITION_FAILURE)
+            raw = p.read_bytes()
+            if not raw:
+                raise PolicyError(f"Empty triple artifact: {p}", code=ERROR_POSTCONDITION_FAILURE)
+            try:
+                decoded = raw.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise PolicyError(
+                    f"Triple artifact is not valid UTF-8: {p}",
+                    code=ERROR_POSTCONDITION_FAILURE,
+                ) from exc
+            if decoded != expected_text:
+                raise PolicyError(
+                    f"Triple artifact content drifted from rendered payload: {p}",
+                    code=ERROR_POSTCONDITION_FAILURE,
+                )
+            if key == "meta_path":
+                loaded_meta = yaml.safe_load(decoded)
+                if not isinstance(loaded_meta, dict) or loaded_meta.get("lint_passed") is not True:
+                    raise PolicyError("Triple meta.yaml failed lint_passed check.", code=ERROR_POSTCONDITION_FAILURE)
+            outputs[str(resolved_p)] = {
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "size": len(raw),
+            }
+        return {
+            "status": "complete",
+            "native_status": "complete",
+            "outputs": outputs,
+            "checks": ["triple_files_present", "utf8_valid", "design_preserved", "meta_lint_passed"],
+            "warnings": [],
+        }
+
+    from .gate import run_guarded_operation
+
     try:
-        with ExitStack() as stack:
-            streams = []
-            for path in paths:
-                streams.append(stack.enter_context(path.open("x", encoding="utf-8", newline="")))
-                created.append(path)
-            for stream, content in zip(streams, contents):
-                stream.write(content)
-    except Exception:
-        # Only paths this call exclusively created; never delete a collision.
-        for path in created:
-            path.unlink()
+        return run_guarded_operation("ste.render_artifact", guard_inputs, _effect, validate_result=_validate)
+    except Exception as exc:
+        if isinstance(exc.__cause__, FileExistsError):
+            raise exc.__cause__ from exc
         raise
-    return dict(zip(("html_path", "design_path", "meta_path"), paths), slug=slug)
 
 
 def _design_tokens(text: str) -> dict[str, str]:

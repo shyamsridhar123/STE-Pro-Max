@@ -20,15 +20,16 @@ than force a lesson. An incident review need not end in resolution. These are
 authoring choices, not guaranteed learning outcomes. See the
 [source-to-design research note](research/VISUAL_LEARNING_AND_STORYTELLING.md).
 
-## Optional engine, not plugin installation
+## Native engine and automatic policy
 
-The installed plugin's default workflow uses the host's native file/model tools
-and [standalone HTML/SVG templates](../examples/showcase/README.md), with no Python
-prerequisite. Install it through [the native plugin manager](PLUGINS.md).
+The published v0.5.0 skills use host tools and
+[standalone HTML/SVG templates](../examples/showcase/README.md). The development
+version uses guarded tools and a configured SkillC runtime. Install host assets
+through [the plugin workflow](PLUGINS.md); do not equate skill loading with enforcement.
 
-The remainder of this guide describes the **optional deterministic engine** for
-structured compilation, schema validation, and batch automation. These stronger
-machine checks are not implied for host-authored artifacts.
+This guide describes the native engine for structured compilation, schema
+validation, and batch automation. Host-authored artifacts receive policy and
+integrity checks, not renderer schema checks unless that renderer ran.
 
 ## Optional developer quickstart
 
@@ -40,7 +41,8 @@ another copy of the engine, alter global Python, or replace an unrelated environ
 Initial setup needs access to the Python package index; TLS failures remain
 visible and are never bypassed. A ready-environment run needs no package download.
 
-With dependencies already available, run:
+The automatic version also requires the [configured policy runtime](SKILLC_GATE.md#runtime-configuration).
+Quickstart does not install SkillC or bypass missing policy. With dependencies available, run:
 
 ```powershell
 python -m ste_promax start notes.md --open
@@ -59,7 +61,17 @@ For an artifact, the assistant authors the shape and runs the command; users
 should not have to choose schema names or construct JSON. The CLI itself is a
 deterministic renderer, not a model that invents or rewrites a source.
 See [the low-friction workflow](../skills/ste-promax/references/low-friction-workflow.md)
-for the default choices and retained review gates.
+for default choices and source/host safety boundaries.
+
+## Automatic checks and export
+
+Version 0.6.0 adds [automatic SkillC checks](SKILLC_GATE.md) to normal
+`start`, `render`, media, and direct APIs. Use `--evidence` and `--evidence-root`
+when applicable. `export --input-dir ... --output-dir ...` checks a fresh native
+bundle and copies it without manual approval. The old stage/approve commands are
+removed. These changes are not part of the older v0.5.0 installation.
+Checks bind bytes and workflow prerequisites, not factual truth or reviewer identity.
+See [upstream credits and citations](SKILLC_CREDITS.md).
 
 ## Inspect the installed shapes
 

@@ -1,13 +1,14 @@
 # Output modes
 
-Choose the smallest medium that answers the user's question. Ordinary installed
-skills use the host's tools and [standalone starters](../../../examples/showcase/README.md);
-there is no Python prerequisite. None of these modes authorizes publication or
-proves that a reader learned. The following commands describe the **optional
-deterministic engine**, not plugin installation. For input shapes and checks, read
+Choose the smallest medium that answers the user's question. Use guarded STE
+tools and [standalone starters](../../../examples/showcase/README.md), following
+[automatic execution policy](automatic-policy.md). The v0.6.0 runtime checks
+operations without manual approval. None of these modes authorizes publication
+or proves that a reader learned. The following commands describe the native
+deterministic engine, not plugin installation. For input shapes and checks, read
 [Authoring](../../../docs/AUTHORING.md).
 
-## Optional: resolve the engine when explicitly selected
+## Resolve the native engine
 
 Starting from the loaded skill's absolute path, find the nearest ancestor with
 both `ste_promax/` and root `__main__.py`. Use `python "<bundle-root>" ...` from
@@ -23,7 +24,7 @@ HTML, a new wrapper, or a service and claim the native mode worked.
 
 Preserve the requested format and factual qualifications. The default relaxed
 profile supports clear prose; it is not a dictionary-compliance percentage.
-`check` provides advisory length diagnostics. Use `--fail-on-findings` only when
+`ste_check_prose` and native `check` provide advisory length diagnostics. Use `--fail-on-findings` only when
 the user wants a failing automation gate, not as the default writing experience.
 
 A prose-only answer does not need an artifact or a renderer. Render Markdown
@@ -109,7 +110,7 @@ qualifications. Sequence-stage durations are demonstration pacing, not measured
 event time or verified alignment with speech; long captions may be sidecar-only.
 
 Do not claim an MP4 exists after preparation. If the user requests an encoded
-movie, follow the separately available video workflow and its review/export
-gates. Verify the actual movie's frames, audio, duration, and ending. A missing
+movie, use a separately available guarded encoding workflow; do not bypass STE
+policy through raw shell. Verify the actual movie's frames, audio, duration, and ending. A missing
 voice, encoder, or export capability is a reported gap, not permission to install
 tools, incur charges, or transmit narration externally.

@@ -42,6 +42,8 @@ class ReadmeTests(unittest.TestCase):
 
     def test_moved_reference_material_remains_discoverable_and_linked(self):
         for document in ("docs/README.md", "docs/APPROACH.md", "docs/EXAMPLES.md",
+                         "docs/SKILLC_GATE.md", "docs/SKILLC_CREDITS.md", "docs/PROVENANCE.md",
+                         "docs/IMPLEMENTATION.md", "docs/VALIDATION.md", "docs/AUTHORING.md",
                          "examples/showcase/README.md", "docs/LINE_STUDIO.md",
                          "skills/ste-line-studio/SKILL.md", "skills/ste-line-studio/references/authoring.md",
                          "skills/ste-line-studio/references/mechanism-figures.md",
@@ -54,6 +56,30 @@ class ReadmeTests(unittest.TestCase):
         hub = (ROOT / "docs/README.md").read_text(encoding="utf-8")
         for page in ("PLUGINS.md", "EXAMPLES.md", "APPROACH.md", "AUTHORING.md", "VALIDATION.md"):
             self.assertIn(page, hub)
+
+    def test_skillc_scope_impact_and_upstream_credit_are_explicit(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs/SKILLC_GATE.md").read_text(encoding="utf-8")
+        credits = (ROOT / "docs/SKILLC_CREDITS.md").read_text(encoding="utf-8")
+        notice = (ROOT / "NOTICE").read_text(encoding="utf-8")
+        for command in ("render", "narrate", "export"):
+            self.assertIn(f"`{command}`", readme)
+        self.assertIn("No manual approval", readme)
+        self.assertIn("timeouts fail open", guide)
+        self.assertIn("not pre-display semantic gates", guide)
+        for page in ("docs/SKILLC_GATE.md", "docs/SKILLC_CREDITS.md"):
+            self.assertIn(page, readme)
+        version = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))["version"]
+        self.assertIn(f"## Automatic SkillC checks in v{version}", readme)
+        self.assertNotIn("unreleased", readme.lower())
+        self.assertIn("Impact: what changes and what does not", guide)
+        self.assertIn("Same-user shell or filesystem access", guide)
+        self.assertIn("Gina Tcchen and contributors", credits)
+        self.assertIn("Anonymous Author(s)", credits)
+        self.assertIn("25cc63bf82e968da7d01e204dc6d99879b76c45b", credits)
+        self.assertIn("Copyright (c) 2026 Gina Tcchen and contributors", notice)
+        self.assertIn("Apache", notice)
+        self.assertIn("MIT", notice)
 
     def test_hero_is_real_wide_png_with_bounded_readme_weight(self):
         image = (ROOT / "docs/assets/hero.png").read_bytes()
@@ -93,16 +119,18 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("not retroactively added", guide)
 
     def test_native_install_not_python_is_the_product_entry(self):
+        version = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))["version"]
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         approach = (ROOT / "docs/APPROACH.md").read_text(encoding="utf-8")
         for host, verb in (("copilot", "install"), ("claude", "install"), ("codex", "add")):
             self.assertIn(f"{host} plugin {verb} ste-pro-max@ste-pro-max-plugins", readme)
-        self.assertIn("v0.5.0", readme)
+        self.assertIn(f"v{version}", readme)
         self.assertNotIn("python quickstart.py", readme)
         self.assertNotIn("git clone", readme)
         self.assertNotIn("--plugin-dir", readme)
-        self.assertIn("not required by the installed authoring skills", approach)
-        self.assertIn("No Python setup", readme)
+        self.assertIn("configured runtime", approach)
+        self.assertTrue("v0.5.0 does not include it" in readme or "configured runtime" in readme)
+        self.assertNotIn("No Python setup", readme)
         self.assertIn("not ASD-STE100 certification", readme)
         self.assertNotIn("pip install ste-pro-max", readme)
 
@@ -142,19 +170,30 @@ class ReadmeTests(unittest.TestCase):
         version = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))["version"]
         for document in ("README.md", "docs/PLUGINS.md"):
             source = (ROOT / document).read_text(encoding="utf-8")
-            for host in ("copilot", "claude"):
-                self.assertIn(
-                    f"{host} plugin marketplace add shyamsridhar123/STE-Pro-Max#v{version}",
-                    source,
-                )
-            self.assertIn(f"codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v{version}", source)
+            self.assertIn(
+                f"copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v{version}",
+                source,
+            )
+            self.assertIn("legacy v0.5.0 skills", source)
+            self.assertIn("claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0", source)
+            self.assertIn("codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.5.0", source)
+            self.assertNotIn(
+                f"claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v{version}",
+                source,
+            )
+            self.assertNotIn(
+                f"codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v{version}",
+                source,
+            )
         for document in ("docs/LINE_STUDIO.md", "skills/ste-line-studio/SKILL.md",
                          "examples/showcase/README.md", "docs/EXAMPLES.md"):
             source = (ROOT / document).read_text(encoding="utf-8")
-            self.assertIn(f"v{version}", source)
+            self.assertIn("v0.5.0", source)
             for stale in ("**in development**", "**In development.", "development preview",
-                          "not a published `v0.5.0`", "release/tag has been published"):
+                          "not a published `v0.5.0`", f"not a published `v{version}`",
+                          "release/tag has been published"):
                 self.assertNotIn(stale, source)
+        self.assert_local_links_resolve("docs/releases/v0.5.0.md")
         self.assert_local_links_resolve(f"docs/releases/v{version}.md")
 
     def test_readme_defines_ste_and_links_actual_karpathy_post_without_claiming_endorsement(self):

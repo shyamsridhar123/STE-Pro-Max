@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook sessionStart",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook sessionStart; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook userPromptSubmitted",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook userPromptSubmitted; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook preToolUse",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook preToolUse; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "preMcpToolCall": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook preMcpToolCall",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook preMcpToolCall; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook postToolUse",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook postToolUse; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook postToolUseFailure",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook postToolUseFailure; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook subagentStart",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook subagentStart; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook subagentStop",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook subagentStop; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook agentStop",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook agentStop; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "python3 -I -B \"$STE_PROMAX_PLUGIN_ROOT/integrations/copilot/hook_entry.py\" --hook sessionEnd",
+        "powershell": "$ErrorActionPreference = 'Stop'; & python -I -B (Join-Path $env:STE_PROMAX_PLUGIN_ROOT 'integrations/copilot/hook_entry.py') --hook sessionEnd; exit $LASTEXITCODE",
+        "env": {
+          "STE_PROMAX_PLUGIN_ROOT": "${PLUGIN_ROOT}",
+          "STE_PROMAX_PLUGIN_DATA": "${PLUGIN_DATA}"
+        },
+        "timeoutSec": 120
+      }
+    ]
+  }
+}

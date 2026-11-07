@@ -20,8 +20,11 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Install the native package
-        run: python -m pip install .
+      - name: Install the native package and pinned policy/MCP dependencies
+        run: |
+          python -m pip install "Jinja2==3.1.6" "MarkupSafe==3.0.4" "PyYAML==6.0.3" "z3-solver==5.3.3.0" "mcp==1.30.0" "skillc @ git+https://github.com/ginaecho/skill-achievability-compiler.git@25cc63bf82e968da7d01e204dc6d99879b76c45b" .
+      - name: Configure owned CI SkillC runtime
+        run: python tools/configure_ci_runtime.py --runtime-dir "${{ runner.temp }}/ste-skillc-runtime" --write-github-env
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
       - name: Verify original SVG primitives and generated examples

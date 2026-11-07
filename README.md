@@ -4,20 +4,19 @@
 
 # STE-Pro Max
 
-**Stop shipping walls of text. Make complex ideas click.**
+**Clear writing. Evidence-linked explanations.**
 
-**STE-inspired clarity. Karpathy-inspired explanations.** Turn dense docs, systems,
-and numbers into **sharp briefs, visual explanations, and interactive mini-labs**.
+STE-inspired writing and Karpathy-inspired explanations: **briefs, diagrams,
+and interactive documents**.
 
-**GitHub Copilot · Claude Code · Codex.** Native plugin. No Python setup.
+**Copilot CLI + OpenCode.** Automatic checks. Other hosts: legacy skills only.
 
-[STE](#ste-the-foundation) · [Karpathy](#karpathys-guidelines-put-to-work) · [Demos](#show-dont-tell) · [Install](#install-the-plugin) · [Docs](docs/README.md)
+[STE](#ste-the-foundation) · [Karpathy](#karpathys-guidelines-put-to-work) · [Demos](#show-dont-tell) · [SkillC](docs/SKILLC_GATE.md) · [Install](#install-the-plugin) · [Docs](docs/README.md)
 
 ## STE: the foundation
 
-**STE means Simplified Technical English**—a controlled language for technical
-writing. Here: short sentences, consistent terms, clear instructions.
-**Simpler language. Facts and uncertainty intact.**
+**STE means Simplified Technical English**, a controlled writing language.
+Here, clearer language must preserve facts and uncertainty.
 
 > **Before:** “Prior to initiating deployment, verification of the configuration is required.”
 >
@@ -29,11 +28,11 @@ STE-inspired, not ASD-STE100 certification. [The approach](docs/APPROACH.md).
 
 Our takeaways from [his post](https://x.com/karpathy/status/2105819303471976479):
 
-- **Write clearly.** Use relaxed STE, not robotic prose.
-- **Show the mechanism.** Use diagrams and images.
-- **Make it explorable.** Use interactive HTML, controls, and animation.
-- **Narrate when useful.** Bespoke explainers need a separately available media tool.
-- **Build to explain.** Small, purpose-built software can make an idea tangible.
+- **Write clearly:** relaxed STE.
+- **Explain mechanisms:** diagrams and images.
+- **Make it explorable:** interactive HTML, controls, and animation.
+- **Narrate** only with an available media tool.
+- **Build to explain:** small, purpose-built software.
 
 Choose the **smallest useful medium**. Keep the evidence inspectable.
 
@@ -45,7 +44,7 @@ Choose the **smallest useful medium**. Keep the evidence inspectable.
 
 [![Retry Observatory: 81 versus 3](docs/assets/retry-observatory.png)](examples/showcase/retry-observatory.html)
 
-Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-observatory.html) · [Guide](docs/LINE_STUDIO.md).
+Adjust budgets, scrub, export SVG. [Guide](docs/LINE_STUDIO.md).
 
 [![Token-bucket mechanism](docs/assets/token-bucket-mechanism.png)](examples/showcase/token-bucket-mechanism.html)
 
@@ -55,46 +54,60 @@ Play, scrub, change budgets, export SVG. [Explore](examples/showcase/retry-obser
 
 > “Show me why retries multiply. Let me change the rules.”
 
-[![Working retry model: four layers with three attempts each produce 81 backend attempts; one retry owner produces three.](docs/assets/retry-storm.gif)](examples/showcase/retry-storm.html)
+[![Four layers with three attempts: 81 backend attempts; one retry owner: 3.](docs/assets/retry-storm.gif)](examples/showcase/retry-storm.html)
 
-Change the rules. Watch attempts multiply. [Explore](examples/showcase/retry-storm.html) · [Still](docs/assets/retry-storm.png).
+[Explore](examples/showcase/retry-storm.html) · [Still](docs/assets/retry-storm.png).
 
-### The update nobody reads → the brief everyone gets
+### A dense note becomes an evidence-linked brief
 
 > “Turn this pilot write-up into a one-screen briefing. Keep the evidence.”
 
-[![A dense Northstar pilot note becomes a visual brief: 186 of 240 answers accepted, limits visible, shadow pilot proposed.](docs/assets/brief-transformation.png)](examples/showcase/brief-transformation.html)
+[![Fictional Northstar pilot: 186/240 answers accepted, limits retained, shadow pilot proposed.](docs/assets/brief-transformation.png)](examples/showcase/brief-transformation.html)
 
-Trace the numbers, scope, and next step to their source. [Explore the brief](examples/showcase/brief-transformation.html).
+[Trace the claims to source](examples/showcase/brief-transformation.html).
 
-### Don't just quote the number. Let people question it.
+### Compare rates without losing context
 
 > “Explain 97.4% → 99.7%. Let me change the baseline.”
 
-[![An interactive rate comparison keeps a zero-based scale and separates 2.3 percentage points from 2.36 percent relative change.](docs/assets/rate-lab.png)](examples/showcase/rate-lab.html)
+[![97.4% to 99.7%: 2.3 percentage points, 2.36% relative change; zero-based scale.](docs/assets/rate-lab.png)](examples/showcase/rate-lab.html)
 
-Move the inputs. See **percentage points vs. relative change** update together.
-[Try the rate lab](examples/showcase/rate-lab.html).
+[Explore percentage points versus relative change](examples/showcase/rate-lab.html).
 
 **Working HTML, not UI mockups.** Fictional data and illustrative models.
-[Get the examples](docs/EXAMPLES.md#get-the-files), open an HTML file, start exploring. No build or server.
+[Get examples](docs/EXAMPLES.md#get-the-files). No build or server.
+
+## Automatic SkillC checks in v0.6.0
+
+Native `render`, `narrate`, and `export` use the original
+[SkillC](https://github.com/ginaecho/skill-achievability-compiler) engine by
+**Gina Tcchen and contributors**, not a rewritten compiler.
+
+Checks run before effects and verify actual output afterward. No manual approval
+step. Missing runtime, unsafe paths, or changed evidence stop the operation.
+
+Copilot CLI and OpenCode adapters add guarded STE tools. This release
+requires a configured runtime; **v0.5.0 does not include it**. All 426 tests pass;
+authenticated Copilot workflows are checked. [Tested scope](docs/VALIDATION.md).
+
+[Usage, implementation, impact](docs/SKILLC_GATE.md) · [Credits and citations](docs/SKILLC_CREDITS.md).
 
 ## Install the plugin
 
-Choose your agent. Install **v0.5.0**, restart it, and bring your own material.
+Configure the [policy runtime](docs/SKILLC_GATE.md#runtime-configuration), then install **v0.6.0**.
 
 <details open>
 <summary><strong>GitHub Copilot CLI</strong></summary>
 
 ```sh
-copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
+copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.6.0
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 ```
 
 </details>
 
 <details>
-<summary><strong>Claude Code</strong></summary>
+<summary><strong>Claude Code — legacy v0.5.0 skills</strong></summary>
 
 ```sh
 claude plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.5.0
@@ -104,7 +117,7 @@ claude plugin install ste-pro-max@ste-pro-max-plugins
 </details>
 
 <details>
-<summary><strong>Codex CLI</strong></summary>
+<summary><strong>Codex CLI — legacy v0.5.0 skills</strong></summary>
 
 ```sh
 codex plugin marketplace add shyamsridhar123/STE-Pro-Max --ref v0.5.0

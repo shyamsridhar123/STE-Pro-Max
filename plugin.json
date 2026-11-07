@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ste-pro-max",
-  "version": "0.5.0",
-  "description": "STE-inspired writing, evidence-linked stories, and original interactive SVG explanations. Native authoring skills and standalone templates; no Python setup.",
+  "version": "0.6.0",
+  "description": "STE writing and visual artifacts with automatic SkillC checks. Requires a configured runtime; mandatory host adapters target Copilot CLI and OpenCode.",
   "author": {
     "name": "Shyam Sridhar"
   },

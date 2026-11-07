@@ -27,6 +27,27 @@ directly rather than delegating to another installed renderer. Jinja2 and PyYAML
 are its two declared runtime dependencies. The default template uses local CSS
 and system fonts. Other checkouts and the original writing import remain unchanged.
 
+## Automatic SkillC integration
+
+The v0.6.0 automatic workflow reuses the original
+SkillC compiler and Monitor by **Gina Tcchen and
+contributors**. The inspected software is version 0.3.0 at commit
+`25cc63bf82e968da7d01e204dc6d99879b76c45b`, licensed under MIT.
+
+STE-Pro-Max contributes its native CLI integration, fixed workflow plan,
+artifact/evidence checks, scoped host adapters, and automatic local export handling.
+Rendering remains in the native STE engine. The local worker delegates
+SkillC policy operations, not rendering, to an inspected external backend.
+No SkillC source is vendored or relicensed as STE-Pro-Max code.
+The inspected MIT source, with its notice, was copied into a separate owned local
+runtime from the pinned Git revision; its compiler was not modified. The earlier
+manual approval package is preserved as historical evidence, not migrated.
+
+[Credits and primary citations](SKILLC_CREDITS.md) distinguish the named software
+author from the anonymous repository manuscript and preserve each license boundary.
+This integration does not inherit an end-to-end formal correctness guarantee
+from an upstream model or paper. See [implemented behavior and limits](SKILLC_GATE.md).
+
 ## Output ideas and standard
 
 The [source-evidence note](../skills/ste-promax/references/source-evidence.md)

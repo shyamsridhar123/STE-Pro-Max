@@ -1,12 +1,14 @@
 ---
 name: ste-storytelling
-description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with reader control. Uses the host's native tools and standalone templates; no Python required for ordinary authoring. Not for a short prose rewrite or automatic video export."
+description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with reader control. Uses guarded STE tools and standalone templates. Not for a short prose rewrite or automatic video export."
 ---
 
 # STE storytelling
 
-Use one reviewed story source and the host's native authoring tools. A story is a way
+Use one reviewed story source and the host's guarded STE tools. A story is a way
 to organize evidence, not a reason to invent a dramatic arc or stronger conclusion.
+Follow [the automatic policy](../ste-promax/references/automatic-policy.md); do not
+add manual approval steps or bypass a missing runtime.
 
 ## Author the source
 
@@ -48,8 +50,8 @@ do not invent feedback or call a click evidence of learning.
 Read the [showcase guide](../../examples/showcase/README.md) and use the
 release-brief or retry-lab starter for the appropriate structure. Resolve the
 plugin root from this skill's location, not the user's working directory.
-Adapt the starter with the host's file-editing tools into a new workspace
-`artifacts/` directory. No Python, pip, uv, build step, or server is required.
+Adapt the starter with `ste_write_artifact` into a new workspace `artifacts/`
+directory. Use the existing configured policy runtime; no frontend build is required.
 Never overwrite the installed plugin or execute untrusted source markup.
 
 Use [the shared low-friction workflow](../ste-promax/references/low-friction-workflow.md).
@@ -63,7 +65,7 @@ with the output. Review the story in its actual HTML form and provide a readable
 prose equivalent. Only generate additional companions when requested or useful.
 
 For explicitly requested deterministic story compilation or batch workflows,
-the [optional engine](../../docs/AUTHORING.md) produces HTML, prose, storyboard,
+the [native engine](../../docs/AUTHORING.md) produces HTML, prose, storyboard,
 narration, and evidence companions. Its validations are not implied for
 host-authored output. A complete manifest is not a semantic review.
 
@@ -71,8 +73,8 @@ host-authored output. A complete manifest is not a semantic review.
 
 Narration requires a separately available media capability; native plugin
 installation does not install voices or encoders. Review the script before
-generating or pairing audio. If the optional Python engine is available and
-selected for this request, run `narrate` with the
+generating or pairing audio. If the native media capability is available, use
+`ste_prepare_story_media` or run `narrate` with the
 original story JSON in a different fresh output directory. Select one route:
 
 ```text

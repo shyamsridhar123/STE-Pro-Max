@@ -18,6 +18,8 @@ from urllib.parse import unquote, urlsplit
 import wave
 import zipfile
 
+from ste_promax import __version__
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("build_plugin", ROOT / "tools/build_plugin.py")
@@ -33,15 +35,14 @@ class PluginTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.source = self.root / "source"
         self.source.mkdir()
-        files = ("__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
-                 ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
-                 ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip",
-                 "tools/build_line_studio.mjs")
+        files = builder.ROOT_FILES
         for relative in files:
             target = self.source / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
-        for name in ("ste_promax", "skills", "examples", "docs", "ste-promax"):
+        for name in builder.TREES:
+            if not (ROOT / name).is_dir():
+                continue
             shutil.copytree(ROOT / name, self.source / name, symlinks=True)
         self.output = self.root / "build"
 
@@ -49,13 +50,16 @@ class PluginTests(unittest.TestCase):
         return builder.build_plugin(self.output, source_root=self.source)
 
     def test_native_manifest_identities_and_fixed_skill_path(self):
+        self.assertEqual(__version__, "0.6.0")
         portable = json.loads((self.source / "plugin.json").read_text())
         claude = json.loads((self.source / ".claude-plugin/plugin.json").read_text())
+        opencode_pkg = json.loads((self.source / "integrations/opencode/package.json").read_text())
+        self.assertEqual(opencode_pkg["version"], __version__)
         self.assertEqual(portable["$schema"], "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json")
         self.assertNotIn("$schema", claude)
         for manifest in (portable, claude):
             self.assertEqual(manifest["name"], "ste-pro-max")
-            self.assertEqual(manifest["version"], "0.5.0")
+            self.assertEqual(manifest["version"], __version__)
             self.assertEqual(manifest["author"]["name"], "Shyam Sridhar")
             self.assertEqual(manifest["repository"], "https://github.com/shyamsridhar123/STE-Pro-Max")
             self.assertEqual(manifest["license"], "Apache-2.0")
@@ -73,7 +77,7 @@ class PluginTests(unittest.TestCase):
             self.assertEqual(catalog["owner"]["name"], "Shyam Sridhar")
             self.assertEqual(len(catalog["plugins"]), 1)
             item = catalog["plugins"][0]
-            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", "0.5.0", "./"))
+            self.assertEqual((item["name"], item["version"], item["source"]), ("ste-pro-max", __version__, "./"))
             self.assertTrue((self.source / item["source"] / "plugin.json").is_file())
         claude_catalog = json.loads((self.source / ".claude-plugin/marketplace.json").read_text())
         self.assertIsInstance(claude_catalog["description"], str)
@@ -95,8 +99,10 @@ class PluginTests(unittest.TestCase):
             "skills/ste-promax/credentials.json", "docs/MEMORY.md", "examples/.git/config",
             "examples/artifacts/private.html", "ste_promax/private.pem",
             "docs/secrets.txt", "examples/api-key.json", "skills/ste-promax/credentials.local.json",
-            ".agents/private.md", ".agents/plugins/private.json", ".github/workflows/private.yml",
-            ".github/plugin/private.json", ".codex/config.toml",
+             ".agents/private.md", ".agents/plugins/private.json", ".github/workflows/private.yml",
+             ".github/plugin/private.json", ".codex/config.toml",
+             "integrations/copilot/__pycache__/private.pyc", "integrations/mcp/credentials.json",
+             "integrations/opencode/node_modules/private.js", "integrations/opencode/tests/private.js",
         )
         for relative in forbidden:
             target = self.source / relative
@@ -136,6 +142,8 @@ class PluginTests(unittest.TestCase):
             "docs/assets/token-bucket-mechanism.png", "docs/assets/token-bucket-mechanism-dark.png",
         }
         self.assertLessEqual(required, set(manifest["files"]))
+        self.assertLessEqual(set(builder.REQUIRED_PAYLOAD), set(manifest["files"]))
+        self.assertIn("configured SkillC runtime", manifest["runtime"])
         self.assertFalse(set(forbidden) & set(manifest["files"]))
         for parent, exact in ((".agents/", ".agents/plugins/marketplace.json"),
                               (".github/", ".github/plugin/marketplace.json")):
@@ -280,7 +288,7 @@ class PluginTests(unittest.TestCase):
         version = subprocess.run([sys.executable, "-B", str(bundle), "--version"],
                                  cwd=workspace, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertEqual(version.stdout.strip(), "0.5.0")
+        self.assertEqual(version.stdout.strip(), __version__)
         source = workspace / "notes.md"
         content = b"# Bundle render\r\n\r\nSource stays unchanged.\r\n"
         source.write_bytes(content)
@@ -307,6 +315,12 @@ class PluginTests(unittest.TestCase):
         workspace.mkdir()
         source = workspace / "story.json"
         shutil.copyfile(ROOT / "examples/suite/retry-explanation.json", source)
+        story = json.loads(source.read_text(encoding="utf-8"))
+        for evidence in story.get("sources", []):
+            if evidence.get("locator"):
+                target = workspace / evidence["locator"]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / evidence["locator"], target)
         audio = workspace / "audio"
         audio.mkdir()
         for name, seconds in (("trace", 8), ("count", 2)):

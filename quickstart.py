@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import importlib
 from importlib import metadata
+import json
 import os
 from pathlib import Path
 import re
@@ -117,6 +118,22 @@ def probe_python(python: str, root: Path, workspace: Path) -> bool:
 
 def current_ready(root: Path, workspace: Path) -> bool:
     return probe_python(sys.executable, root, workspace)
+
+
+def policy_preflight(root: Path, workspace: Path) -> None:
+    """Check real policy before any environment setup, isolated from caller imports."""
+    code = ("import json,sys; sys.path.insert(0,sys.argv[1]); "
+            "from ste_promax.gate import get_policy_status; print(json.dumps(get_policy_status()))")
+    result = subprocess.run([sys.executable, "-I", "-B", "-c", code, str(root)],
+                            cwd=workspace, shell=False, timeout=60, capture_output=True,
+                            text=True, encoding="utf-8", check=False)
+    if result.returncode:
+        raise ValueError(f"SkillC runtime check failed; nothing was installed. {result.stderr.strip()}")
+    status = json.loads(result.stdout)
+    if not isinstance(status, dict) or status.get("available") is not True:
+        error = status.get("error") if isinstance(status, dict) else None
+        detail = error.get("message", "Unavailable backend") if isinstance(error, dict) else "Unavailable backend"
+        raise ValueError(f"Configure the SkillC runtime first; nothing was installed. {detail}")
 
 
 def env_ready(python: Path, root: Path, workspace: Path) -> bool:
@@ -233,6 +250,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("Output must be a new directory outside .ste-env; existing paths were not changed.")
         else:
             safe_path(workspace / "artifacts", directory=True)
+        policy_preflight(root, workspace)
         python = runtime(root, workspace, args.no_install)
         command = [python, "-I", "-B", str(root), "start"]
         if source is not None:

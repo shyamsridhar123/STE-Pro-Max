@@ -21,10 +21,11 @@ not a hosting service or an ASD-STE100 certification tool.
 - Keep generated files in a new subdirectory of `artifacts/`. Preserve the
   normalized source input and inspect the actual output, not just an exit code.
 - Local memory and `.omx/` state are intentionally not published in this repo.
-- The installed plugin uses the host's native authoring/file/browser tools by
-  default. No Python, pip, or setup script is required for writing or HTML/SVG
-  authoring. Reuse the dependency-free starters in `examples/showcase/`.
-  The Python engine is an optional deterministic/developer path, not plugin install.
+- Version 0.6.0 authoring uses guarded STE tools and a configured real SkillC
+  runtime. Native rendering and host-authored artifacts receive automatic checks;
+  do not bypass refusals through raw shell or generic mutations. Reuse the
+  standalone starters in `examples/showcase/`. Plugin installation does not
+  silently download runtime dependencies. Published v0.5.0 remains historical.
 - For routine artifacts, infer safe defaults, choose a fresh output directory,
   and return the useful result.
   Do not ask the user to name folders, choose schemas, or repeat supplied context.
@@ -33,6 +34,8 @@ not a hosting service or an ASD-STE100 certification tool.
 ## Verification
 
 Run `python -m unittest discover -s tests -v` after changing helper scripts.
+For release validation, set `STE_RUN_HOST_CLI_TESTS=1` with supported Copilot CLI
+and OpenCode executables available; client integration skips are not release passes.
 Validate the skill with the installed skill-creator validator when available.
 For a renderer change, run `python -m ste_promax render` and inspect its triple, gallery,
 metadata, and browser behavior. For narration, verify real non-silent PCM audio.

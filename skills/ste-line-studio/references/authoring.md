@@ -66,8 +66,9 @@ new workspace `artifacts/` directory, alongside source material and its normaliz
 copy. Never write to installed assets or reuse a previous artifact directory
 without permission to replace its contents.
 
-The ordinary authoring path does not invoke the builder or require Python, npm,
-React, a package install, a server, or third-party runtime downloads. When composing
+The ordinary authoring path does not invoke the frontend builder or require npm,
+React, or a server. The v0.6.0 STE policy runtime must already be configured;
+use guarded tools rather than downloading dependencies or bypassing checks. When composing
 from runtime assets rather than a standalone starter, inline the reviewed math
 runtime before the studio runtime. Keep their license notices.
 

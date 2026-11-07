@@ -15,7 +15,7 @@ ROOT_FILES = (
     "__main__.py", "quickstart.py", "pyproject.toml", "README.md", "DESIGN.md", "LICENSE", "NOTICE", "plugin.json",
     ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
     ".github/plugin/marketplace.json", ".agents/plugins/marketplace.json", "STE-ProMAX.zip",
-    "tools/build_line_studio.mjs",
+    "tools/build_line_studio.mjs", "tools/provision_skillc_runtime.py", "mcp.json", "integrations/__init__.py",
 )
 # Runtime/source trees only; no tests, generated artifacts, or repository state.
 TREES = {
@@ -24,6 +24,10 @@ TREES = {
     "examples": {".md", ".json", ".py", ".ps1", ".html", ".css", ".js", ".svg", ".txt"},
     "docs": {".md", ".txt", ".svg", ".png", ".webp", ".gif"},
     "ste-promax": {".md", ".yaml", ".yml"},
+    "integrations/copilot": {".py", ".json", ".md", ".mjs", ".js"},
+    "integrations/mcp": {".py", ".json", ".md", ".mjs", ".js"},
+    "integrations/opencode": {".py", ".json", ".md", ".mjs", ".js", ".ts"},
+    "com.github.copilot": {".json", ".md"},
 }
 REQUIRED_PAYLOAD = (
     "ste_promax/__init__.py", "ste_promax/__main__.py", "ste_promax/cli.py",
@@ -36,6 +40,14 @@ REQUIRED_PAYLOAD = (
     "skills/ste-visual-docs/SKILL.md", "skills/ste-storytelling/SKILL.md", "ste-promax/SKILL.md",
     "docs/AUTHORING.md", "ste_promax/onboarding.py", "ste_promax/data/quickstart.json",
     "ste_promax/input_validation.py",
+    "ste_promax/gate.py", "ste_promax/policy_runtime.py", "ste_promax/_skillc_worker.py",
+    "integrations/copilot/hook_entry.py", "integrations/copilot/scope.py",
+    "integrations/mcp/operations.py", "integrations/mcp/server.py", "mcp.json",
+    "com.github.copilot/hooks/hooks.json", "com.github.copilot/agents/ste-author.agent.md",
+    "integrations/opencode/package.json", "integrations/opencode/server.js",
+    "integrations/opencode/index.js", "integrations/opencode/core.js", "integrations/opencode/dispatch.py",
+    "skills/ste-promax/references/automatic-policy.md", "docs/SKILLC_GATE.md", "docs/SKILLC_CREDITS.md",
+    "examples/narrated-demo/prepare.py",
     "docs/assets/hero.png", "docs/assets/showcase.webp",
     "examples/showcase/README.md", "examples/showcase/retry-lab.html",
     "examples/showcase/release-brief.html", "examples/showcase/rate-lab.html",
@@ -162,7 +174,7 @@ def build_plugin(output_dir, source_root=ROOT):
     manifest = {
         "name": NAME, "version": identity["version"], "bundle_type": "source",
         "bundle_dir": NAME,
-        "runtime": "Native skills and standalone HTML/SVG need no runtime setup. Only the optional engine requires Python and pyproject.toml dependencies; nothing is auto-installed.",
+        "runtime": "Automatic STE operations require the configured SkillC runtime. Copilot CLI and OpenCode adapters supply guarded tools; plugin installation does not download Python, SkillC, voices, or SDK dependencies. Existing standalone HTML/SVG remains directly viewable.",
         "archive": {"path": archive.name, **record(archive.read_bytes())},
         "files": {relative: record(contents) for relative, contents in payload.items()},
     }

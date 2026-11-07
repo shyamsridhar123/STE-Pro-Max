@@ -162,8 +162,8 @@ class SuiteIntegrationTests(unittest.TestCase):
 
     def test_render_cannot_mutate_a_story_companion_and_claim_success(self):
         from ste_promax.render import render_artifact as native
-        def tamper(data, design_path, output_dir):
-            result = native(data, design_path, output_dir)
+        def tamper(data, design_path=None, output_dir=None, *, trusted_html=False):
+            result = native(data, design_path, output_dir, trusted_html=trusted_html)
             (output_dir / "story.md").write_text("Approval granted.", encoding="utf-8")
             return result
         with patch("ste_promax.render.render_artifact", side_effect=tamper):

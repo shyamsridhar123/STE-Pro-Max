@@ -1,13 +1,13 @@
 ---
 name: ste-visual-docs
-description: "Author source-grounded diagrams, charts, and interactive technical explanations using the host's tools and standalone HTML/SVG templates. No Python required for ordinary authoring. Preserve readable text/data equivalents; not for decorative artwork or a prose-only rewrite."
+description: "Author source-grounded diagrams, charts, and interactive technical explanations with guarded STE tools and standalone HTML/SVG templates. Preserve readable text/data equivalents; not for decorative artwork or a prose-only rewrite."
 ---
 
 # STE visual documentation
 
-Produce a focused explanation from reviewed facts, using the host's native
-authoring tools. No Python install, wrapper, or hosted service is needed for
-ordinary HTML/SVG authoring with the shipped templates.
+Produce a focused explanation from reviewed facts, using guarded STE authoring
+tools. Follow [the automatic policy](../ste-promax/references/automatic-policy.md).
+Use the configured runtime; no manual STE approval is needed.
 
 ## Choose and ground the visual
 
@@ -41,7 +41,7 @@ primitives are bundled locally; no additional plugin or package install is neede
 
 Resolve the plugin root from this loaded `SKILL.md`. Read the nearest
 [showcase guide](../../examples/showcase/README.md) and the relevant standalone
-HTML starter. Adapt its inline CSS/SVG/JavaScript using the host's file tools.
+HTML starter. Adapt its inline CSS/SVG/JavaScript using `ste_write_artifact`.
 Write new output to a fresh directory in the user's workspace, never the plugin
 cache. The starter is source code, not a command that installs dependencies.
 
@@ -56,11 +56,11 @@ Choose the simplest faithful visual yourself. Do not ask the user to choose
 internal schema names, file paths, themes, or renderer options. Preserve the
 requested medium, and ask only when a missing fact or ambiguity affects meaning.
 
-The optional Python engine offers deterministic validated shapes for explicitly
-requested structured rendering. Its commands and prerequisites are in
-[Authoring](../../docs/AUTHORING.md). Do not run its bootstrap or ask the user to
-install Python for the default authoring workflow. Do not claim its schema or
-hash checks for output authored directly by the host.
+The native engine offers deterministic validated shapes for structured rendering.
+Its commands and prerequisites are in [Authoring](../../docs/AUTHORING.md). Both
+custom authoring and native rendering use automatic checks. Do not silently run
+a bootstrap when capability is missing. Do not claim renderer schema validation
+for a host-authored document merely because its policy/integrity checks passed.
 
 ## Inspect before delivery
 

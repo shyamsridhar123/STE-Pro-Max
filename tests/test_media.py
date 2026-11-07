@@ -14,9 +14,14 @@ from unittest.mock import patch
 import wave
 import xml.etree.ElementTree as ET
 
-from ste_promax import media
+from ste_promax import gate, media
 from ste_promax.charts import CHART_SCHEMA
 from ste_promax.diagrams import DIAGRAM_SCHEMA, diagram_svg
+from ste_promax.policy_runtime import (
+    ERROR_DEPENDENCY_MISSING,
+    ERROR_INVALID_INPUT,
+    PolicyError,
+)
 from ste_promax.stories import STORY_SCHEMA, story_companions
 
 
@@ -223,16 +228,11 @@ class MediaTests(unittest.TestCase):
     def test_missing_audio_leaves_clear_partial_manifest_and_evidence(self):
         self.save()
         (self.audio / "checks.wav").write_bytes(pcm())
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(PolicyError) as ctx:
             self.prepare()
-        manifest = json.loads((self.output / "manifest.json").read_text())
-        self.assertEqual(manifest["status"], "partial_failure_not_rendered")
-        self.assertEqual(manifest["failed_beat_id"], "gate")
-        self.assertEqual([a["id"] for a in manifest["audio"]], ["checks"])
-        self.assertTrue((self.output / "evidence.json").exists())
-        self.assertFalse((self.output / "video/index.html").exists())
-        with self.assertRaisesRegex(ValueError, "new output"):
-            self.prepare()
+        self.assertEqual(ctx.exception.code, ERROR_INVALID_INPUT)
+        self.assertIn("gate.wav", str(ctx.exception))
+        self.assertFalse(self.output.exists())
 
     def test_bad_pcm_rejected_and_never_copied_as_valid_audio(self):
         good = pcm()
@@ -249,12 +249,11 @@ class MediaTests(unittest.TestCase):
             with self.subTest(case=i):
                 self.output = self.root / f"bad-{i}"
                 self.save()
+                self.inputs()
                 (self.audio / "checks.wav").write_bytes(data)
                 with self.assertRaises(ValueError):
                     self.prepare()
-                manifest = json.loads((self.output / "manifest.json").read_text())
-                self.assertEqual(manifest["status"], "partial_failure_not_rendered")
-                self.assertEqual(manifest["audio"], [])
+                self.assertFalse(self.output.exists())
                 self.assertFalse((self.output / "video/beat-checks.wav").exists())
 
     def test_pcm_widths_and_stereo_are_accepted_without_resampling(self):
@@ -371,26 +370,39 @@ class MediaTests(unittest.TestCase):
     def test_default_speaker_unavailable_has_no_success_claim(self):
         self.save()
         with patch.object(media.shutil, "which", return_value=None):
-            with self.assertRaisesRegex(RuntimeError, "System.Speech"):
+            with self.assertRaisesRegex(PolicyError, "System.Speech") as ctx:
                 media.prepare_story_media(self.source, self.output)
-        manifest = json.loads((self.output / "manifest.json").read_text())
-        self.assertEqual(manifest["status"], "partial_failure_not_rendered")
-        self.assertEqual(manifest["audio"], [])
-        self.assertFalse((self.output / "video/index.html").exists())
+        self.assertEqual(ctx.exception.code, ERROR_DEPENDENCY_MISSING)
+        self.assertFalse(self.output.exists())
 
     def test_system_speech_invocation_uses_existing_helper_and_argument_list(self):
         self.assertEqual(media.NARRATOR, Path(media.__file__).resolve().parent / "scripts/narrate.ps1")
+        text_path = self.root / "text.txt"
+        audio_path = self.root / "out.wav"
+        text_path.write_text("Reviewed narration cue for local speech synthesis.\n", encoding="utf-8")
+
+        def fake_powershell(cmd, *args, **kwargs):
+            out_idx = cmd.index("-OutputPath") + 1
+            Path(cmd[out_idx]).write_bytes(pcm())
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
         with patch.object(media.shutil, "which", return_value="powershell.exe"), \
-                patch.object(media.subprocess, "run") as run:
-            run.return_value = subprocess.CompletedProcess([], 0)
-            media.synthesize(self.root / "text.txt", self.root / "out.wav", "Voice; not a command")
+                patch.object(media.subprocess, "run", side_effect=fake_powershell) as run:
+            media.synthesize(text_path, audio_path, "Voice; not a command")
             args, kwargs = run.call_args
             self.assertIn(str(media.NARRATOR), args[0])
             self.assertEqual(args[0][-2:], ["-Voice", "Voice; not a command"])
             self.assertFalse(kwargs.get("shell", False))
+            self.assertTrue(audio_path.is_file())
+            receipt = gate.get_last_receipt()
+            self.assertIsNotNone(receipt)
+            assert receipt is not None
+            self.assertEqual(receipt["op"], "ste.synthesize_wav")
+            self.assertEqual(receipt["verdict"], "ALLOW")
+            run.side_effect = None
             run.return_value = subprocess.CompletedProcess([], 1, stderr="No installed voice")
             with self.assertRaisesRegex(RuntimeError, "No installed voice"):
-                media.synthesize(self.root / "text.txt", self.root / "out.wav", None)
+                media.synthesize(text_path, self.root / "failed-out.wav", None)
 
     def test_speaker_failure_after_one_beat_is_recorded(self):
         self.save()
@@ -471,8 +483,15 @@ class MediaTests(unittest.TestCase):
             self.assertNotIn(bad, markup)
 
     def retry_story(self):
-        fixture = Path(__file__).resolve().parents[1] / "examples/suite/retry-explanation.json"
+        repo_root = Path(__file__).resolve().parents[1]
+        fixture = repo_root / "examples/suite/retry-explanation.json"
         self.story = json.loads(fixture.read_text(encoding="utf-8"))
+        for entry in self.story.get("sources", []):
+            locator = entry.get("locator")
+            if locator:
+                target_ev = self.root / Path(locator)
+                target_ev.parent.mkdir(parents=True, exist_ok=True)
+                target_ev.write_bytes((repo_root / Path(locator)).read_bytes())
         self.save()
         self.inputs()
         # Deliberately uneven frame count exercises deterministic remainder allocation.

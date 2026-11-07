@@ -8,8 +8,8 @@
     {
       "name": "ste-pro-max",
       "source": "./",
-      "description": "Native writing, visual explanation, storytelling, and interactive SVG authoring. No Python prerequisite.",
-      "version": "0.5.0"
+      "description": "STE writing, visual explanations, and automatic SkillC checks. Requires a configured runtime; see the documented host support matrix.",
+      "version": "0.6.0"
     }
   ]
 }
