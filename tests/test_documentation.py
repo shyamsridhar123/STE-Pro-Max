@@ -134,7 +134,7 @@ class ReadmeTests(unittest.TestCase):
         self.assertNotIn("git clone", readme)
         self.assertNotIn("--plugin-dir", readme)
         self.assertIn("configured runtime", approach)
-        self.assertTrue("v0.5.0 does not include it" in readme or "configured runtime" in readme)
+        self.assertIn("configured runtime", readme)
         self.assertNotIn("No Python setup", readme)
         self.assertIn("not ASD-STE100 certification", readme)
         self.assertNotIn("pip install ste-pro-max", readme)

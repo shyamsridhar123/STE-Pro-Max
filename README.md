@@ -87,7 +87,7 @@ Missing declared evidence blocks a bundle. Changed evidence blocks export.
 Empty or invalid audio fails preparation.
 
 **This is workflow checking, not an English tutor or fact-checker.**
-No manual approval step. A configured runtime is required; **v0.5.0 does not include it**.
+No manual approval step. A configured runtime is required.
 
 [Why it matters and how it works](docs/SKILLC_GATE.md) · [Credits](docs/SKILLC_CREDITS.md) · [Tested scope](docs/VALIDATION.md).
 
