@@ -241,7 +241,8 @@ class SuiteIntegrationTests(unittest.TestCase):
 
     def test_narrate_cli_failure_is_not_success_and_preserves_partial_evidence(self):
         self.source.write_text(json.dumps(STORY_SCHEMA["example"]), encoding="utf-8")
-        with patch("ste_promax.media.synthesize", side_effect=RuntimeError("Fictional unavailable voice")):
+        with patch("ste_promax.media.synthesize", side_effect=RuntimeError("Fictional unavailable voice")), \
+                patch("ste_promax.media.shutil.which", return_value="powershell.exe"):
             code, _, error = self.call(["narrate", str(self.source), "--output-dir", str(self.output)])
         self.assertEqual(code, 2)
         self.assertIn("unavailable voice", error)

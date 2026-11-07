@@ -661,7 +661,8 @@ class MediaTests(unittest.TestCase):
             calls.append(audio_path)
             audio_path.write_bytes(pcm())
 
-        with patch.object(media, "synthesize", side_effect=synthesize):
+        with patch.object(media, "synthesize", side_effect=synthesize), \
+                patch.object(media.shutil, "which", return_value="powershell.exe"):
             result = media.prepare_story_media(self.source, self.output)
         self.assertEqual(calls, [self.output / record["file"] for record in result["audio"]])
         self.assertTrue((self.output / result["composition"]).is_file())
@@ -676,7 +677,8 @@ class MediaTests(unittest.TestCase):
             return mkdir(path, *args, **kwargs)
 
         with patch.object(Path, "mkdir", autospec=True, side_effect=fail_video), \
-                patch.object(media, "synthesize") as speaker:
+                patch.object(media, "synthesize") as speaker, \
+                patch.object(media.shutil, "which", return_value="powershell.exe"):
             with self.assertRaisesRegex(PermissionError, "Video directory creation denied"):
                 media.prepare_story_media(self.source, self.output)
             speaker.assert_not_called()
