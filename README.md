@@ -79,18 +79,17 @@ Adjust budgets, scrub, export SVG. [Guide](docs/LINE_STUDIO.md).
 
 ## Automatic SkillC checks in v0.6.0
 
-Native `render`, `narrate`, and `export` use the original
-[SkillC](https://github.com/ginaecho/skill-achievability-compiler) engine by
-**Gina Tcchen and contributors**, not a rewritten compiler.
+**SkillC makes STE’s tools check their work before reporting success.**
+STE-Pro Max creates documents, HTML/SVG, and audio—not just prose.
+`render`, `narrate`, and `export` check required inputs, declared evidence, and actual outputs.
 
-Checks run before effects and verify actual output afterward. No manual approval
-step. Missing runtime, unsafe paths, or changed evidence stop the operation.
+Missing declared evidence blocks a bundle. Changed evidence blocks export.
+Empty or invalid audio fails preparation.
 
-Copilot CLI and OpenCode adapters add guarded STE tools. This release
-requires a configured runtime; **v0.5.0 does not include it**. All 426 tests pass;
-authenticated Copilot workflows are checked. [Tested scope](docs/VALIDATION.md).
+**This is workflow checking, not an English tutor or fact-checker.**
+No manual approval step. A configured runtime is required; **v0.5.0 does not include it**.
 
-[Usage, implementation, impact](docs/SKILLC_GATE.md) · [Credits and citations](docs/SKILLC_CREDITS.md).
+[Why it matters and how it works](docs/SKILLC_GATE.md) · [Credits](docs/SKILLC_CREDITS.md) · [Tested scope](docs/VALIDATION.md).
 
 ## Install the plugin
 

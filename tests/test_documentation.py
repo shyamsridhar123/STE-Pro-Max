@@ -65,6 +65,11 @@ class ReadmeTests(unittest.TestCase):
         for command in ("render", "narrate", "export"):
             self.assertIn(f"`{command}`", readme)
         self.assertIn("No manual approval", readme)
+        self.assertIn("tools check their work before reporting success", readme)
+        self.assertIn("not an English tutor or fact-checker", readme)
+        self.assertIn("Why it is relevant to STE-Pro Max", guide)
+        self.assertIn("For a short conversational rewrite", guide)
+        self.assertLess(guide.index("Why it is relevant"), guide.index("Implementation details"))
         self.assertIn("timeouts fail open", guide)
         self.assertIn("not pre-display semantic gates", guide)
         for page in ("docs/SKILLC_GATE.md", "docs/SKILLC_CREDITS.md"):

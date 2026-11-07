@@ -11,7 +11,7 @@ your agent for a clear rewrite, a visual explanation, or an interactive story.
 | Understand STE and the Karpathy-inspired approach | [How it works](APPROACH.md) |
 | Adapt a self-contained HTML example | [Template guide](../examples/showcase/README.md) |
 | Render structured input or automate batches | [Native engine](AUTHORING.md) |
-| Run automatic checks without manual approval | [SkillC integration, v0.6.0](SKILLC_GATE.md) |
+| Understand why STE checks evidence, paths, and output files | [What SkillC does for STE-Pro Max](SKILLC_GATE.md) |
 | Attribute SkillC correctly and inspect its sources | [Credits, licenses, and citations](SKILLC_CREDITS.md) |
 | Check what was actually tested | [Verification](VALIDATION.md) |
 

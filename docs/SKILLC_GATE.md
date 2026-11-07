@@ -1,32 +1,62 @@
-# Automatic STE checks with SkillC
+# What SkillC does for STE-Pro Max
 
-**Available in v0.6.0.** Ordinary STE effectful operations use the
-real SkillC engine automatically. There is no `stage`/`approve` sequence, review
-token, or product confirmation prompt. Automatic checks still refuse invalid
-operations. Existing host permission rules remain in force.
+**SkillC checks the steps behind an STE artifact—not just whether a tool ran.**
+It checks a workflow against declared rules:
+what must be available, which actions are allowed, and what must be verified
+before completion.
 
-The published **v0.5.0** tag remains unchanged. A local
-source edit does not establish that an installed host enforces it. The
-[validation record](VALIDATION.md) distinguishes native tests, host tests, and
-actual installed behavior. GitHub Copilot CLI testing is a release requirement.
+In STE-Pro Max, this runs automatically before and after supported operations.
+The STE integration checks the actual source, evidence, output files, and audio.
+A failed check is an error, not a successful result with a reassuring message.
+There is no manual staging, approval token, or product confirmation step.
 
-## What runs
+## Why it is relevant to STE-Pro Max
 
-| Layer | Implementation | What it establishes |
-| --- | --- | --- |
-| Admission | Original SkillC parser, `bind_runtime`, and `checker.check` | The finite declared plan is admissible, `ACHIEVABLE`, and `WELL_TYPED` |
-| Runtime policy | Real strict `Monitor.pre_action` / `post_action` | Declared roles and prerequisites permit the operation |
-| STE validation | Native input validators plus concrete path, source, evidence, file-hash, metadata, and PCM checks | The inspected operation and files satisfy these bounded checks |
-| Host adapters | Copilot CLI hooks/strict STE agent and OpenCode V2 hooks, with guarded typed tools | STE-scoped operations use the checked executor instead of unrestricted mutation tools |
+**Simplified Technical English does not need SkillC. Automated document production
+benefits from it.** STE-Pro Max does more than rewrite sentences: it creates
+evidence-linked reports, HTML/SVG explanations, and narrated material.
 
-SkillC is **not reimplemented** here. Credit belongs to **Gina Tcchen and
-contributors**. STE-Pro-Max supplies the integration, concrete validators, host
-adapters, and tests. See [licenses, citations, and proof limits](SKILLC_CREDITS.md).
+Instructions such as “keep the source intact,” “retain the evidence,” and
+“verify the output” are easy for an assistant to skip. The integration turns the
+checkable parts of those instructions into enforced workflow rules. Clear prose
+does not compensate for a missing attachment, changed source data, or broken output.
 
-Monitor trusts reported tool outcomes; it does not inspect files itself. The
-adapter therefore verifies actual bytes before recording an `ALLOW` receipt.
-Neither a positive abstract verdict nor a hash establishes factual truth,
-authorship, semantic entailment, or a formally verified Python implementation.
+For a short conversational rewrite, the benefit is limited. SkillC does not make
+the English clearer, grade STE compliance, or establish that a claim is true.
+Its main value is reliability when the assistant performs actions and produces files.
+Enforcement applies to tool execution and results; it cannot guarantee that every
+sentence in the assistant's chat response is accurate.
+
+## Concrete problems it catches
+
+| Situation | What the guarded STE workflow does |
+| --- | --- |
+| A report declares a local evidence file that is missing | Refuses to create the bundle rather than silently dropping that dependency |
+| Source or declared evidence changes during a build or before export | Rejects the result or export instead of claiming it still matches the recorded inputs |
+| An assistant requests a write outside its workspace or into a protected area | Refuses that target before writing through the guarded tool |
+| A renderer returns success but a required output is missing or invalid | Reports failure after checking the actual files |
+| A WAV exists but is empty, malformed, or constant | Refuses to mark narration preparation complete |
+
+These are operational checks, not a guarantee of correct meaning. The system
+cannot discover every undeclared source, prove that evidence supports a claim,
+or establish that valid audio says the right words.
+
+## What happens when you ask for a report
+
+Suppose you supply `report.md` and declare `results.json` as evidence.
+
+1. **Before building:** check that the required files and runtime are available,
+   the output path is allowed, and the inputs meet the operation's requirements.
+2. **Build:** run the existing STE renderer and retain the declared source/evidence.
+3. **Before returning success:** inspect the produced files and compare recorded
+   bytes and hashes. Refuse success if those checks fail.
+
+If the evidence changes later, export refuses the stale bundle. It does not
+silently approve the new evidence. Some failures are detected after output exists;
+partial files remain for diagnosis. This is not a promise to undo every effect.
+
+**Available from v0.6.0.** Existing host permissions still apply, and the v0.5.0
+tag remains unchanged. See [tested behavior and limits](VALIDATION.md).
 
 ## Native use
 
@@ -178,3 +208,21 @@ from an `ALLOW` receipt.
 The source checkout tests core/native boundaries, packaging, and host adapters.
 Installed CLI workflows and retained artifacts remain separate evidence. See
 [validation](VALIDATION.md) for the tested environments and remaining limits.
+
+## Implementation details
+
+SkillC supplies workflow checking and a strict runtime monitor. STE-Pro Max
+supplies the file/evidence/audio validators and host-tool integration. The
+monitor does not inspect document meaning or generated files on its own.
+
+| Layer | Implementation | What it establishes |
+| --- | --- | --- |
+| Workflow admission | SkillC parser, `bind_runtime`, and `checker.check` | The declared finite plan is admissible, `ACHIEVABLE`, and `WELL_TYPED` |
+| Runtime rules | Strict `Monitor.pre_action` / `post_action` | Declared roles and prerequisites permit the operation |
+| Concrete validation | STE input, path, source, evidence, file-hash, metadata, and PCM checks | The inspected files satisfy the stated operational checks |
+| Host adapters | Copilot CLI hooks/strict STE agent and OpenCode V2 hooks with guarded tools | Supported STE sessions use the checked executor rather than unrestricted mutation routes |
+
+SkillC is by **Gina Tcchen and contributors**. STE-Pro Max maintains this
+integration. See [credits, licenses, and primary sources](SKILLC_CREDITS.md).
+A positive workflow verdict is not a certificate for factual truth or the
+correctness of every line of this integration.

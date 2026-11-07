@@ -7,10 +7,9 @@ where possible. The implementation and bounded impact are documented in the
 
 ## Upstream software credit
 
-**SkillC was not invented or reimplemented by this integration.** The original
-[skill-achievability-compiler](https://github.com/ginaecho/skill-achievability-compiler)
-supplies the compiler/checker and strict runtime `Monitor` used by the automatic
-workflow. Credit belongs to **Gina Tcchen and contributors**. The earlier manual
+[SkillC](https://github.com/ginaecho/skill-achievability-compiler), by
+**Gina Tcchen and contributors**, supplies the workflow checker and strict runtime `Monitor`
+used by the automatic workflow. The earlier manual
 prototype also used upstream `Delivery` and `ApprovalGate`; the current workflow
 does not use manual approval.
 
