@@ -1,4 +1,4 @@
-"""OpenCode V2 automatic STE-Pro-Max host adapter and bounded CLI JSON dispatcher."""
+"""OpenCode V2 STE-Pro-Max host adapter and bounded CLI JSON dispatcher."""
 from __future__ import annotations
 
 from pathlib import Path

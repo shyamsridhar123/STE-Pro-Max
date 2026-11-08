@@ -17,7 +17,7 @@ your agent for a clear rewrite, a visual explanation, or an interactive story.
 
 ## Go deeper
 
-- **Release:** [v0.6.0 automatic checks](releases/v0.6.0.md); [v0.5.0 Line Studio](releases/v0.5.0.md).
+- **Release:** [v0.6.1 removes host-tool restrictions](releases/v0.6.1.md); [v0.6.0 automatic checks](releases/v0.6.0.md); [v0.5.0 Line Studio](releases/v0.5.0.md).
 
 - **Design and implementation:** [Design direction](../DESIGN.md),
   [implementation](IMPLEMENTATION.md), [suite coverage](SUITE_AUDIT.md).
@@ -28,7 +28,7 @@ your agent for a clear rewrite, a visual explanation, or an interactive story.
   [original post and STE standard](../skills/ste-promax/references/source-evidence.md),
   [preserved imports](PROVENANCE.md), [image provenance](assets/README.md).
 
-The published v0.5.0 plugin uses the host's existing tools. Version 0.6.0
-adds automatic policy, a configured runtime, and guarded tools for
-Copilot CLI and OpenCode. See the integration guide before claiming enforcement.
+STE skills do not restrict the host's existing tools. Native checked tools for
+Copilot CLI and OpenCode need a configured runtime. See the integration guide
+before claiming that an operation received those checks.
 Narration and video require a separately available media capability.

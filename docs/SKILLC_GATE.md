@@ -5,10 +5,13 @@ It checks a workflow against declared rules:
 what must be available, which actions are allowed, and what must be verified
 before completion.
 
-In STE-Pro Max, this runs automatically before and after supported operations.
+In STE-Pro Max, this runs automatically before and after native STE operations.
 The STE integration checks the actual source, evidence, output files, and audio.
 A failed check is an error, not a successful result with a reassuring message.
 There is no manual staging, approval token, or product confirmation step.
+**It does not restrict other host tools.** Shell, file tools, Code Mode, browser
+tools, external agents, and unrelated integrations keep their normal permissions.
+Loading an STE skill does not create a persistent restricted session.
 
 ## Why it is relevant to STE-Pro Max
 
@@ -55,8 +58,7 @@ If the evidence changes later, export refuses the stale bundle. It does not
 silently approve the new evidence. Some failures are detected after output exists;
 partial files remain for diagnosis. This is not a promise to undo every effect.
 
-**Available from v0.6.0.** Existing host permissions still apply, and the v0.5.0
-tag remains unchanged. See [tested behavior and limits](VALIDATION.md).
+Existing host permissions still apply. See [tested behavior and limits](VALIDATION.md).
 
 ## Native use
 
@@ -115,43 +117,41 @@ prefix these names with the server name. File-producing tools derive the
 workspace from trusted host context, not a model argument. They protect plugin,
 configuration, credential, and source areas, and check proposed and actual bytes.
 
-Scope starts from actual STE skill/agent activation, not words in a prompt. It
-persists across turns and follows native descendants; resume/reload must recover
-the scope. Start a new non-STE session for unrelated unrestricted work. Non-STE
-sessions keep their existing behavior. Within STE scope, raw shell, generic
-patch/edit, opaque external agents, and other uncontrolled mutation routes are
-refused rather than parsed with a supposedly safe command regex.
+STE does not intercept unrelated tool calls or inject a session-wide tool policy.
+There is no restrictive mode to inherit, recover, or switch off. Ordinary tools
+remain available after STE skill or tool use, including in child sessions.
+Their availability still depends on the host's own permissions and configuration.
+Actions performed with ordinary tools do not receive native STE validation or
+receipts; skill loading alone does not establish that any checks ran.
 
 **Copilot CLI:** Agent Plugins 1.0 uses root `mcp.json`,
-`com.github.copilot/hooks/hooks.json`, and the `ste-author` agent. The dedicated
-agent restricts tool availability independently of hooks. Use it for the strongest
-supported boundary. Copilot's outer command-hook **timeouts fail open**. An inner
-watchdog reduces that risk but cannot eliminate an OS-level stall. Guarded MCP
-executors independently check their effects. Do not advertise default-agent hooks
-as an unconditional sandbox.
+`com.github.copilot/hooks/hooks.json`, and the `ste-author` agent. The agent preloads
+STE guidance without a strict tool list. Hooks only record trusted workspace
+context and attach it to STE MCP requests; they do not police shell or file tools.
 Copilot 1.0.103's `preMcpToolCall` hook binds its actual session ID and working
 directory into request metadata. The MCP executor resolves that exact session
 record; it does not guess the newest session or use the plugin directory as the
 workspace. Missing or invalid bindings refuse effects.
 
-**OpenCode V2:** pre-tool hooks can refuse before execution; post-hooks cannot
-undo effects. Bounded top-level tools remain available without Code Mode. Host
-permissions and other safety plugins are not changed from `ask` to `allow`.
+**OpenCode V2:** the adapter registers four skills and ten typed tools without
+global pre-tool, prompt, context, or event interception. Native STE tools resolve
+the actual session/location workspace. Code Mode and other tools remain usable;
+host permissions and other safety plugins are not changed from `ask` to `allow`.
 
-Conversational prose can receive automatic preflight and post-generation
-diagnostics. Streamed text has already appeared before post-turn checks. These
-are advisory writing/source-limit diagnostics, **not pre-display semantic gates**.
+`ste_check_prose` provides advisory diagnostics when called. There is no automatic
+chat monitoring or pre-display semantic gate.
 Static inspection is not a browser interaction, visual QA, or accessibility audit.
 
-The v0.6.0 enforcement adapters target Copilot CLI and OpenCode. Published
-Claude Code/Codex skill support is not evidence that these hosts have equivalent
-enforcement adapters. Loading instructions alone never counts as enforcement.
+The native tool adapters target Copilot CLI and OpenCode. Published Claude
+Code/Codex skill support is not evidence that these hosts have the same native
+tool integration. Loading instructions alone never counts as validation.
 
 ## Runtime configuration
 
-Effectful operations require a configured backend. Plugin installation does not
+Native STE operations require a configured backend. Plugin installation does not
 silently install Python, SkillC, a voice, or a media encoder. Missing capability
-produces an actionable refusal, not an unchecked fallback.
+produces an error from the native tool. It does not prevent ordinary host-tool
+authoring or unrelated work, and it does not cause silent dependency installation.
 
 Default trusted configuration locations:
 
@@ -183,15 +183,16 @@ weakens TLS, repairs an unrelated environment, or overwrites an existing runtime
 | --- | --- |
 | Manual staging, approval, then export | Ordinary operations check themselves; no approval ceremony |
 | Normal rendering bypassed the optional export gate | Public effectful renderer/media entry points enter the shared controller |
-| Host skill instructions were only conventions | Supported host adapters restrict STE mutation paths and provide guarded tools |
+| Host-wide restrictions interrupted unrelated work | Adapters provide checked STE tools without restricting other tools |
 | Export could use evidence found later | Export requires render-time bindings and rejects changed declared evidence |
 | A successful function return could be mistaken for verification | The controller reads the actual outputs and can reject the result |
 
 These are behavior changes, not measured productivity, accuracy, cost, or
 learning gains. Test pass counts are not real-world success rates.
 
-Same-user shell or filesystem access outside the controlled host can bypass or
-alter local helpers/state. This is a local policy boundary, not an OS sandbox,
+Same-user shell or filesystem access can create files without native checks or
+alter local helpers/state. Those tools remain available under host permissions.
+This is operation-local validation, not an OS sandbox,
 multi-party identity system, complete numeric/protocol monitor, or permanent file
 lock. Existing host permissions, external-action authorization, and source trust
 still apply. No publication, paid service, or unrelated global change follows
@@ -203,7 +204,7 @@ from an `ALLOW` receipt.
 - [Runtime resolver](../ste_promax/policy_runtime.py): trusted configuration and typed errors.
 - [Worker](../ste_promax/_skillc_worker.py): closed JSON `guard_pre`, `guard_post`, `guard_fail`, and `guard_status` actions.
 - [Host operations](../integrations/mcp/operations.py): bounded shared executor, also used by adapters.
-- [Copilot hooks](../integrations/copilot/hook_entry.py): session scope and pre-tool refusal.
+- [Copilot hooks](../integrations/copilot/hook_entry.py): exact-session workspace metadata for STE MCP requests.
 
 The source checkout tests core/native boundaries, packaging, and host adapters.
 Installed CLI workflows and retained artifacts remain separate evidence. See
@@ -220,7 +221,7 @@ monitor does not inspect document meaning or generated files on its own.
 | Workflow admission | SkillC parser, `bind_runtime`, and `checker.check` | The declared finite plan is admissible, `ACHIEVABLE`, and `WELL_TYPED` |
 | Runtime rules | Strict `Monitor.pre_action` / `post_action` | Declared roles and prerequisites permit the operation |
 | Concrete validation | STE input, path, source, evidence, file-hash, metadata, and PCM checks | The inspected files satisfy the stated operational checks |
-| Host adapters | Copilot CLI hooks/strict STE agent and OpenCode V2 hooks with guarded tools | Supported STE sessions use the checked executor rather than unrestricted mutation routes |
+| Host adapters | Copilot workspace metadata and OpenCode typed tools | Native STE requests use the correct workspace; other host tools are not intercepted |
 
 SkillC is by **Gina Tcchen and contributors**. STE-Pro Max maintains this
 integration. See [credits, licenses, and primary sources](SKILLC_CREDITS.md).

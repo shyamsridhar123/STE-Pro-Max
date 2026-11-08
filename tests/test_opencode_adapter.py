@@ -6,23 +6,25 @@ Covers:
    never `runtime.json.ste_root`).
 3. Bounded CLI JSON dispatcher (`integrations/opencode/dispatch.py`) and guarded host operations
    (`ste_status`, `ste_check_prose`, `ste_write_artifact`, `ste_render_bundle`, `ste_render_artifact`,
-   `ste_regenerate_gallery`, `ste_prepare_story_media`, `ste_inspect_artifact`, `ste_export_bundle`,
-   `ste_preflight_turn`, `ste_postprocess_prose`), including pre-mutation denial of out-of-workspace targets,
-   protected paths, untrusted raw HTML, forbidden model keys, and missing SkillC runtime.
-4. JS Effect plugin & scope unit boundaries (`createSteOpenCodePlugin`, `createScopeManager`,
-   `evaluateSteToolIntercept`, `scanContextMessagesForScope`), proving:
-   - V2 Effect `execute.before` hook + typed `Tool.Error` refusal.
-   - Top-level `ste_*` tool registration with `options: { codemode: false }`.
-   - Scope activation from `skill(id)`, `prompt.skills`, `session.skill.activated`, typed `SessionMessage`
-     context records (`type: "skill"`, `User.skills`), exact `SKILL.md` read, and `ste_*` tools.
-   - No false activation from random prompt words.
-   - Parent-to-child inheritance via `ctx.session.get` `parentID` for new and resumed native children,
-     while blocking external ACP subagents (`dsh`, `acp`).
-   - Explicit user `/ste-off` deactivation and no model-callable bypass.
-   - Post-stream `session.text.ended` prose diagnostics and graceful read-only degradation when runtime is missing.
+   `ste_regenerate_gallery`, `ste_prepare_story_media`, `ste_inspect_artifact`, `ste_export_bundle`),
+   including pre-mutation denial of out-of-workspace targets, protected paths, untrusted raw HTML,
+   forbidden model keys, and missing SkillC runtime.
+4. JS Effect plugin unit boundaries (`createSteOpenCodePlugin`, `executeGuardedSteTool`,
+   `resolveWorkspaceForSession`, `prevalidateSteToolCall`, `buildSteToolResultMetadata`), proving:
+   - Registration of the 4 bundled STE skills and 10 top-level `ste_*` tools with `options: { codemode: false }`.
+   - Zero global or session-scoped interception: no `execute.before` tool hook, no `prompt` or `context`
+     session hooks, no `event.subscribe` stream monitor, and no `/ste-off` command registration.
+   - Workspace resolution from `ctx.session.get(sessionID).location.directory` or `ctx.location.directory`
+     (never falling back to bundle root or process CWD).
+   - Guarded STE tool execution succeeds regardless of session history or ancestor chains, while invalid STE
+     inputs fail with typed `Tool.Error` and missing SkillC runtime never fabricates `verdict: "ALLOW"`.
 5. Real OpenCode 2.2.6 (`opencode-cli` / `opencode-cli.exe --standalone`) end-to-end execution against a local loopback
    OpenAI-compatible mock provider in an isolated home/config/workspace (zero billable model calls),
    retaining full evidence under `artifacts/`.
+   Proves that after loading a bundled STE skill (`skill(id: "ste-promax")`), normal host tools (`shell`, `write`,
+   `read`, and Code Mode `execute` when offered by the CLI catalog) remain available alongside guarded STE tools
+   (`ste_status`, `ste_write_artifact`, `ste_render_bundle`, `ste_inspect_artifact`), while invalid STE inputs
+   (`../` traversal) are still refused before any file write.
    `OpenCodeAdapterDispatcherAndBoundaryTests` always runs unconditionally in CI and local runs.
    `OpenCodeV2LiveLoopbackTests` resolves the CLI from `STE_OPENCODE_CLI_EXE` (or `OPENCODE_CLI_EXE`),
    `PATH`, or the known Windows desktop CLI fallback, and runs only when `STE_RUN_HOST_CLI_TESTS=1`
@@ -63,6 +65,7 @@ from integrations.opencode import (  # noqa: E402
     dispatch_operation,
     resolve_bundle_root,
 )
+
 
 def _resolve_opencode_cli() -> Path | None:
     for env_key in ("STE_OPENCODE_CLI_EXE", "OPENCODE_CLI_EXE"):
@@ -212,6 +215,7 @@ class OpenCodeAdapterDispatcherAndBoundaryTests(unittest.TestCase):
         self.assertEqual(pkg.get("type"), "module")
         self.assertEqual(pkg.get("main"), "server.js")
         self.assertNotIn("exports", pkg)
+        self.assertNotIn("execute.before", pkg.get("description", ""))
         self.assertEqual(BUNDLE_ROOT, REPO_ROOT)
         self.assertEqual(resolve_bundle_root(), REPO_ROOT)
         self.assertEqual(
@@ -424,8 +428,7 @@ class OpenCodeAdapterDispatcherAndBoundaryTests(unittest.TestCase):
         self.assertTrue(prose_res["ok"], prose_res)
         self.assertEqual(prose_res["result"]["policy_receipt"]["verdict"], "ALLOW")
 
-        # 6. Missing SkillC runtime fails effectful operations closed before sentinel creation,
-        # while turn preflight and post-stream prose diagnostics degrade gracefully for read-only help.
+        # 6. Missing SkillC runtime fails effectful operations closed before sentinel creation
         missing_sentinel = self.workspace / "artifacts" / "missing-runtime-sentinel.md"
         with patch.dict(
             os.environ,
@@ -449,33 +452,7 @@ class OpenCodeAdapterDispatcherAndBoundaryTests(unittest.TestCase):
             self.assertEqual(missing_write["error"]["code"], "dependency_missing")
             self.assertFalse(missing_sentinel.exists())
 
-            degraded_preflight = dispatch_operation(
-                {
-                    "op": "ste_preflight_turn",
-                    "args": {"prompt_text": "Explain ASD-STE100 active voice rules."},
-                    "workspace_root": str(self.workspace),
-                }
-            )
-            self.assertTrue(degraded_preflight["ok"], degraded_preflight)
-            self.assertEqual(degraded_preflight["result"]["status"], "degraded_readonly_only")
-            self.assertTrue(degraded_preflight["result"]["readonly_help_permitted"])
-            self.assertFalse(degraded_preflight["result"]["effectful_tools_permitted"])
-
-            degraded_post = dispatch_operation(
-                {
-                    "op": "ste_postprocess_prose",
-                    "args": {
-                        "text": "Use active voice in procedural instructions.",
-                        "profile": "procedure",
-                    },
-                    "workspace_root": str(self.workspace),
-                }
-            )
-            self.assertTrue(degraded_post["ok"], degraded_post)
-            self.assertEqual(degraded_post["result"]["status"], "checked_without_skillc_backend")
-            self.assertFalse(degraded_post["result"]["pre_display_guaranteed"])
-
-    def test_js_effect_plugin_scope_inheritance_and_hook_boundaries(self) -> None:
+    def test_js_effect_plugin_tools_only_without_host_interception(self) -> None:
         node_bin = shutil.which("node") or shutil.which("bun")
         self.assertIsNotNone(node_bin, "Node or Bun is required to run JS plugin boundary tests.")
 
@@ -484,19 +461,17 @@ class OpenCodeAdapterDispatcherAndBoundaryTests(unittest.TestCase):
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import * as coreMod from {json.dumps(core_url)};
 import {{
   STE_SKILL_IDS,
   STE_TOOL_NAMES,
   STE_TOOL_SCHEMAS,
   buildSteToolResultMetadata,
-  createScopeManager,
   createSteOpenCodePlugin,
-  evaluateSteToolIntercept,
-  isExactSteSkillMdPath,
-  isExplicitUserSteOff,
-  isSteSkillIdentifier,
+  executeGuardedSteTool,
+  prevalidateSteToolCall,
   readBundleSkills,
-  scanContextMessagesForScope,
+  resolveWorkspaceForSession,
 }} from {json.dumps(core_url)};
 
 const ws = {json.dumps(str(self.workspace))};
@@ -504,7 +479,26 @@ const stateRoot = {json.dumps(str(self.state_root))};
 const cleanEnv = {{ ...process.env, STE_SKILLC_STATE_ROOT: stateRoot }};
 delete cleanEnv.STE_TRUSTED_WORKSPACE;
 
-// 1. Bundled skills and top-level tool schema checks (options.codemode = false)
+// 1. Verify obsolete scope/blocklist machinery and dead helpers were removed from core.js exports
+for (const removedExport of [
+  "createScopeManager",
+  "evaluateSteToolIntercept",
+  "scanContextMessagesForScope",
+  "isExplicitUserSteOff",
+  "RAW_MUTATION_TOOLS",
+  "RAW_SHELL_AND_CODEMODE_TOOLS",
+  "OPAQUE_HOST_MUTATION_TOOLS",
+  "BLOCKED_SUBAGENT_NAMES",
+  "sha256Hex",
+  "normalizeIdentifier",
+  "isSteSkillIdentifier",
+  "isSteToolName",
+  "resolveStateRoot",
+]) {{
+  assert.ok(!(removedExport in coreMod), `Obsolete export ${{removedExport}} must not remain in core.js`);
+}}
+
+// 2. Bundled skills and top-level tool schema checks (options.codemode = false)
 const skills = readBundleSkills();
 assert.equal(skills.length, 4);
 for (const id of STE_SKILL_IDS) {{
@@ -517,7 +511,7 @@ for (const toolName of STE_TOOL_NAMES) {{
   assert.ok(!("workspace_root" in (schema.input.properties || {{}})));
 }}
 
-// 1b. Honest tool result metadata verdict (never fabricate ALLOW when policy_receipt is absent/unavailable)
+// 3. Honest tool result metadata verdict (never fabricate ALLOW when policy_receipt is absent/unavailable)
 assert.deepEqual(
   buildSteToolResultMetadata("ste_status", {{ ok: true, result: {{ available: false, mode: "unavailable" }} }}),
   {{ ste_op: "ste_status", verdict: "unverified" }},
@@ -531,258 +525,59 @@ assert.deepEqual(
   {{ ste_op: "ste_write_artifact", verdict: "ALLOW" }},
 );
 
-// 2. Scope manager: non-STE passthrough and no prompt keyword activation
+// 4. Workspace resolution from session.get(sessionID).location.directory or ctx.location.directory (never CWD/bundle)
 const sessionInfos = new Map();
-const sessionContexts = new Map();
-const storageMap = new Map();
-
-const mgr = createScopeManager({{
-  defaultWorkspaceRoot: ws,
-  env: cleanEnv,
+sessionInfos.set("ses_custom", {{
+  id: "ses_custom",
+  location: {{ directory: ws }},
+}});
+const resolvedFromSession = await resolveWorkspaceForSession("ses_custom", {{
+  defaultWorkspaceRoot: null,
   getSessionInfo: async (sid) => sessionInfos.get(sid) || null,
-  getSessionContext: async (sid) => sessionContexts.get(sid) || [],
-  storageGet: async (k) => storageMap.get(k),
-  storageSet: async (k, v) => storageMap.set(k, v),
 }});
+assert.equal(resolvedFromSession, fs.realpathSync(ws));
 
-// Random prompt words mentioning STE skills must NOT activate STE scope
-const nonStePrompt = await mgr.handlePromptHook({{
-  sessionID: "ses_non_ste",
-  prompt: {{ text: "Please compare ste-promax and ste-visual-docs in plain prose." }},
-}});
-assert.equal(nonStePrompt.active, false);
-
-const nonSteWrite = await mgr.handleExecuteBefore({{
-  sessionID: "ses_non_ste",
-  tool: "write",
-  input: {{ path: "allowed.txt", content: "ok" }},
-}});
-assert.equal(nonSteWrite.allow, true);
-
-// Non-STE parent spawning an external dsh/acp child must remain non-STE (unchanged passthrough)
-sessionInfos.set("ses_non_ste_dsh_child", {{
-  id: "ses_non_ste_dsh_child",
-  parentID: "ses_non_ste",
-  agent: "dsh",
-  location: {{ directory: ws }},
-}});
-const nonSteExtScope = await mgr.isSessionScoped("ses_non_ste_dsh_child");
-assert.equal(nonSteExtScope.active, false);
-assert.ok(!nonSteExtScope.blockedExternalChild);
-const nonSteExtShell = await mgr.handleExecuteBefore({{
-  sessionID: "ses_non_ste_dsh_child",
-  tool: "shell",
-  input: {{ command: "echo allowed_in_non_ste" }},
-}});
-assert.equal(nonSteExtShell.allow, true);
-
-// 3. Activate via prompt.skills and verify raw shell/write/edit/execute/PTY/GUI/ACP are refused
-const stePrompt = await mgr.handlePromptHook({{
-  sessionID: "ses_ste_parent",
-  prompt: {{
-    text: "Write a procedure.",
-    skills: [{{ id: "ste-promax" }}],
-  }},
-}});
-assert.equal(stePrompt.active, true);
-
-for (const blockedTool of ["shell", "bash", "powershell", "execute", "write", "edit", "apply_patch", "pty_spawn", "cua-driver_snapshot", "opencode_worktree_remove", "res_add", "unknown_custom_tool"]) {{
-  const dec = await mgr.handleExecuteBefore({{
-    sessionID: "ses_ste_parent",
-    tool: blockedTool,
-    input: {{}},
-  }});
-  assert.equal(dec.allow, false, `Expected ${{blockedTool}} to be refused in STE scope`);
-  assert.equal(dec.code, "policy_refusal");
-}}
-
-// Credential read is refused while normal read is allowed
-const credRead = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_parent",
-  tool: "read",
-  input: {{ path: "~/.copilot/config.json" }},
-}});
-assert.equal(credRead.allow, false);
-
-const normalRead = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_parent",
-  tool: "read",
-  input: {{ path: "README.md" }},
-}});
-assert.equal(normalRead.allow, true);
-
-// Headless browser inspection is refused with unsupported_operation in execute.before
-const headlessInspect = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_parent",
-  tool: "ste_inspect_artifact",
-  input: {{ target_path: "artifacts/bundle-01", headless_browser: true }},
-}});
-assert.equal(headlessInspect.allow, false);
-assert.equal(headlessInspect.code, "unsupported_operation");
-
-// 4. Parent-to-child inheritance via session.get(parentID) and resumed subagent child
-sessionInfos.set("ses_native_child", {{
-  id: "ses_native_child",
-  parentID: "ses_ste_parent",
-  agent: "fixer",
-  location: {{ directory: ws }},
-}});
-const childScope = await mgr.isSessionScoped("ses_native_child");
-assert.equal(childScope.active, true);
-assert.match(childScope.reason, /inherited_from:ses_ste_parent/);
-
-const childShell = await mgr.handleExecuteBefore({{
-  sessionID: "ses_native_child",
-  tool: "shell",
-  input: {{ command: "echo child" }},
-}});
-assert.equal(childShell.allow, false);
-
-// External ACP subagent spawn is refused and cannot masquerade as a native child
-const acpSpawn = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_parent",
-  tool: "subagent",
-  input: {{ agent: "dsh", prompt: "run external acp", sessionID: "ses_fake_child" }},
-}});
-assert.equal(acpSpawn.allow, false);
-
-// STE-scoped parent with an external dsh/acp child session is blocked
-sessionInfos.set("ses_ste_dsh_child", {{
-  id: "ses_ste_dsh_child",
-  parentID: "ses_ste_parent",
-  agent: "dsh",
-  location: {{ directory: ws }},
-}});
-const steExtScope = await mgr.isSessionScoped("ses_ste_dsh_child");
-assert.equal(steExtScope.active, true);
-assert.equal(steExtScope.blockedExternalChild, true);
-const steExtRead = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_dsh_child",
-  tool: "read",
-  input: {{ path: "README.md" }},
-}});
-assert.equal(steExtRead.allow, false);
-
-// Native subagent resume binds STE scope to the resumed child session
-const nativeResume = await mgr.handleExecuteBefore({{
-  sessionID: "ses_ste_parent",
-  tool: "subagent",
-  input: {{ agent: "explorer", prompt: "inspect files", sessionID: "ses_resumed_child" }},
-}});
-assert.equal(nativeResume.allow, true);
-const resumedScope = await mgr.isSessionScoped("ses_resumed_child");
-assert.equal(resumedScope.active, true);
-
-// 4b. Malformed parent cycle and deep ancestor chain (>8 hops from STE ancestor)
-// must fail closed for effectful tools while keeping read-only diagnosis available
-sessionInfos.set("ses_cycle_a", {{ id: "ses_cycle_a", parentID: "ses_cycle_b", location: {{ directory: ws }} }});
-sessionInfos.set("ses_cycle_b", {{ id: "ses_cycle_b", parentID: "ses_cycle_a", location: {{ directory: ws }} }});
-const cycleScope = await mgr.isSessionScoped("ses_cycle_a");
-assert.equal(cycleScope.active, true);
-assert.equal(cycleScope.uncertainScope, true);
-assert.match(cycleScope.reason, /ancestor_cycle_detected/);
-
-const cycleWrite = await mgr.handleExecuteBefore({{
-  sessionID: "ses_cycle_a",
-  tool: "write",
-  input: {{ path: "cycle-write.md", content: "blocked" }},
-}});
-assert.equal(cycleWrite.allow, false);
-const cycleSteWrite = await mgr.handleExecuteBefore({{
-  sessionID: "ses_cycle_a",
-  tool: "ste_write_artifact",
-  input: {{ target_path: "artifacts/cycle.md", content: "blocked" }},
-}});
-assert.equal(cycleSteWrite.allow, false);
-const cycleStatus = await mgr.handleExecuteBefore({{
-  sessionID: "ses_cycle_a",
-  tool: "ste_status",
-  input: {{}},
-}});
-assert.equal(cycleStatus.allow, true);
-const cycleRead = await mgr.handleExecuteBefore({{
-  sessionID: "ses_cycle_a",
-  tool: "read",
-  input: {{ path: "README.md" }},
-}});
-assert.equal(cycleRead.allow, true);
-
-// Deep native descendant chain (10 hops from ses_ste_parent)
-let prevId = "ses_ste_parent";
-for (let i = 1; i <= 10; i++) {{
-  const curId = `ses_deep_${{i}}`;
-  sessionInfos.set(curId, {{ id: curId, parentID: prevId, agent: "fixer", location: {{ directory: ws }} }});
-  prevId = curId;
-}}
-const deepScope = await mgr.isSessionScoped("ses_deep_10");
-assert.equal(deepScope.active, true);
-assert.equal(deepScope.uncertainScope, true);
-assert.match(deepScope.reason, /ancestor_depth_limit_exceeded/);
-const deepWrite = await mgr.handleExecuteBefore({{
-  sessionID: "ses_deep_10",
-  tool: "write",
-  input: {{ path: "deep-write.md", content: "blocked" }},
-}});
-assert.equal(deepWrite.allow, false);
-const deepShell = await mgr.handleExecuteBefore({{
-  sessionID: "ses_deep_10",
-  tool: "shell",
-  input: {{ command: "echo blocked" }},
-}});
-assert.equal(deepShell.allow, false);
-const deepStatus = await mgr.handleExecuteBefore({{
-  sessionID: "ses_deep_10",
-  tool: "ste_status",
-  input: {{}},
-}});
-assert.equal(deepStatus.allow, true);
-
-// 5. Reload recovery from typed ctx.session.context records (SessionMessage.Skill / User.skills)
-const freshMgr = createScopeManager({{
+const resolvedFromDefault = await resolveWorkspaceForSession("ses_unknown", {{
   defaultWorkspaceRoot: ws,
+  getSessionInfo: async () => null,
+}});
+assert.equal(resolvedFromDefault, fs.realpathSync(ws));
+
+const resolvedMissing = await resolveWorkspaceForSession("ses_unknown", {{
+  defaultWorkspaceRoot: null,
+  getSessionInfo: async () => null,
+}});
+assert.equal(resolvedMissing, null);
+
+// Missing workspace root refuses STE tool calls rather than falling back to process CWD or bundle root
+const missingWsExec = await executeGuardedSteTool("ste_status", {{}}, {{ sessionID: "ses_unknown" }}, {{
+  defaultWorkspaceRoot: null,
   env: cleanEnv,
-  getSessionInfo: async (sid) => sessionInfos.get(sid) || null,
-  getSessionContext: async (sid) => sessionContexts.get(sid) || [],
+  getSessionInfo: async () => null,
 }});
+assert.equal(missingWsExec.ok, false);
+assert.equal(missingWsExec.error.code, "invalid_input");
 
-// Disk recovery for ses_ste_parent
-const recoveredDisk = await freshMgr.isSessionScoped("ses_ste_parent");
-assert.equal(recoveredDisk.active, true);
+// 5. Prevalidation of STE tool calls (headless_browser, traversal, forbidden keys)
+const headlessPre = prevalidateSteToolCall(
+  "ste_inspect_artifact",
+  {{ target_path: "artifacts/bundle-01", headless_browser: true }},
+  ws,
+  cleanEnv,
+);
+assert.equal(headlessPre.ok, false);
+assert.equal(headlessPre.code, "unsupported_operation");
 
-// Typed context message recovery for a session whose disk record was not yet written
-sessionContexts.set("ses_context_recovery", [
-  {{ type: "user", id: "msg_1", text: "Help with diagram", time: {{ created: 1 }} }},
-  {{ type: "skill", id: "msg_2", skill: "ste-line-studio", name: "ste-line-studio", text: "...", time: {{ created: 2 }} }},
-]);
-const recoveredCtx = await freshMgr.isSessionScoped("ses_context_recovery");
-assert.equal(recoveredCtx.active, true);
-assert.equal(recoveredCtx.reason, "context:skill:ste-line-studio");
+const traversalPre = prevalidateSteToolCall(
+  "ste_write_artifact",
+  {{ target_path: "../escape.md", content: "# Blocked" }},
+  ws,
+  cleanEnv,
+);
+assert.equal(traversalPre.ok, false);
+assert.equal(traversalPre.code, "policy_refusal");
 
-// 6. Post-stream session.text.ended prose diagnostic
-const diag = await freshMgr.handleServerEvent({{
-  type: "session.text.ended",
-  data: {{
-    sessionID: "ses_ste_parent",
-    assistantMessageID: "msg_asst_1",
-    ordinal: 0,
-    text: "Close the inlet valve before removing the filter housing.",
-  }},
-}});
-assert.ok(diag);
-assert.equal(diag.status, "checked");
-assert.equal(diag.delivery_timing, "post_stream_advisory");
-assert.equal(diag.pre_display_guaranteed, false);
-assert.equal(diag.policy_receipt.verdict, "ALLOW");
-
-// 7. Explicit user /ste-off ends scope
-await freshMgr.handlePromptHook({{
-  sessionID: "ses_ste_parent",
-  prompt: {{ text: "/ste-off" }},
-}});
-const afterOff = await freshMgr.isSessionScoped("ses_ste_parent");
-assert.equal(afterOff.active, false);
-
-// 8. Verify createSteOpenCodePlugin Effect registration & Tool.Error failure channel
+// 6. Verify createSteOpenCodePlugin registers ONLY skills and tools (no execute.before, no prompt/context hooks, no event subscription, no /ste-off)
 class MockToolError extends Error {{
   constructor(opts) {{
     super(opts.message);
@@ -829,12 +624,13 @@ const addedTools = new Map();
 const addedCommands = new Map();
 const addedSkills = new Map();
 const toolHooks = new Map();
+const sessionHooks = new Map();
+let eventSubscribed = false;
 
 const pluginDef = createSteOpenCodePlugin({{
   PluginApi: {{ define: (x) => x }},
   ToolErrorClass: MockToolError,
   EffectApi: mockEffectApi,
-  StreamApi: {{}},
 }});
 assert.equal(pluginDef.id, "ste-promax");
 pluginDef.effect({{
@@ -847,8 +643,14 @@ pluginDef.effect({{
   command: {{ transform: (cb) => makeEffect(cb({{ add: (c) => addedCommands.set(c.name, c) }})) }},
   session: {{
     get: async (inp) => sessionInfos.get(inp.sessionID) || null,
-    context: async (inp) => sessionContexts.get(inp.sessionID) || [],
-    hook: () => makeEffect({{}}),
+    context: async () => [],
+    hook: (name, cb) => makeEffect(sessionHooks.set(name, cb)),
+  }},
+  event: {{
+    subscribe: () => {{
+      eventSubscribed = true;
+      return {{ pipe: () => makeEffect({{}}) }};
+    }},
   }},
 }})();
 
@@ -857,34 +659,43 @@ assert.equal(addedTools.size, 10);
 for (const [tName, tDef] of addedTools.entries()) {{
   assert.deepEqual(tDef.options, {{ codemode: false }}, `Tool ${{tName}} must set codemode: false`);
 }}
-assert.ok(addedCommands.has("ste-off"));
-assert.ok(toolHooks.has("execute.before"));
+assert.equal(addedCommands.size, 0, "Must not register /ste-off or any slash commands");
+assert.equal(toolHooks.size, 0, "Must not register execute.before or any tool hooks");
+assert.equal(sessionHooks.size, 0, "Must not register prompt or context session hooks");
+assert.equal(eventSubscribed, false, "Must not subscribe to global server events");
 
-const execBefore = toolHooks.get("execute.before");
-// Activate ses_plugin_hook via skill(id: "ste-promax")
-const skillHookRes = await execBefore({{
-  sessionID: "ses_plugin_hook",
-  tool: "skill",
-  input: {{ id: "ste-promax" }},
-}});
-assert.equal(skillHookRes._failed, false);
+// 7. Guarded STE tool execution succeeds regardless of session history/ancestry, and invalid STE inputs fail with Tool.Error
+const writeTool = addedTools.get("ste_write_artifact");
+const validWriteRes = await writeTool.execute(
+  {{
+    target_path: "artifacts/js-unit/note.md",
+    content: "# Unit Test Note\\n\\nClose the isolation valve before inspection.\\n",
+  }},
+  {{ sessionID: "ses_custom" }},
+);
+assert.equal(validWriteRes._failed, false);
+assert.equal(validWriteRes.value.metadata.ste_op, "ste_write_artifact");
+assert.equal(validWriteRes.value.metadata.verdict, "ALLOW");
+assert.ok(fs.existsSync(path.join(ws, "artifacts", "js-unit", "note.md")));
 
-// Now shell must fail with MockToolError (_tag === "Tool.Error")
-const shellHookRes = await execBefore({{
-  sessionID: "ses_plugin_hook",
-  tool: "shell",
-  input: {{ command: "echo blocked" }},
-}});
-assert.equal(shellHookRes._failed, true);
-assert.ok(shellHookRes.error instanceof MockToolError);
-assert.equal(shellHookRes.error._tag, "Tool.Error");
+const invalidWriteRes = await writeTool.execute(
+  {{
+    target_path: "../escaped-unit.md",
+    content: "# Escaped\\n",
+  }},
+  {{ sessionID: "ses_custom" }},
+);
+assert.equal(invalidWriteRes._failed, true);
+assert.ok(invalidWriteRes.error instanceof MockToolError);
+assert.equal(invalidWriteRes.error._tag, "Tool.Error");
+assert.equal(invalidWriteRes.error.metadata.code, "policy_refusal");
 
-// Verify ste_status tool execution when runtime is missing does NOT fabricate verdict: "ALLOW"
+// 8. Verify ste_status tool execution when runtime is missing does NOT fabricate verdict: "ALLOW"
 const prevCfg = process.env.STE_SKILLC_RUNTIME_CONFIG;
 process.env.STE_SKILLC_RUNTIME_CONFIG = path.join(ws, "nonexistent-runtime.json");
 try {{
   const statusTool = addedTools.get("ste_status");
-  const statusExecRes = await statusTool.execute({{}}, {{ sessionID: "ses_plugin_hook" }});
+  const statusExecRes = await statusTool.execute({{}}, {{ sessionID: "ses_custom" }});
   assert.equal(statusExecRes._failed, false);
   assert.equal(statusExecRes.value.metadata.ste_op, "ste_status");
   assert.equal(statusExecRes.value.metadata.verdict, "unverified");
@@ -932,8 +743,6 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
         retained_dir = REPO_ROOT / "artifacts" / f"opencode-v2-validation-{ts}-{secrets.token_hex(4)}"
         retained_dir.mkdir(parents=True, exist_ok=False)
 
-        # Keep the OpenCode runtime home under the approved short temp directory so Windows
-        # named pipes / SQLite paths stay compact, and copy all logs/evidence into retained_dir.
         APPROVED_TEMP_BASE.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="oc-live-", dir=str(APPROVED_TEMP_BASE)) as tmp_home:
             sandbox_root = Path(tmp_home).resolve()
@@ -959,15 +768,16 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            # Sentinels that must NEVER exist
-            sentinel_raw_shell = workspace / "sentinel-raw-shell.txt"
-            sentinel_raw_write = workspace / "sentinel-raw-write.md"
+            # Outside-workspace sentinel for invalid STE tool input that must NEVER exist
             sentinel_outside = sandbox_root / "sentinel-outside-root.md"
-            sentinel_after_reload = workspace / "sentinel-after-reload.md"
+            # Normal host files after loading STE skill that MUST succeed
+            host_write_after_skill = workspace / "host-write-after-ste-skill.txt"
+            host_shell_after_skill = workspace / "host-shell-after-ste-skill.txt"
 
             scenario_state: dict[str, Any] = {
-                "mode": "non_ste",
+                "mode": "ste_coexistence",
                 "step": 0,
+                "execute_offered": False,
                 "requests": [],
             }
 
@@ -985,7 +795,7 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                         self.send_response(200)
                         self.send_header("Content-Type", "text/event-stream")
                         self.end_headers()
-                        self.wfile.write(_make_text_sse("STE Validation Session"))
+                        self.wfile.write(_make_text_sse("STE Tools and Host Coexistence Session"))
                         self.wfile.flush()
                         return
 
@@ -1015,68 +825,56 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                     self.send_header("Content-Type", "text/event-stream")
                     self.end_headers()
 
-                    if mode == "non_ste":
+                    if mode == "ste_coexistence":
                         if step == 1:
-                            payload = _make_tool_call_sse(
-                                "call_non_ste_write",
-                                "write",
-                                {
-                                    "path": str(workspace / "non-ste-allowed.txt"),
-                                    "content": "NON_STE_PASSTHROUGH_OK\n",
-                                },
-                            )
-                        else:
-                            payload = _make_text_sse("NON_STE_COMPLETE")
-
-                    elif mode == "ste_main":
-                        if step == 1:
-                            # 1. Activate STE scope via real `skill` tool
+                            # 1. Load bundled STE skill via real `skill` tool
                             payload = _make_tool_call_sse(
                                 "call_ste_skill",
                                 "skill",
                                 {"id": "ste-promax"},
                             )
                         elif step == 2:
-                            # 2. Check ste_status to verify workspace_root is bound from OpenCode session/location (not bundle root)
+                            # 2. Check ste_status to verify workspace_root is bound from OpenCode session/location
                             payload = _make_tool_call_sse(
                                 "call_ste_status",
                                 "ste_status",
                                 {},
                             )
                         elif step == 3:
-                            # 3. Attempt raw shell -> must be denied by V2 Effect execute.before
+                            # 3. Normal host `write` after loading STE skill -> must succeed
                             payload = _make_tool_call_sse(
-                                "call_raw_shell",
-                                "shell",
-                                {"command": f"echo PWNED > {sentinel_raw_shell}"},
-                            )
-                        elif step == 4:
-                            # 4. Attempt raw write -> must be denied by V2 Effect execute.before
-                            payload = _make_tool_call_sse(
-                                "call_raw_write",
+                                "call_host_write",
                                 "write",
-                                {"path": str(sentinel_raw_write), "content": "PWNED\n"},
-                            )
-                        elif step == 5:
-                            # 5. Attempt raw edit -> must be denied by V2 Effect execute.before
-                            payload = _make_tool_call_sse(
-                                "call_raw_edit",
-                                "edit",
                                 {
-                                    "path": str(source_doc),
-                                    "oldString": "Check",
-                                    "newString": "PWNED",
+                                    "path": str(host_write_after_skill),
+                                    "content": "HOST_WRITE_AFTER_STE_SKILL_OK\n",
                                 },
                             )
-                        elif step == 6:
-                            # 6. Attempt Code Mode `execute` -> must be denied by V2 Effect execute.before
+                        elif step == 4:
+                            # 4. Normal host `shell` after loading STE skill -> must succeed
                             payload = _make_tool_call_sse(
-                                "call_code_mode",
-                                "execute",
-                                {"code": "return 'bypass'"},
+                                "call_host_shell",
+                                "shell",
+                                {"command": f'echo HOST_SHELL_OK > "{host_shell_after_skill}"'},
                             )
-                        elif step == 7:
-                            # 7. Attempt out-of-workspace ste_write_artifact -> must be denied before write
+                        elif step == 5:
+                            # 5. Normal host Code Mode `execute` (if offered by CLI catalog) or `read` after loading STE skill
+                            if "execute" in tools_offered:
+                                scenario_state["execute_offered"] = True
+                                payload = _make_tool_call_sse(
+                                    "call_code_mode",
+                                    "execute",
+                                    {"code": "return { codemode_ok: true };"},
+                                )
+                            else:
+                                scenario_state["execute_offered"] = False
+                                payload = _make_tool_call_sse(
+                                    "call_host_read",
+                                    "read",
+                                    {"path": str(source_doc)},
+                                )
+                        elif step == 6:
+                            # 6. Attempt out-of-workspace ste_write_artifact -> must be refused by STE validation before write
                             payload = _make_tool_call_sse(
                                 "call_ste_outside",
                                 "ste_write_artifact",
@@ -1085,8 +883,8 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                                     "content": "# Escaped\n",
                                 },
                             )
-                        elif step == 8:
-                            # 8. Valid guarded ste_write_artifact -> must succeed automatically
+                        elif step == 7:
+                            # 7. Valid guarded ste_write_artifact -> must succeed with ALLOW receipt
                             payload = _make_tool_call_sse(
                                 "call_ste_write",
                                 "ste_write_artifact",
@@ -1098,8 +896,8 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                                     ),
                                 },
                             )
-                        elif step == 9:
-                            # 9. Valid guarded ste_render_bundle -> must succeed automatically
+                        elif step == 8:
+                            # 8. Valid guarded ste_render_bundle -> must succeed automatically
                             payload = _make_tool_call_sse(
                                 "call_ste_render",
                                 "ste_render_bundle",
@@ -1109,8 +907,8 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                                     "title": "Hydraulic Pressure Check",
                                 },
                             )
-                        elif step == 10:
-                            # 10. Valid guarded ste_inspect_artifact -> must succeed automatically
+                        elif step == 9:
+                            # 9. Valid guarded ste_inspect_artifact -> must succeed automatically
                             payload = _make_tool_call_sse(
                                 "call_ste_inspect",
                                 "ste_inspect_artifact",
@@ -1123,27 +921,6 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                             payload = _make_text_sse(
                                 "Check the pressure gauge before opening the relief valve."
                             )
-
-                    elif mode == "ste_reload_resume":
-                        if step == 1:
-                            # In a brand new process continuing the same session ID,
-                            # raw write must STILL be denied without re-calling `skill`!
-                            payload = _make_tool_call_sse(
-                                "call_reload_write",
-                                "write",
-                                {"path": str(sentinel_after_reload), "content": "PWNED_AFTER_RELOAD\n"},
-                            )
-                        elif step == 2:
-                            payload = _make_tool_call_sse(
-                                "call_reload_prose",
-                                "ste_check_prose",
-                                {
-                                    "text": "Check the pressure gauge before opening the relief valve.",
-                                    "profile": "procedure",
-                                },
-                            )
-                        else:
-                            payload = _make_text_sse("RELOAD_VERIFIED")
                     else:
                         payload = _make_text_sse("DONE")
 
@@ -1196,36 +973,6 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
             # exercise genuine ctx.session.get(sessionID).location.directory / ctx.location.directory binding!
             env.pop("STE_TRUSTED_WORKSPACE", None)
 
-            # --- Run 1: Non-STE passthrough (prompt mentions STE-ProMAX in text, must NOT activate STE) ---
-            scenario_state["mode"] = "non_ste"
-            scenario_state["step"] = 0
-            proc_non_ste = subprocess.run(
-                [
-                    str(OPENCODE_CLI_EXE),
-                    "run",
-                    "--standalone",
-                    "--auto",
-                    "--format",
-                    "json",
-                    "Hello, we might discuss STE-ProMAX later, please write non-ste-allowed.txt.",
-                ],
-                cwd=str(workspace),
-                env=env,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=60,
-                check=False,
-            )
-            (retained_dir / "run1-non-ste.stdout.jsonl").write_text(proc_non_ste.stdout, encoding="utf-8")
-            (retained_dir / "run1-non-ste.stderr.log").write_text(proc_non_ste.stderr, encoding="utf-8")
-            self.assertEqual(proc_non_ste.returncode, 0, proc_non_ste.stderr)
-            self.assertTrue((workspace / "non-ste-allowed.txt").is_file())
-
-            # --- Run 2: STE workflow + Effect execute.before denials + guarded write/render/inspect ---
-            scenario_state["mode"] = "ste_main"
-            scenario_state["step"] = 0
             proc_ste = subprocess.run(
                 [
                     str(OPENCODE_CLI_EXE),
@@ -1234,7 +981,7 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                     "--auto",
                     "--format",
                     "json",
-                    "Execute STE workflow.",
+                    "Load ste-promax skill, use normal host tools and guarded STE tools.",
                 ],
                 cwd=str(workspace),
                 env=env,
@@ -1245,82 +992,47 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                 timeout=90,
                 check=False,
             )
-            (retained_dir / "run2-ste-main.stdout.jsonl").write_text(proc_ste.stdout, encoding="utf-8")
-            (retained_dir / "run2-ste-main.stderr.log").write_text(proc_ste.stderr, encoding="utf-8")
+            (retained_dir / "run1-ste-coexistence.stdout.jsonl").write_text(proc_ste.stdout, encoding="utf-8")
+            (retained_dir / "run1-ste-coexistence.stderr.log").write_text(proc_ste.stderr, encoding="utf-8")
             self.assertEqual(proc_ste.returncode, 0, proc_ste.stderr)
 
-            # Extract sessionID from Run 2 JSON output
-            ste_session_id = None
-            for line in proc_ste.stdout.splitlines():
-                if not line.strip().startswith("{"):
-                    continue
-                ev = json.loads(line)
-                if isinstance(ev.get("sessionID"), str):
-                    ste_session_id = ev["sessionID"]
-                    break
-            self.assertIsNotNone(ste_session_id, "Failed to extract sessionID from OpenCode JSON output.")
+            # Verify normal host tools succeeded after loading STE skill
+            self.assertTrue(host_write_after_skill.is_file(), "Normal host write after STE skill must succeed!")
+            self.assertIn("HOST_WRITE_AFTER_STE_SKILL_OK", host_write_after_skill.read_text(encoding="utf-8"))
+            self.assertTrue(host_shell_after_skill.is_file(), "Normal host shell after STE skill must succeed!")
+            self.assertIn("HOST_SHELL_OK", host_shell_after_skill.read_text(encoding="utf-8"))
 
-            # Verify sentinels were NEVER created
-            self.assertFalse(sentinel_raw_shell.exists(), "Raw shell sentinel must not exist!")
-            self.assertFalse(sentinel_raw_write.exists(), "Raw write sentinel must not exist!")
-            self.assertFalse(sentinel_outside.exists(), "Outside-workspace sentinel must not exist!")
-            self.assertIn(
-                "Check the pressure gauge",
-                source_doc.read_text(encoding="utf-8"),
-                "Raw edit must not have modified source-note.md!",
-            )
+            # Verify invalid STE tool input was still refused without side effects
+            self.assertFalse(sentinel_outside.exists(), "Outside-workspace STE sentinel must not exist!")
 
-            # Verify guarded artifact write and bundle render succeeded
+            # Verify guarded STE artifact write and bundle render succeeded
             written_doc = workspace / "artifacts" / "oc-live-doc" / "valve-procedure.md"
             bundle_dir = workspace / "artifacts" / "oc-live-bundle"
             self.assertTrue(written_doc.is_file())
             self.assertTrue((bundle_dir / "manifest.json").is_file())
             self.assertTrue((bundle_dir / "gallery.html").is_file())
 
-            # --- Run 3: Reload / resume recovery in a new `--standalone` process (`--session <ste_session_id>`) ---
-            scenario_state["mode"] = "ste_reload_resume"
-            scenario_state["step"] = 0
-            proc_reload = subprocess.run(
-                [
-                    str(OPENCODE_CLI_EXE),
-                    "run",
-                    "--standalone",
-                    "--auto",
-                    "--format",
-                    "json",
-                    "--session",
-                    str(ste_session_id),
-                    "Continue STE session after reload.",
-                ],
-                cwd=str(workspace),
-                env=env,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=60,
-                check=False,
-            )
-            (retained_dir / "run3-ste-reload.stdout.jsonl").write_text(proc_reload.stdout, encoding="utf-8")
-            (retained_dir / "run3-ste-reload.stderr.log").write_text(proc_reload.stderr, encoding="utf-8")
-            self.assertEqual(proc_reload.returncode, 0, proc_reload.stderr)
-            self.assertFalse(
-                sentinel_after_reload.exists(),
-                "Raw write after reload must be denied by recovered STE scope!",
-            )
-
             # Save full request log and copy artifacts/policy-state into retained_dir
             (retained_dir / "mock-provider-requests.json").write_text(
-                json.dumps(scenario_state["requests"], indent=2),
+                json.dumps(
+                    {
+                        "execute_offered_by_cli": bool(scenario_state["execute_offered"]),
+                        "codemode_status": (
+                            "exercised_and_verified"
+                            if scenario_state["execute_offered"]
+                            else "not_offered_by_standalone_cli_catalog"
+                        ),
+                        "requests": scenario_state["requests"],
+                    },
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
             shutil.copytree(workspace / "artifacts", retained_dir / "workspace-artifacts")
             shutil.copytree(policy_state, retained_dir / "policy-state")
 
-            # Verify Tool.Error messages were received by the model for each denied tool
-            ste_reqs = [r for r in scenario_state["requests"] if r["mode"] == "ste_main"]
-            self.assertGreaterEqual(len(ste_reqs), 11)
-            # Top-level STE tools must be offered in tool definitions
+            ste_reqs = [r for r in scenario_state["requests"] if r["mode"] == "ste_coexistence"]
+            self.assertGreaterEqual(len(ste_reqs), 10)
             for tool_name in STE_TOOL_NAMES:
                 self.assertIn(tool_name, ste_reqs[0]["tools_offered"])
 
@@ -1331,7 +1043,7 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                 for raw_msg in r.get("tool_messages", []):
                     if isinstance(raw_msg, str) and '"host_adapter": "ste-promax"' in raw_msg:
                         status_tool_outputs.append(json.loads(raw_msg))
-            self.assertTrue(status_tool_outputs, "Expected ste_status tool output in ste_main transcript.")
+            self.assertTrue(status_tool_outputs, "Expected ste_status tool output in transcript.")
             status_res = status_tool_outputs[0]["result"]
             self.assertEqual(Path(status_res["workspace_root"]).resolve(), workspace.resolve())
             self.assertEqual(Path(status_res["bundle_root"]).resolve(), installed_bundle.resolve())
@@ -1345,21 +1057,15 @@ class OpenCodeV2LiveLoopbackTests(unittest.TestCase):
                 for r in ste_reqs
                 for msg in r.get("tool_messages", [])
             )
-            self.assertIn('STE-Pro-Max policy refuses raw shell/Code Mode/PTY tool \\"shell\\"', combined_feedback)
-            self.assertIn('STE-Pro-Max policy refuses raw file mutation tool \\"write\\"', combined_feedback)
-            self.assertIn('STE-Pro-Max policy refuses raw file mutation tool \\"edit\\"', combined_feedback)
-            self.assertIn('STE-Pro-Max policy refuses raw shell/Code Mode/PTY tool \\"execute\\"', combined_feedback)
+            self.assertNotIn("STE-Pro-Max policy refuses raw", combined_feedback)
             self.assertIn("must not contain '..' traversal segments", combined_feedback)
-
-            reload_reqs = [r for r in scenario_state["requests"] if r["mode"] == "ste_reload_resume"]
-            self.assertGreaterEqual(len(reload_reqs), 3)
-            reload_feedback = "\n".join(
-                str(msg)
-                for r in reload_reqs
-                for msg in r.get("tool_messages", [])
-            )
-            self.assertIn('STE-Pro-Max policy refuses raw file mutation tool \\"write\\"', reload_feedback)
-            self.assertIn("prose_advisory_checked", reload_feedback)
+            self.assertIn('"verdict": "ALLOW"', combined_feedback)
+            if scenario_state["execute_offered"]:
+                code_result = next(r["last_message"] for r in ste_reqs if r["step"] == 6)
+                self.assertEqual(code_result["tool_call_id"], "call_code_mode")
+                self.assertIs(json.loads(code_result["content"]).get("codemode_ok"), True)
+            else:
+                self.assertIn("Hydraulic Pressure Check", combined_feedback)
 
 
 if __name__ == "__main__":

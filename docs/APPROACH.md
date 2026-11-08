@@ -49,9 +49,9 @@ rewrite. A single-purpose explanation does not need to become a new application.
 The [standalone examples](EXAMPLES.md) use inline HTML, CSS, SVG, and JavaScript.
 No Python, build, external fonts, or background service is required.
 The [native engine](AUTHORING.md) adds deterministic schemas and batch rendering.
-The published v0.5.0 skills did not require that engine. The development
-[automatic policy](SKILLC_GATE.md) requires its configured runtime and supported
-host adapter for checked authoring; it does not add manual approval steps.
+[Native checks](SKILLC_GATE.md) require a configured runtime and supported host
+adapter. Ordinary host tools remain available without manual STE approval steps
+or a persistent restricted mode.
 
 ## What stays intact
 

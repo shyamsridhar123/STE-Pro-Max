@@ -3,6 +3,38 @@
 Dated evidence below records what ran, not an assertion of formal STE
 certification or universal host compatibility.
 
+## Host-tool restriction removal, v0.6.1
+
+The current adapters remove STE-added host-tool restrictions while retaining
+validation inside native STE operations. The v0.6.0 interception and descendant
+denial results below are historical, not current guarantees. Current checks must
+establish that ordinary tools remain usable after STE activation, native outputs
+are still checked, and Copilot resolves the exact trusted session workspace.
+
+Release validation uses `STE_RUN_HOST_CLI_TESTS=1` with supported Copilot CLI and
+OpenCode executables. Client skips are not release passes. The live OpenCode
+hotfix allowed Code Mode to query superagent state and sources without an off
+command; both returned HTTP 200. The service reported `repositoryUnset`, not a
+tool-access error. No superagent configuration was changed.
+
+On Windows, the reconciled source passed **426 Python tests with no skips** in
+190.222 seconds, including actual Copilot CLI 1.0.103 and OpenCode 2.2.6 loopback
+client tests. All **66 Node tests**, the example-builder check, and OpenCode
+JavaScript syntax checks passed. Ruff found one unused test import; removing it
+did not change runtime behavior. The final Ruff and documentation checks passed.
+
+Copilot tests cover ordinary file and shell tools after STE skill use, continuation,
+the author profile's normal tool availability, exact-session workspace metadata,
+and native invalid-input refusal. Foreign MCP calls remain unaffected by corrupt
+STE state or the STE metadata watchdog. OpenCode tests verify ordinary file,
+shell, and Code Mode execution after skill loading, with successful native
+write/render results and an out-of-workspace native refusal.
+
+These are real client dispatches against local mock providers, not model-quality
+benchmarks or proof of another machine's installation. Evidence is retained under
+`artifacts/release-v0.6.1/` and the dated Copilot/OpenCode validation directories.
+Installed-client activation and authenticated runs require their own receipts.
+
 ## Automatic SkillC integration 2026-11-07
 
 **Source and client validation passed after security corrections.** These checks

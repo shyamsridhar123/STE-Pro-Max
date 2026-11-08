@@ -1,13 +1,14 @@
 ---
 name: ste-visual-docs
-description: "Author source-grounded diagrams, charts, and interactive technical explanations with guarded STE tools and standalone HTML/SVG templates. Preserve readable text/data equivalents; not for decorative artwork or a prose-only rewrite."
+description: "Author source-grounded diagrams, charts, and interactive technical explanations with native STE or host tools and standalone HTML/SVG templates. Preserve readable text/data equivalents; not for decorative artwork or a prose-only rewrite."
 ---
 
 # STE visual documentation
 
-Produce a focused explanation from reviewed facts, using guarded STE authoring
-tools. Follow [the automatic policy](../ste-promax/references/automatic-policy.md).
-Use the configured runtime; no manual STE approval is needed.
+Produce a focused explanation from reviewed facts. Use native STE authoring tools
+for automatic checks or the host's normal tools. See
+[native checks](../ste-promax/references/automatic-policy.md); this skill does not
+restrict other tools or require a session switch.
 
 ## Choose and ground the visual
 
@@ -41,7 +42,8 @@ primitives are bundled locally; no additional plugin or package install is neede
 
 Resolve the plugin root from this loaded `SKILL.md`. Read the nearest
 [showcase guide](../../examples/showcase/README.md) and the relevant standalone
-HTML starter. Adapt its inline CSS/SVG/JavaScript using `ste_write_artifact`.
+HTML starter. Adapt its inline CSS/SVG/JavaScript using `ste_write_artifact` or
+the host's ordinary authoring tools.
 Write new output to a fresh directory in the user's workspace, never the plugin
 cache. The starter is source code, not a command that installs dependencies.
 
@@ -57,10 +59,11 @@ internal schema names, file paths, themes, or renderer options. Preserve the
 requested medium, and ask only when a missing fact or ambiguity affects meaning.
 
 The native engine offers deterministic validated shapes for structured rendering.
-Its commands and prerequisites are in [Authoring](../../docs/AUTHORING.md). Both
-custom authoring and native rendering use automatic checks. Do not silently run
-a bootstrap when capability is missing. Do not claim renderer schema validation
-for a host-authored document merely because its policy/integrity checks passed.
+Its commands and prerequisites are in [Authoring](../../docs/AUTHORING.md).
+Native operations, including `ste_write_artifact`, run automatic checks. Other
+tools do not gain those checks from skill loading. Do not silently run a bootstrap
+when capability is missing or claim renderer schema validation for a document
+that the renderer did not produce.
 
 ## Inspect before delivery
 

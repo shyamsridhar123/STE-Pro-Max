@@ -1,4 +1,4 @@
-"""GitHub Copilot CLI hook and session-scope adapter for STE-Pro-Max."""
+"""GitHub Copilot CLI workspace-binding hook adapter for STE-Pro-Max."""
 from __future__ import annotations
 
 from .hook_entry import dispatch_hook, main
@@ -6,26 +6,22 @@ from .scope import (
     STE_AGENT_IDS,
     STE_PLUGIN_ID,
     STE_SKILL_IDS,
-    activate_session_scope,
-    deactivate_session_scope,
-    is_exact_ste_skill_md_path,
-    is_explicit_user_ste_off,
-    is_ste_agent_identifier,
-    is_ste_skill_identifier,
-    resolve_session_scope,
+    bind_session_workspace,
+    is_ste_mcp_tool_name,
+    load_session_record,
+    resolve_session_workspace,
+    save_session_record,
 )
 
 __all__ = [
     "STE_AGENT_IDS",
     "STE_PLUGIN_ID",
     "STE_SKILL_IDS",
-    "activate_session_scope",
-    "deactivate_session_scope",
+    "bind_session_workspace",
     "dispatch_hook",
-    "is_exact_ste_skill_md_path",
-    "is_explicit_user_ste_off",
-    "is_ste_agent_identifier",
-    "is_ste_skill_identifier",
+    "is_ste_mcp_tool_name",
+    "load_session_record",
     "main",
-    "resolve_session_scope",
+    "resolve_session_workspace",
+    "save_session_record",
 ]

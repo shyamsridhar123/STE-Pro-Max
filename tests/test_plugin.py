@@ -50,7 +50,7 @@ class PluginTests(unittest.TestCase):
         return builder.build_plugin(self.output, source_root=self.source)
 
     def test_native_manifest_identities_and_fixed_skill_path(self):
-        self.assertEqual(__version__, "0.6.0")
+        self.assertEqual(__version__, "0.6.1")
         portable = json.loads((self.source / "plugin.json").read_text())
         claude = json.loads((self.source / ".claude-plugin/plugin.json").read_text())
         opencode_pkg = json.loads((self.source / "integrations/opencode/package.json").read_text())

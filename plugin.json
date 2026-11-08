@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ste-pro-max",
-  "version": "0.6.0",
-  "description": "STE writing and visual artifacts with automatic SkillC checks. Requires a configured runtime; mandatory host adapters target Copilot CLI and OpenCode.",
+  "version": "0.6.1",
+  "description": "STE writing and visual artifacts without host-tool restrictions. Native SkillC-checked operations require a configured runtime; adapters target Copilot CLI and OpenCode.",
   "author": {
     "name": "Shyam Sridhar"
   },

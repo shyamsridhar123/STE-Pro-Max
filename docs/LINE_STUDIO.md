@@ -69,9 +69,9 @@ Or request a still:
 > Make an original SVG showing these responsibilities. Keep it static and retain
 > the qualifications in my notes.
 
-The published v0.5.0 host reads and adapts self-contained HTML/SVG with its own
-tools. The v0.6.0 [automatic-policy version](SKILLC_GATE.md) instead uses
-guarded STE tools and a configured runtime. The output needs no npm, React,
+The host reads and adapts self-contained HTML/SVG with ordinary tools or native
+STE tools. [Native checks](SKILLC_GATE.md) need a configured runtime and do not
+restrict other tools. The output needs no npm, React,
 server, or provider key. Outputs go into a new workspace
 `artifacts/` subdirectory, with preserved source material. Installed templates
 and the original source are not overwritten.

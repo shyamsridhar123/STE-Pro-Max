@@ -1,12 +1,11 @@
-// OpenCode V2 Effect plugin entry point for STE-Pro-Max automatic local policy.
-// Uses actual V2 Effect `ctx.tool.hook("execute.before")` + typed `Tool.Error`
-// refusal, registers top-level guarded STE tools (`options: { codemode: false }`),
-// recovers and inherits STE session scope across turns/reloads/child sessions,
-// and runs turn preflight + post-stream `session.text.ended` prose diagnostics.
+// OpenCode V2 Effect plugin entry point for STE-Pro-Max tools and skills.
+// Registers the 4 bundled STE skills and 10 top-level guarded STE tools
+// (`options: { codemode: false }`) validated through the shared Python dispatcher,
+// without intercepting or restricting other host tools, sessions, or commands.
 
 import { Plugin } from "@opencode/plugin/effect";
 import { Error as ToolError } from "@opencode/plugin/promise/tool";
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 
 import {
   BUNDLE_ROOT,
@@ -22,7 +21,6 @@ const stePlugin = createSteOpenCodePlugin({
   PluginApi: Plugin,
   ToolErrorClass: ToolError,
   EffectApi: Effect,
-  StreamApi: Stream,
   bundleRoot: BUNDLE_ROOT,
   dispatchPyPath: DISPATCH_PY_PATH,
 });

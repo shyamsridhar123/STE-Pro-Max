@@ -334,7 +334,7 @@ class RenderTests(unittest.TestCase):
         self.assertIn("Postcheck rejected", err)
 
     def test_version(self):
-        self.assertEqual(__version__, "0.6.0")
+        self.assertEqual(__version__, "0.6.1")
         with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as error:
             cli.main(["--version"])
         self.assertEqual(error.exception.code, 0)

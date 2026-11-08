@@ -7,8 +7,8 @@
     {
       "name": "ste-pro-max",
       "source": "./",
-      "description": "STE writing, visual explanations, and automatic SkillC checks. Requires a configured runtime; see the documented host support matrix.",
-      "version": "0.6.0"
+      "description": "STE writing and visual explanations without host-tool restrictions. Native checked tools require a configured runtime; see the host support matrix.",
+      "version": "0.6.1"
     }
   ]
 }

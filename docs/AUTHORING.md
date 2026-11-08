@@ -22,14 +22,15 @@ authoring choices, not guaranteed learning outcomes. See the
 
 ## Native engine and automatic policy
 
-The published v0.5.0 skills use host tools and
-[standalone HTML/SVG templates](../examples/showcase/README.md). The development
-version uses guarded tools and a configured SkillC runtime. Install host assets
-through [the plugin workflow](PLUGINS.md); do not equate skill loading with enforcement.
+Skills can use ordinary host tools and
+[standalone HTML/SVG templates](../examples/showcase/README.md). Native STE tools
+provide automatic checks through a configured SkillC runtime without restricting
+other tools. Install host assets through [the plugin workflow](PLUGINS.md).
 
 This guide describes the native engine for structured compilation, schema
-validation, and batch automation. Host-authored artifacts receive policy and
-integrity checks, not renderer schema checks unless that renderer ran.
+validation, and batch automation. Artifacts written with `ste_write_artifact`
+receive policy and integrity checks, not renderer schema checks unless that
+renderer ran. Ordinary host-tool output does not inherit these checks.
 
 ## Optional developer quickstart
 
@@ -69,7 +70,7 @@ Version 0.6.0 adds [automatic SkillC checks](SKILLC_GATE.md) to normal
 `start`, `render`, media, and direct APIs. Use `--evidence` and `--evidence-root`
 when applicable. `export --input-dir ... --output-dir ...` checks a fresh native
 bundle and copies it without manual approval. The old stage/approve commands are
-removed. These changes are not part of the older v0.5.0 installation.
+removed. Other host tools keep their normal permissions.
 Checks bind bytes and workflow prerequisites, not factual truth or reviewer identity.
 See [upstream credits and citations](SKILLC_CREDITS.md).
 

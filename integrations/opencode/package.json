@@ -1,7 +1,7 @@
 {
   "name": "ste-promax-opencode-plugin",
-  "version": "0.6.0",
-  "description": "OpenCode V2 automatic STE-Pro-Max host adapter with Effect execute.before enforcement and guarded STE tools",
+  "version": "0.6.1",
+  "description": "OpenCode V2 STE-Pro-Max host adapter providing bundled STE skills and guarded STE tools",
   "type": "module",
   "main": "server.js",
   "private": true

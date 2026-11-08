@@ -21,11 +21,11 @@ not a hosting service or an ASD-STE100 certification tool.
 - Keep generated files in a new subdirectory of `artifacts/`. Preserve the
   normalized source input and inspect the actual output, not just an exit code.
 - Local memory and `.omx/` state are intentionally not published in this repo.
-- Version 0.6.0 authoring uses guarded STE tools and a configured real SkillC
-  runtime. Native rendering and host-authored artifacts receive automatic checks;
-  do not bypass refusals through raw shell or generic mutations. Reuse the
-  standalone starters in `examples/showcase/`. Plugin installation does not
-  silently download runtime dependencies. Published v0.5.0 remains historical.
+- Native STE tools use a configured real SkillC runtime and validate their own
+  operations. STE adds no session-wide restrictions to ordinary host tools.
+  Using other tools does not imply native validation; report only checks that ran.
+  Reuse the standalone starters in `examples/showcase/`. Plugin installation
+  does not silently download runtime dependencies or change host permissions.
 - For routine artifacts, infer safe defaults, choose a fresh output directory,
   and return the useful result.
   Do not ask the user to name folders, choose schemas, or repeat supplied context.

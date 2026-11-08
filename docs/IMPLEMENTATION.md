@@ -64,6 +64,12 @@ STE renders in-process. A configured worker supports a separate backend environm
 it is not a model service or an authentication provider. No manual STE approval is
 required. Existing host permission and external-action boundaries remain intact.
 
+Version 0.6.1 removes session-wide tool interception, inherited restrictions,
+restrictive prompts, and the dedicated agent's tool allowlist. OpenCode registers
+tools and skills only. Copilot retains exact-session workspace metadata plumbing.
+Native STE validation stays inside its own operations; ordinary host tools remain
+available under the host's existing permissions.
+
 See [usage, implementation, impact, and limits](SKILLC_GATE.md),
 [dated validation evidence](VALIDATION.md#native-skillc-gate-development-2026-11-06),
 and [upstream authorship and licenses](SKILLC_CREDITS.md).

@@ -1,9 +1,9 @@
 # Output modes
 
-Choose the smallest medium that answers the user's question. Use guarded STE
-tools and [standalone starters](../../../examples/showcase/README.md), following
-[automatic execution policy](automatic-policy.md). The v0.6.0 runtime checks
-operations without manual approval. None of these modes authorizes publication
+Choose the smallest medium that answers the user's question. Use native STE
+tools or ordinary host tools with [standalone starters](../../../examples/showcase/README.md).
+[Native checks](automatic-policy.md) run inside STE operations without manual
+approval; they do not restrict other tools. None of these modes authorizes publication
 or proves that a reader learned. The following commands describe the native
 deterministic engine, not plugin installation. For input shapes and checks, read
 [Authoring](../../../docs/AUTHORING.md).
@@ -110,7 +110,7 @@ qualifications. Sequence-stage durations are demonstration pacing, not measured
 event time or verified alignment with speech; long captions may be sidecar-only.
 
 Do not claim an MP4 exists after preparation. If the user requests an encoded
-movie, use a separately available guarded encoding workflow; do not bypass STE
-policy through raw shell. Verify the actual movie's frames, audio, duration, and ending. A missing
+movie, use a separately available encoding workflow under the host's normal
+permissions. Verify the actual movie's frames, audio, duration, and ending. A missing
 voice, encoder, or export capability is a reported gap, not permission to install
 tools, incur charges, or transmit narration externally.

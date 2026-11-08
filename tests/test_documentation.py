@@ -70,8 +70,8 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("Why it is relevant to STE-Pro Max", guide)
         self.assertIn("For a short conversational rewrite", guide)
         self.assertLess(guide.index("Why it is relevant"), guide.index("Implementation details"))
-        self.assertIn("timeouts fail open", guide)
-        self.assertIn("not pre-display semantic gates", guide)
+        self.assertIn("does not restrict other host tools", guide)
+        self.assertIn("no automatic\nchat monitoring", guide)
         for page in ("docs/SKILLC_GATE.md", "docs/SKILLC_CREDITS.md"):
             self.assertIn(page, readme)
         version = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))["version"]
@@ -85,6 +85,21 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn("Copyright (c) 2026 Gina Tcchen and contributors", notice)
         self.assertIn("Apache", notice)
         self.assertIn("MIT", notice)
+
+    def test_current_skills_do_not_require_restricted_host_tools(self):
+        policy = (ROOT / "skills/ste-promax/references/automatic-policy.md").read_text(encoding="utf-8")
+        self.assertIn("STE does not restrict shell, Code Mode, file tools", policy)
+        self.assertIn("No off command or new session is needed", policy)
+        self.assertIn("Existing host permissions", policy)
+        for document in ("skills/ste-promax/SKILL.md", "skills/ste-visual-docs/SKILL.md",
+                         "skills/ste-storytelling/SKILL.md", "skills/ste-line-studio/SKILL.md",
+                         "skills/ste-promax/references/output-modes.md", "docs/SKILLC_GATE.md",
+                         "docs/PLUGINS.md"):
+            text = (ROOT / document).read_text(encoding="utf-8")
+            with self.subTest(document=document):
+                self.assertNotIn("Start a new non-STE session", text)
+                self.assertNotIn("blocked by STE session policy", text)
+                self.assertNotIn("do not bypass STE\npolicy through raw shell", text)
 
     def test_hero_is_real_wide_png_with_bounded_readme_weight(self):
         image = (ROOT / "docs/assets/hero.png").read_bytes()

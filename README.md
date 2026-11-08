@@ -77,29 +77,29 @@ Adjust budgets, scrub, export SVG. [Guide](docs/LINE_STUDIO.md).
 **Working HTML, not UI mockups.** Fictional data and illustrative models.
 [Get examples](docs/EXAMPLES.md#get-the-files). No build or server.
 
-## Automatic SkillC checks in v0.6.0
+## Automatic SkillC checks in v0.6.1
 
 **SkillC makes STE’s tools check their work before reporting success.**
-STE-Pro Max creates documents, HTML/SVG, and audio—not just prose.
-`render`, `narrate`, and `export` check required inputs, declared evidence, and actual outputs.
+`render`, `narrate`, and `export` check inputs, declared evidence, and actual outputs.
 
 Missing declared evidence blocks a bundle. Changed evidence blocks export.
 Empty or invalid audio fails preparation.
 
 **This is workflow checking, not an English tutor or fact-checker.**
-No manual approval step. A configured runtime is required.
+No manual approval step. Native STE tools need a configured runtime.
+**STE does not restrict your other tools.** No off command; host permissions still apply.
 
 [Why it matters and how it works](docs/SKILLC_GATE.md) · [Credits](docs/SKILLC_CREDITS.md) · [Tested scope](docs/VALIDATION.md).
 
 ## Install the plugin
 
-Configure the [policy runtime](docs/SKILLC_GATE.md#runtime-configuration), then install **v0.6.0**.
+Install **v0.6.1**. Native tools need a [configured runtime](docs/SKILLC_GATE.md#runtime-configuration).
 
 <details open>
 <summary><strong>GitHub Copilot CLI</strong></summary>
 
 ```sh
-copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.6.0
+copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.6.1
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 ```
 

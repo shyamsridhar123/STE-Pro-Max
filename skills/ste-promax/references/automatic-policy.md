@@ -1,33 +1,29 @@
-# Automatic execution policy
+# Native checks without host-tool restrictions
 
-Version 0.6.0 uses real SkillC checks throughout STE workflows. The
-checks are automatic: do not ask for a stage approval, reviewer, fingerprint, or
-token. Do not bypass a failed check through another tool. Existing host access
-permissions and authorization for publication or paid services still apply.
+STE does not restrict shell, Code Mode, file tools, browser tools, external agents,
+or other integrations. Loading a skill or using an STE tool does not change that.
+No off command or new session is needed. Existing host permissions and user
+authorization for external actions still apply.
 
-1. Use `ste_status` to inspect the available configured runtime when needed.
-   A missing runtime or adapter is a reported capability gap, not permission to
-   fall back to unchecked shell/file tools or silently install packages.
-2. Keep a short rewrite in the conversation. `ste_check_prose` provides advisory
-   diagnostics, not factual certification. Host post-turn checks cannot retract
-   text already streamed to the user.
-3. Use `ste_write_artifact` for authored UTF-8 documents, HTML, and SVG in a fresh
-   workspace `artifacts/` directory. For deterministic source rendering, use
-   `ste_render_bundle` or the supported native operation. Preserve source material
-   and declared local evidence. Never let a document choose executable paths.
-4. Use guarded media and inspection tools for their supported tasks. Verify real
-   outputs and state what was not inspected. A static scan is not browser QA;
-   prepared narration is not an encoded movie. Do not substitute unrestricted
-   Code Mode, shell, GUI automation, patches, or external agents when refused.
-5. Return the requested result with material limits. SkillC admission and output
-   integrity checks do not prove source truth, JavaScript safety, pronunciation,
-   visual quality, accessibility conformance, or reader understanding.
+1. Keep a short rewrite in the conversation. `ste_check_prose` offers advisory
+   diagnostics when useful, not factual certification or automatic chat policing.
+2. For checked artifact production, use `ste_write_artifact`, `ste_render_bundle`,
+   or the relevant native operation. These tools check their own inputs, evidence,
+   workspace paths, and outputs automatically, without a manual approval step.
+3. Use ordinary host tools when they fit the task. Such actions do not receive
+   native STE validation or receipts. Report a failed native check honestly;
+   using a different tool does not turn that failure into a pass.
+4. Use `ste_status` when runtime information is needed. A missing runtime prevents
+   native checked operations, not ordinary authoring or unrelated work. Do not
+   silently install packages or claim checks that did not run.
+5. Verify the actual result and state material limits. Static inspection is not
+   browser QA; prepared narration is not an encoded movie. SkillC does not prove
+   source truth, JavaScript safety, pronunciation, visual quality, accessibility
+   conformance, or reader understanding.
 
-Tools may carry a host/server prefix. Copilot CLI's dedicated `ste-author` agent
-provides a strict tool list; its ordinary command-hook outer timeouts can fail
-open. The guarded executors remain independently checked. Use a new non-STE
-session for unrelated work after STE scope starts. Reading these instructions
-alone is not evidence that a host adapter is active.
+Tools may carry a host/server prefix. Copilot retains hooks only to bind native
+STE requests to the correct workspace. OpenCode registers tools and skills,
+without session-wide interception. The `ste-author` agent has no STE tool allowlist.
 
 See [the integration guide](../../../docs/SKILLC_GATE.md) for runtime setup,
-enforced scope, limitations, attribution, and the release-validation boundary.
+native validation, limitations, and attribution.

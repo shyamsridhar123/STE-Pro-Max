@@ -1,19 +1,19 @@
 # Install and manage the plugin
 
-The host's native plugin manager owns installation and lifecycle. The published
-**v0.5.0** skills/templates need no Python setup. The **v0.6.0 automatic-policy
-version** additionally needs a configured SkillC runtime and supported host adapter.
-See [automatic checks](SKILLC_GATE.md); do not confuse the two installation states.
+The host's native plugin manager owns installation and lifecycle. Skills and
+standalone templates work with ordinary host tools. Native checked STE tools need
+a configured SkillC runtime and supported adapter. Neither route restricts other
+host tools. See [native checks](SKILLC_GATE.md).
 
 ## Install a release
 
-Copilot's commands select **v0.6.0**, not the moving default branch. The Claude
+Copilot's commands select **v0.6.1**, not the moving default branch. The Claude
 Code and Codex commands retain their last verified **v0.5.0 skills-only** route.
 
 ### GitHub Copilot CLI
 
 ```sh
-copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.6.0
+copilot plugin marketplace add shyamsridhar123/STE-Pro-Max#v0.6.1
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 copilot plugin list --json
 ```
@@ -29,14 +29,15 @@ claude plugin list --json
 User scope persists across projects. Use a supported project/local scope only
 when that is the intended installation; it can write project settings.
 
-### OpenCode V2 (v0.6.0)
+### OpenCode V2 (v0.6.1)
 
 Configure the inspected [policy runtime](SKILLC_GATE.md#runtime-configuration),
-download and unpack the v0.6.0 source bundle, and add its adapter directory to
+download and unpack the v0.6.1 source bundle, and add its adapter directory to
 the existing `plugins` array in `opencode.json(c)`:
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "plugins": ["/absolute/path/to/ste-pro-max/integrations/opencode"]
 }
 ```
@@ -62,16 +63,15 @@ Desktop UI behavior is not inferred from CLI installation tests.
 
 ## Use it
 
-For the published v0.5.0 release:
-
 Ask for `STE-ProMAX`, `STE visual docs`, `STE storytelling`, or `STE Line Studio`,
 and supply the material. The agent reads the installed skill and uses its normal model/file
 and browser tools. It can adapt the [standalone examples](../examples/showcase/README.md)
 without a build, runtime bootstrap, provider key, or server.
 
-A short rewrite stays in the conversation. HTML/SVG output is authored and checked
-by the host; it does not implicitly receive the optional engine's machine
-validation or hash manifest. Voice/video needs a separately available capability.
+A short rewrite stays in the conversation. Native STE tools can check artifact
+inputs, evidence, and output files. Ordinary authoring tools remain available,
+but their output does not implicitly receive native validation or a hash manifest.
+Voice/video needs a separately available capability. No off command is needed.
 
 ## Update, disable, uninstall
 
@@ -87,7 +87,7 @@ marketplace configuration and reinstall/update its entry. Do not overwrite
 existing tags or silently opt people into an unpinned development branch.
 Codex's inherited `--enable`/`--disable` flags control features, **not plugins**.
 
-### Move an existing Copilot installation to v0.6.0
+### Move an existing Copilot installation to v0.6.1
 
 If your marketplace is pinned to an earlier tag, `plugin update` alone stays on that
 release. In PowerShell or your terminal, remove only the STE registration,
@@ -96,12 +96,12 @@ then select the new tag:
 ```powershell
 copilot plugin uninstall ste-pro-max@ste-pro-max-plugins
 copilot plugin marketplace remove ste-pro-max-plugins
-copilot plugin marketplace add "shyamsridhar123/STE-Pro-Max#v0.6.0"
+copilot plugin marketplace add "shyamsridhar123/STE-Pro-Max#v0.6.1"
 copilot plugin install ste-pro-max@ste-pro-max-plugins
 copilot plugin list --json
 ```
 
-Start a new Copilot session. The installed version should be `0.6.0`, with all four STE
+Start a new Copilot session. The installed version should be `0.6.1`, with all four STE
 skills available. These commands do not remove your authored workspace files.
 For a first installation, use the shorter commands above.
 
@@ -120,18 +120,17 @@ The public repository includes developer tools, tests, and an optional Python
 renderer. Their presence does not run them or install their dependencies.
 The release source ZIP excludes workstation memory, Git state, generated local
 evidence, caches, and credentials. No root Node manifest triggers an implicit
-package install. The published v0.5.0 bundle has no hooks or MCP servers. The
-v0.6.0 version adds root `mcp.json`, Copilot hooks/agent, and an OpenCode
-adapter. These are explicit components, not portable post-install scripts or new
-global permission grants.
+package install. The bundle includes root `mcp.json`, Copilot workspace hooks and
+an authoring agent, and an OpenCode tools/skills adapter. These are explicit
+components, not portable post-install scripts or global permission grants.
 
 ## Optional deterministic engine
 
 For schema-driven compilation and batch workflows, see [Authoring](AUTHORING.md).
 That separate path requires Python 3.10+, Jinja2, and PyYAML; the developer
 `quickstart.py` prepares an isolated environment only when explicitly invoked.
-It is **not plugin installation**. In the automatic-policy version, the separate
-SkillC runtime is mandatory for effects; quickstart is not a policy bypass.
+It is **not plugin installation**. Native STE operations also require the separate
+SkillC runtime; quickstart does not install it or change other host tools.
 
 ## Test the automatic development bundle locally
 
@@ -160,20 +159,19 @@ local marketplace, then install/list/disable/enable/uninstall it through the CLI
 Fresh profiles may not inherit authentication. Use supported login if a live
 test needs it; **never copy credential configuration between profiles**.
 
-The dedicated `ste-author` agent restricts its tool list. Ordinary STE skill
-activation also enables session hooks, but Copilot command-hook outer timeouts
-can fail open. Independently guarded tools and the strict agent are distinct
-controls; see the integration guide for the remaining limit.
+The `ste-author` agent preloads STE skills without restricting its tool list.
+Copilot hooks retain only the trusted workspace mapping needed by STE MCP tools.
+They do not intercept ordinary shell, file, browser, or unrelated integration calls.
 
 OpenCode uses its V2 plugin configuration to load the bundle's
 `integrations/opencode` directory. Preserve unrelated plugins and permissions;
-never replace `ask` rules with blanket `allow`. Apply activation last, then test
-in a separate session: an existing session containing STE skill history can
-immediately become STE-scoped on reload.
+never replace `ask` rules with blanket `allow`. Configuration reload makes the
+adapter available without introducing a restrictive session mode. Verify the
+registered paths and actual native output after an update.
 
-The supported v0.6.0 automatic host adapters are Copilot CLI and OpenCode. Claude Code
-and Codex release-skill support does not establish equivalent runtime enforcement.
-Do not announce universal automatic enforcement based on the portable manifest.
+The supported native tool adapters are Copilot CLI and OpenCode. Claude Code and
+Codex release-skill support does not establish equivalent native tool integration.
+Do not claim automatic validation for ordinary tools based on the portable manifest.
 
 ## Evidence and sources
 

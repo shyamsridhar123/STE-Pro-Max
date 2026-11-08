@@ -35,7 +35,7 @@ contributors**. The inspected software is version 0.3.0 at commit
 `25cc63bf82e968da7d01e204dc6d99879b76c45b`, licensed under MIT.
 
 STE-Pro-Max contributes its native CLI integration, fixed workflow plan,
-artifact/evidence checks, scoped host adapters, and automatic local export handling.
+artifact/evidence checks, native tool adapters, and automatic local export handling.
 Rendering remains in the native STE engine. The local worker delegates
 SkillC policy operations, not rendering, to an inspected external backend.
 No SkillC source is vendored or relicensed as STE-Pro-Max code.

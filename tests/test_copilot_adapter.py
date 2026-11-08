@@ -2,14 +2,15 @@
 
 Covers:
 1. Schema & manifest validation for root `mcp.json`, `com.github.copilot/hooks/hooks.json`,
-   and `com.github.copilot/agents/ste-author.agent.md`.
+   and `com.github.copilot/agents/ste-author.agent.md` (verifying hooks are strictly workspace
+   plumbing, strict tool allowlist is absent, and `ste-author` prompt contains no host tool ban).
 2. Installed-bundle isolation (`resolve_bundle_root` loads from installed bundle copy, not
    the dev checkout in `runtime.json`).
-3. Watchdog deadline enforcement (exits with code 2 and `permissionDecision: "deny"` before
-   the outer command-hook timeout can fail open).
-4. Session scope activation, non-STE passthrough, parent/child subagent inheritance,
-   `events.jsonl` recovery across resume, exact `SKILL.md` view entry signal, no prompt
-   keyword-matching, and explicit user `/ste-off` deactivation.
+3. Watchdog deadline enforcement on `preMcpToolCall` (exits with code 2 and
+   `permissionDecision: "deny"` before the outer command-hook timeout can fail open).
+4. Absence of STE host tool policing: ordinary shell, file mutation, subagent, CodeMode,
+   and third-party MCP tools pass through unaffected before and after STE skill/MCP invocation,
+   during child subagent work, and when state is missing or corrupt.
 5. Guarded MCP operations (`ste_status`, `ste_check_prose`, `ste_write_artifact`,
    `ste_render_bundle`, `ste_render_artifact`, `ste_regenerate_gallery`,
    `ste_prepare_story_media`, `ste_inspect_artifact`, `ste_export_bundle`) over stdio MCP
@@ -45,13 +46,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import integrations.copilot as copilot_pkg  # noqa: E402
 from integrations.copilot import (  # noqa: E402
     STE_SKILL_IDS,
-    activate_session_scope,
+    bind_session_workspace,
     dispatch_hook,
-    is_exact_ste_skill_md_path,
-    is_explicit_user_ste_off,
-    resolve_session_scope,
+    load_session_record,
 )
 from integrations.mcp import (  # noqa: E402
     MCP_SERVER_NAME,
@@ -67,6 +67,7 @@ from integrations.mcp import (  # noqa: E402
     host_write_artifact,
     resolve_mcp_python,
 )
+
 
 def _resolve_copilot_cli() -> Path | None:
     for env_key in ("STE_COPILOT_CLI_EXE", "COPILOT_CLI_EXE"):
@@ -146,7 +147,7 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
     def test_failed_workspace_binding_does_not_issue_mcp_metadata(self) -> None:
         payload = {"sessionId": "session-binding-failure", "cwd": str(self.workspace),
                    "serverName": "ste-promax", "toolName": "ste_status"}
-        with patch("integrations.copilot.hook_entry.resolve_session_scope",
+        with patch("integrations.copilot.hook_entry.resolve_session_workspace",
                    side_effect=RuntimeError("Binding record could not be updated")) as bind:
             with self.assertRaisesRegex(RuntimeError, "Binding record"):
                 dispatch_hook("preMcpToolCall", payload)
@@ -154,7 +155,7 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
                 **payload, "serverName": "unrelated", "toolName": "unrelated_read"}), ({}, 0))
             self.assertEqual(bind.call_count, 1)
 
-    def test_manifests_and_strict_agent_schema(self) -> None:
+    def test_manifests_workspace_only_hooks_and_unrestricted_agent_schema(self) -> None:
         plugin_json = json.loads((REPO_ROOT / "plugin.json").read_text(encoding="utf-8"))
         self.assertNotIn("hooks", plugin_json)
         self.assertNotIn("mcpServers", plugin_json)
@@ -175,19 +176,24 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
         self.assertTrue(hooks_path.is_file())
         hooks_json = json.loads(hooks_path.read_text(encoding="utf-8"))
         self.assertEqual(hooks_json.get("version"), 1)
+        # Hooks must be strictly workspace plumbing (sessionStart and preMcpToolCall only)
         expected_hooks = {
             "sessionStart",
-            "userPromptSubmitted",
-            "preToolUse",
             "preMcpToolCall",
+        }
+        self.assertEqual(set(hooks_json.get("hooks", {}).keys()), expected_hooks)
+        for removed_policing_hook in (
+            "preToolUse",
+            "userPromptSubmitted",
             "postToolUse",
             "postToolUseFailure",
             "subagentStart",
             "subagentStop",
             "agentStop",
             "sessionEnd",
-        }
-        self.assertEqual(set(hooks_json.get("hooks", {}).keys()), expected_hooks)
+        ):
+            self.assertNotIn(removed_policing_hook, hooks_json.get("hooks", {}))
+
         for hook_name, entries in hooks_json["hooks"].items():
             self.assertEqual(len(entries), 1)
             entry = entries[0]
@@ -203,48 +209,54 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
         self.assertTrue(agent_path.is_file())
         agent_text = agent_path.read_text(encoding="utf-8")
         self.assertTrue(agent_text.startswith("---\n"))
-        frontmatter = agent_text.split("---\n", 2)[1]
-        self.assertIn("strictToolsList: true", frontmatter)
-        self.assertIn("strict-tools-list: true", frontmatter)
+        parts = agent_text.split("---\n", 2)
+        frontmatter = parts[1]
+        body = parts[2]
+        # Strict allowlist must be absent so normal host tools remain available
+        self.assertNotIn("strictToolsList", frontmatter)
+        self.assertNotIn("strict-tools-list", frontmatter)
+        self.assertNotIn("\ntools:", frontmatter)
         for skill_id in STE_SKILL_IDS:
             self.assertIn(f"- {skill_id}", frontmatter)
         for tool_name in STE_MCP_TOOL_NAMES:
-            self.assertIn(f"- ste-promax/{tool_name}", frontmatter)
-        for forbidden_tool in ("powershell", "bash", "local_shell", "create", "edit", "apply_patch", "extensions_manage"):
-            self.assertNotIn(f"- {forbidden_tool}", frontmatter)
+            self.assertIn(f"ste-promax/{tool_name}", body)
+        # Prompt must not ban host tools or claim raw shell/mutations are excluded or blocked
+        self.assertNotIn("excluded from this agent's allowlist", body)
+        self.assertNotIn("blocked by STE session policy", body)
+        self.assertIn("Normal host tools remain available", body)
 
-    def test_non_ste_passthrough_and_no_prompt_keyword_matching(self) -> None:
-        sid = "session-non-ste-001"
-        # Mentioning STE in a user prompt must NEVER activate STE scope
+        # Obsolete scope/policing exports must be gone (not retained as a disabled policy engine)
+        for obsolete_symbol in (
+            "activate_session_scope",
+            "deactivate_session_scope",
+            "resolve_session_scope",
+            "is_explicit_user_ste_off",
+            "is_exact_ste_skill_md_path",
+            "scan_events_jsonl",
+        ):
+            self.assertFalse(hasattr(copilot_pkg, obsolete_symbol), f"Obsolete symbol {obsolete_symbol} should be removed")
+
+    def test_ordinary_host_tools_unaffected_after_ste_invocation_and_in_child_work(self) -> None:
+        parent_sid = "session-unrestricted-parent-001"
+
+        # 1. sessionStart records workspace without emitting permissionDecision or additionalContext
         resp, code = dispatch_hook(
-            "userPromptSubmitted",
+            "sessionStart",
             {
-                "sessionId": sid,
+                "sessionId": parent_sid,
                 "cwd": str(self.workspace),
-                "prompt": "Please explain STE-ProMAX and ste-visual-docs in plain text.",
             },
         )
         self.assertEqual(code, 0)
         self.assertEqual(resp, {})
+        rec = load_session_record(parent_sid)
+        self.assertIsNotNone(rec)
+        assert rec is not None
+        self.assertEqual(Path(rec["working_directory"]).resolve(), self.workspace.resolve())
+        self.assertNotIn("active", rec)
 
-        # preToolUse on powershell in a non-STE session passes through without blanket allow
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": sid,
-                "cwd": str(self.workspace),
-                "toolName": "powershell",
-                "toolArgs": {"command": "Write-Output ok"},
-            },
-        )
-        self.assertEqual(code, 0)
-        self.assertEqual(resp, {})
-        self.assertNotIn("permissionDecision", resp)
-
-    def test_ste_scope_activation_denial_inheritance_resume_and_ste_off(self) -> None:
-        parent_sid = "session-ste-parent-001"
-        # Activate via skill tool (toolArgs.skill)
-        resp, code = dispatch_hook(
+        # 2. Invoke STE skill and STE MCP tool
+        resp_skill, code_skill = dispatch_hook(
             "preToolUse",
             {
                 "sessionId": parent_sid,
@@ -253,167 +265,134 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
                 "toolArgs": {"skill": "ste-promax"},
             },
         )
-        self.assertEqual(code, 0)
-        self.assertEqual(resp, {})
+        self.assertEqual(code_skill, 0)
+        self.assertEqual(resp_skill, {})
 
-        # Raw mutations and opaque tools (including sql, session_store_sql, and bluebird/*) are denied cheaply
-        for blocked_tool in (
-            "powershell",
-            "bash",
-            "write_powershell",
-            "create",
-            "edit",
-            "apply_patch",
-            "extensions_manage",
-            "run_dynamic_workflow",
-            "computer-use/click",
-            "sql",
-            "session_store_sql",
-            "bluebird/mutate_index",
-            "bluebird/code_read",
+        resp_mcp, code_mcp = dispatch_hook(
+            "preMcpToolCall",
+            {
+                "sessionId": parent_sid,
+                "cwd": str(self.workspace),
+                "serverName": "ste-promax",
+                "toolName": "ste_status",
+                "_meta": {"progressToken": 5},
+            },
+        )
+        self.assertEqual(code_mcp, 0)
+        self.assertEqual(
+            resp_mcp,
+            {"metaToUse": {"progressToken": 5, "ste_session_id": parent_sid}},
+        )
+
+        # 3. After STE invocation, ordinary shell, file mutation, subagent, CodeMode, view, and MCP tools
+        # are completely unaffected (exit 0, {}, no permissionDecision override)
+        for tool_name, tool_args in (
+            ("powershell", {"command": "Write-Output ok"}),
+            ("bash", {"command": "echo ok"}),
+            ("write_powershell", {"input": "dir"}),
+            ("create", {"path": str(self.workspace / "new.txt"), "content": "hi"}),
+            ("edit", {"path": str(self.workspace / "new.txt")}),
+            ("apply_patch", {"input": "*** Begin Patch\n*** End Patch"}),
+            ("execute", {"code": "return 1;"}),
+            ("subagent", {"agent": "dsh", "prompt": "inspect"}),
+            ("task", {"agent": "fixer", "prompt": "fix"}),
+            ("extensions_manage", {}),
+            ("run_dynamic_workflow", {}),
+            ("computer-use/click", {}),
+            ("sql", {}),
+            ("session_store_sql", {}),
+            ("bluebird/mutate_index", {}),
+            ("view", {"path": str(self.workspace / "README.md")}),
         ):
-            resp, code = dispatch_hook(
+            resp_tool, code_tool = dispatch_hook(
                 "preToolUse",
                 {
                     "sessionId": parent_sid,
                     "cwd": str(self.workspace),
-                    "toolName": blocked_tool,
-                    "toolArgs": {},
+                    "toolName": tool_name,
+                    "toolArgs": tool_args,
                 },
             )
-            self.assertEqual(code, 2, f"Expected exit 2 for {blocked_tool}")
-            self.assertEqual(resp.get("permissionDecision"), "deny")
+            self.assertEqual(code_tool, 0, f"Expected exit 0 for {tool_name}")
+            self.assertEqual(resp_tool, {}, f"Expected empty passthrough for {tool_name}")
+            self.assertNotIn("permissionDecision", resp_tool)
 
-        # Read/discovery tools remain allowed without overriding host permission flow
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": parent_sid,
-                "cwd": str(self.workspace),
-                "toolName": "view",
-                "toolArgs": {"path": str(self.workspace / "README.md")},
-            },
-        )
-        self.assertEqual(code, 0)
-        self.assertEqual(resp, {})
-
-        # Reading blocked ~/.copilot/config.json is denied even via view
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": parent_sid,
-                "cwd": str(self.workspace),
-                "toolName": "view",
-                "toolArgs": {"path": r"C:\Users\someone\.copilot\config.json"},
-            },
-        )
-        self.assertEqual(code, 2)
-        self.assertEqual(resp.get("permissionDecision"), "deny")
-
-        # Child subagent inherits STE scope via parentAgentId (child sessionId == agentId)
+        # 4. Child subagent work and subagentStart/userPromptSubmitted hooks emit no restrictions or additionalContext
         child_sid = "subagent-child-001"
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": child_sid,
-                "agentId": child_sid,
-                "parentAgentId": parent_sid,
-                "cwd": str(self.workspace),
-                "toolName": "edit",
-                "toolArgs": {"path": str(self.workspace / "file.txt")},
-            },
-        )
-        self.assertEqual(code, 2)
-        self.assertEqual(resp.get("permissionDecision"), "deny")
-
-        # Subsequent child tool call without parentAgentId still remembers persisted inheritance
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": child_sid,
-                "cwd": str(self.workspace),
-                "toolName": "powershell",
-                "toolArgs": {"command": "dir"},
-            },
-        )
-        self.assertEqual(code, 2)
-        self.assertEqual(resp.get("permissionDecision"), "deny")
-
-        # Explicit user /ste-off ends STE scope
-        self.assertTrue(is_explicit_user_ste_off("/ste-off"))
-        self.assertTrue(is_explicit_user_ste_off("  /ste-off now "))
-        self.assertFalse(is_explicit_user_ste_off("Please run /ste-off"))
-        resp, code = dispatch_hook(
-            "userPromptSubmitted",
-            {
-                "sessionId": parent_sid,
-                "cwd": str(self.workspace),
-                "prompt": "/ste-off",
-            },
-        )
-        self.assertEqual(code, 0)
-        self.assertIn("additionalContext", resp)
-
-        # After /ste-off, powershell passes through again
-        resp, code = dispatch_hook(
-            "preToolUse",
-            {
-                "sessionId": parent_sid,
-                "cwd": str(self.workspace),
-                "toolName": "powershell",
-                "toolArgs": {"command": "Write-Output ok"},
-            },
-        )
-        self.assertEqual(code, 0)
-        self.assertEqual(resp, {})
-
-    def test_events_jsonl_recovery_and_exact_skill_md_view_signal(self) -> None:
-        sid = "session-events-recovery-002"
-        session_dir = self.copilot_home / "session-state" / sid
-        session_dir.mkdir(parents=True, exist_ok=True)
-        events_file = session_dir / "events.jsonl"
-        events_file.write_text(
-            json.dumps({
-                "id": "11111111-1111-4111-8111-111111111111",
-                "timestamp": "2026-11-06T20:00:00Z",
-                "parentId": None,
-                "type": "skill.invoked_ref",
-                "data": {
-                    "name": "ste-visual-docs",
-                    "path": str(REPO_ROOT / "skills" / "ste-visual-docs" / "SKILL.md"),
-                    "contentId": "sha256:" + "a" * 64,
-                    "contentLength": 120,
+        for hook_name, payload in (
+            (
+                "subagentStart",
+                {
+                    "sessionId": child_sid,
+                    "agentName": "ste-author",
+                    "parentAgentId": parent_sid,
+                    "cwd": str(self.workspace),
                 },
-            })
-            + "\n",
-            encoding="utf-8",
-        )
-        scope = resolve_session_scope({"sessionId": sid, "cwd": str(self.workspace)}, hook_name="preToolUse")
-        self.assertTrue(scope["active"])
-        self.assertIn("skill.invoked_ref", scope["reason"])
+            ),
+            (
+                "preToolUse",
+                {
+                    "sessionId": child_sid,
+                    "agentId": child_sid,
+                    "parentAgentId": parent_sid,
+                    "cwd": str(self.workspace),
+                    "toolName": "powershell",
+                    "toolArgs": {"command": "Write-Output child"},
+                },
+            ),
+            (
+                "userPromptSubmitted",
+                {
+                    "sessionId": parent_sid,
+                    "cwd": str(self.workspace),
+                    "prompt": "Use ste-promax and run tests with powershell.",
+                },
+            ),
+        ):
+            h_resp, h_code = dispatch_hook(hook_name, payload)
+            self.assertEqual(h_code, 0)
+            self.assertEqual(h_resp, {})
+            self.assertNotIn("additionalContext", h_resp)
+            self.assertNotIn("permissionDecision", h_resp)
 
-        # Exact installed STE SKILL.md view path is recognized, arbitrary markdown is not
-        self.assertTrue(
-            is_exact_ste_skill_md_path(str(REPO_ROOT / "skills" / "ste-line-studio" / "SKILL.md"), self.workspace)
-        )
-        other_md = self.workspace / "STE-notes.md"
-        other_md.write_text("# STE notes\n", encoding="utf-8")
-        self.assertFalse(is_exact_ste_skill_md_path(str(other_md), self.workspace))
-
-    def test_watchdog_deadline_exits_2_before_outer_timeout(self) -> None:
+    def test_watchdog_deadline_exits_2_for_ste_and_skips_foreign_mcp(self) -> None:
         env = dict(os.environ)
         env["STE_COPILOT_WATCHDOG_SEC"] = "0.2"
         env["STE_COPILOT_TEST_DELAY_SEC"] = "3.0"
-        payload = json.dumps({
+
+        # 1. Foreign MCP server exits 0 promptly with no output (never blocked by STE watchdog or delay)
+        foreign_payload = json.dumps({
+            "sessionId": "watchdog-foreign-session",
+            "cwd": str(self.workspace),
+            "serverName": "github-mcp-server",
+            "toolName": "get_pull_request",
+        })
+        start_foreign = datetime.datetime.now(datetime.timezone.utc)
+        proc_foreign = subprocess.run(
+            [sys.executable, "-B", str(REPO_ROOT / "integrations" / "copilot" / "hook_entry.py"), "--hook", "preMcpToolCall"],
+            input=foreign_payload,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=5,
+            check=False,
+        )
+        elapsed_foreign = (datetime.datetime.now(datetime.timezone.utc) - start_foreign).total_seconds()
+        self.assertEqual(proc_foreign.returncode, 0)
+        self.assertEqual(proc_foreign.stdout.strip(), "")
+        self.assertLess(elapsed_foreign, 1.5)
+
+        # 2. Confirmed STE MCP request exits 2 with denial JSON before outer timeout
+        ste_payload = json.dumps({
             "sessionId": "watchdog-session",
             "cwd": str(self.workspace),
-            "toolName": "view",
-            "toolArgs": {"path": "README.md"},
+            "serverName": "ste-promax",
+            "toolName": "ste_status",
         })
         start = datetime.datetime.now(datetime.timezone.utc)
         proc = subprocess.run(
-            [sys.executable, "-B", str(REPO_ROOT / "integrations" / "copilot" / "hook_entry.py"), "--hook", "preToolUse"],
-            input=payload,
+            [sys.executable, "-B", str(REPO_ROOT / "integrations" / "copilot" / "hook_entry.py"), "--hook", "preMcpToolCall"],
+            input=ste_payload,
             capture_output=True,
             text=True,
             env=env,
@@ -792,9 +771,8 @@ class CopilotAdapterUnitAndContractTests(unittest.TestCase):
         # 1. Seed an unrelated session record with recent mtime; must NEVER be picked by mtime
         other_ws = self.root / "unrelated-other-session-workspace"
         other_ws.mkdir(parents=True, exist_ok=True)
-        activate_session_scope(
+        bind_session_workspace(
             "unrelated-session-999",
-            "tool.skill:ste-promax",
             working_directory=str(other_ws),
         )
         with patch.dict(os.environ, {"STE_TRUSTED_WORKSPACE": ""}, clear=False):
@@ -1092,9 +1070,12 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-        # Sentinels that must NEVER be created
-        raw_shell_sentinel = workspace / "sentinel-raw-shell.txt"
-        apply_patch_sentinel = workspace / "sentinel-apply-patch.txt"
+        # Ordinary host files that SHOULD succeed after STE invocation
+        post_ste_patch_file = workspace / "post-ste-patch.txt"
+        post_ste_shell_file = workspace / "post-ste-shell.txt"
+        resumed_shell_file = workspace / "resumed-shell.txt"
+
+        # Sentinels that must NEVER be created (guarded STE MCP boundary)
         out_of_root_sentinel = sandbox_root / "sentinel-outside-root.md"
         missing_backend_sentinel = workspace / "artifacts" / "sentinel-missing-backend.md"
 
@@ -1151,9 +1132,9 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                         msg = {"role": "assistant", "content": "NON_STE_COMPLETE", "tool_calls": None}
                         finish = "stop"
 
-                elif mode == "ste_workflow_and_denials":
+                elif mode == "ste_workflow_and_host_tools":
                     if turn == 1:
-                        # 1. Activate STE scope via skill tool
+                        # 1. Invoke STE skill via skill tool
                         msg = {
                             "role": "assistant",
                             "content": None,
@@ -1170,21 +1151,21 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                         }
                         finish = "tool_calls"
                     elif turn == 2:
-                        # 2. Attempt apply_patch sentinel write (gpt-6.1-sol mutation tool; must be denied!)
+                        # 2. Ordinary apply_patch after STE skill invocation MUST succeed (no STE host tool ban)
                         msg = {
                             "role": "assistant",
                             "content": None,
                             "tool_calls": [
                                 {
-                                    "id": "call_blocked_patch",
+                                    "id": "call_post_ste_patch",
                                     "type": "function",
                                     "function": {
                                         "name": "apply_patch",
                                         "arguments": json.dumps({
                                             "input": (
                                                 "*** Begin Patch\n"
-                                                f"*** Add File: {apply_patch_sentinel.name}\n"
-                                                "+PATCH_PWNED\n"
+                                                f"*** Add File: {post_ste_patch_file.name}\n"
+                                                "+PATCH_ALLOWED_AFTER_STE\n"
                                                 "*** End Patch"
                                             )
                                         }),
@@ -1194,19 +1175,19 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                         }
                         finish = "tool_calls"
                     elif turn == 3:
-                        # 3. Attempt raw powershell sentinel write (must be denied by preToolUse hook!)
+                        # 3. Ordinary powershell after STE skill invocation MUST succeed
                         msg = {
                             "role": "assistant",
                             "content": None,
                             "tool_calls": [
                                 {
-                                    "id": "call_blocked_ps",
+                                    "id": "call_post_ste_ps",
                                     "type": "function",
                                     "function": {
                                         "name": "powershell",
                                         "arguments": json.dumps({
-                                            "command": f"Set-Content -Path '{raw_shell_sentinel}' -Value 'PWNED'",
-                                            "description": "Attempt raw shell write in STE scope",
+                                            "command": f"Set-Content -Path '{post_ste_shell_file}' -Value 'SHELL_ALLOWED_AFTER_STE'",
+                                            "description": "Verify powershell works after STE invocation",
                                         }),
                                     },
                                 }
@@ -1214,7 +1195,7 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                         }
                         finish = "tool_calls"
                     elif turn == 4:
-                        # 4. Attempt out-of-root write via ste_write_artifact (must be denied!)
+                        # 4. Out-of-root write via ste_write_artifact MUST still be refused by native STE guard!
                         msg = {
                             "role": "assistant",
                             "content": None,
@@ -1268,9 +1249,9 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                         msg = {"role": "assistant", "content": "STE_WORKFLOW_COMPLETE", "tool_calls": None}
                         finish = "stop"
 
-                elif mode == "ste_resume_denial":
+                elif mode == "ste_resume_passthrough":
                     if turn == 1:
-                        # On resumed STE session, immediately try powershell without calling skill again
+                        # On resumed session after STE work, ordinary powershell continues to work normally
                         msg = {
                             "role": "assistant",
                             "content": None,
@@ -1281,8 +1262,8 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
                                     "function": {
                                         "name": "powershell",
                                         "arguments": json.dumps({
-                                            "command": f"Set-Content -Path '{raw_shell_sentinel}' -Value 'RESUMED_PWN'",
-                                            "description": "Attempt raw shell write on resumed STE session",
+                                            "command": f"Set-Content -Path '{resumed_shell_file}' -Value 'RESUMED_OK'",
+                                            "description": "Verify powershell works on resumed session",
                                         }),
                                     },
                                 }
@@ -1423,17 +1404,17 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
         self.assertEqual(p1.returncode, 0, p1.stderr)
         self.assertIn("NON_STE_COMPLETE", p1.stdout)
 
-        # Run 2: STE workflow activation + raw shell denial + out-of-root denial + automatic write & render_bundle
+        # Run 2: STE workflow + ordinary host tools (apply_patch & powershell) remain available + out-of-root denial + automatic write & render_bundle
         ste_sid = "11111111-2222-4333-8444-555555555552"
         p2 = _run_cli(
-            "02-ste-workflow-and-denials",
-            "ste_workflow_and_denials",
+            "02-ste-workflow-and-host-tools",
+            "ste_workflow_and_host_tools",
             ["--session-id", ste_sid, "-p", "Use ste-promax to author and render the valve procedure"],
         )
         self.assertEqual(p2.returncode, 0, p2.stderr)
         self.assertIn("STE_WORKFLOW_COMPLETE", p2.stdout)
-        self.assertFalse(apply_patch_sentinel.exists(), "apply_patch sentinel must never be created!")
-        self.assertFalse(raw_shell_sentinel.exists(), "Raw shell sentinel must never be created!")
+        self.assertTrue(post_ste_patch_file.is_file(), "apply_patch after STE invocation should succeed")
+        self.assertTrue(post_ste_shell_file.is_file(), "powershell after STE invocation should succeed")
         self.assertFalse(out_of_root_sentinel.exists(), "Out-of-root sentinel must never be created!")
 
         authored_file = workspace / "artifacts" / "authored" / "valve-procedure.md"
@@ -1443,15 +1424,15 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
         self.assertTrue(rendered_manifest.is_file(), "Guarded ste_render_bundle manifest.json should exist")
         self.assertTrue(rendered_gallery.is_file(), "Guarded ste_render_bundle gallery.html should exist")
 
-        # Run 3: Resume STE session (--resume=<ste_sid>) and verify raw shell is STILL denied without re-invoking skill
+        # Run 3: Resume session (--resume=<ste_sid>) and verify powershell continues to work
         p3 = _run_cli(
-            "03-ste-resume-denial",
-            "ste_resume_denial",
-            ["--resume", ste_sid, "-p", "Continue the STE session"],
+            "03-ste-resume-passthrough",
+            "ste_resume_passthrough",
+            ["--resume", ste_sid, "-p", "Continue the session"],
         )
         self.assertEqual(p3.returncode, 0, p3.stderr)
         self.assertIn("STE_RESUME_COMPLETE", p3.stdout)
-        self.assertFalse(raw_shell_sentinel.exists(), "Resumed session raw shell sentinel must not exist!")
+        self.assertTrue(resumed_shell_file.is_file(), "Resumed session powershell file should exist")
 
         # Run 4: Dedicated ste-author custom agent (--agent ste-pro-max:ste-author)
         author_sid = "11111111-2222-4333-8444-555555555554"
@@ -1463,15 +1444,17 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
         self.assertEqual(p4.returncode, 0, p4.stderr)
         self.assertIn("STE_AUTHOR_AGENT_COMPLETE", p4.stdout)
 
-        # Verify ste-author agent tool allowlist from captured model request
+        # Verify ste-author agent offers both STE MCP tools and normal host tools (no strict allowlist)
         author_reqs = [r for r in scenario_state["requests"] if r["mode"] == "ste_author_agent"]
         self.assertTrue(author_reqs)
         offered = set(author_reqs[0]["tools_offered"])
         self.assertIn("ste-promax-ste_status", offered)
         self.assertIn("ste-promax-ste_write_artifact", offered)
         self.assertIn("ste-promax-ste_render_bundle", offered)
-        for excluded_opaque in ("apply_patch", "edit", "create", "powershell", "read_powershell", "list_powershell", "run_dynamic_workflow", "write_agent"):
-            self.assertNotIn(excluded_opaque, offered)
+        self.assertTrue(
+            bool(offered & {"powershell", "bash", "apply_patch", "edit", "create"}),
+            f"Expected normal host tools to remain offered on ste-author, got: {sorted(offered)}",
+        )
 
         # Run 5: Missing backend fail-closed before sentinel write
         missing_sid = "11111111-2222-4333-8444-555555555555"
@@ -1512,15 +1495,12 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
 
         ste_outcomes = _parse_session_tool_outcomes(ste_sid)
         self.assertTrue(ste_outcomes["call_activate_ste"]["success"])
-        self.assertFalse(ste_outcomes["call_blocked_patch"]["success"])
-        self.assertEqual(ste_outcomes["call_blocked_patch"]["error"]["code"], "denied")
-        self.assertFalse(ste_outcomes["call_blocked_ps"]["success"])
-        self.assertEqual(ste_outcomes["call_blocked_ps"]["error"]["code"], "denied")
+        self.assertTrue(ste_outcomes["call_post_ste_patch"]["success"])
+        self.assertTrue(ste_outcomes["call_post_ste_ps"]["success"])
         self.assertFalse(ste_outcomes["call_blocked_out_of_root"]["success"])
         self.assertTrue(ste_outcomes["call_valid_write"]["success"])
         self.assertTrue(ste_outcomes["call_valid_render"]["success"])
-        self.assertFalse(ste_outcomes["call_resumed_ps"]["success"])
-        self.assertEqual(ste_outcomes["call_resumed_ps"]["error"]["code"], "denied")
+        self.assertTrue(ste_outcomes["call_resumed_ps"]["success"])
 
         author_outcomes = _parse_session_tool_outcomes(author_sid)
         self.assertTrue(author_outcomes["call_agent_status"]["success"])
@@ -1561,10 +1541,13 @@ class CopilotCliLoopbackReleaseGateTests(unittest.TestCase):
             "session_plugin_dir": str(installed_plugin),
             "workspace": str(workspace),
             "sentinels_absent": {
-                "apply_patch_sentinel": not apply_patch_sentinel.exists(),
-                "raw_shell_sentinel": not raw_shell_sentinel.exists(),
                 "out_of_root_sentinel": not out_of_root_sentinel.exists(),
                 "missing_backend_sentinel": not missing_backend_sentinel.exists(),
+            },
+            "ordinary_host_tools_succeeded": {
+                "post_ste_patch_file": post_ste_patch_file.is_file(),
+                "post_ste_shell_file": post_ste_shell_file.is_file(),
+                "resumed_shell_file": resumed_shell_file.is_file(),
             },
             "verified_tool_outcomes": {
                 "non_ste": non_ste_outcomes,

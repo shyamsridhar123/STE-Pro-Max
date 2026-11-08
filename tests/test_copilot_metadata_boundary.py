@@ -1,24 +1,34 @@
 """Focused tests for Copilot preMcpToolCall metadata boundary and workspace binding.
 
 Verifies:
-1. Actual `integrations/copilot/hook_entry.py` subprocess behavior for `preMcpToolCall` on:
-   - malformed stdin JSON payload -> exit 2 with denial JSON and no `metaToUse`.
-   - missing `cwd` / `workingDirectory` -> exit 2, no `metaToUse`, no fallback to stale session record.
-   - invalid / relative / nonexistent / file / symlink-or-reparse `cwd` -> exit 2, no `metaToUse`,
-     and no workspace authority from a pre-existing stale session record.
-   - missing `sessionId` for STE MCP call -> exit 2, no `metaToUse`.
-2. Forced record update failure (I/O error or exception during `resolve_session_scope` /
-   `save_session_record`) via `main()` and subprocess -> exit 2 with denial JSON, no `metaToUse`,
-   and no authorization of old session workspace.
-3. Non-STE MCP server `preMcpToolCall` passes through unchanged (`{}` / empty stdout, exit 0).
+1. Actual `integrations/copilot/hook_entry.py` subprocess behavior for `preMcpToolCall`:
+   - malformed or unidentifiable stdin JSON payload -> exit 0 with empty stdout (never grants
+     `metaToUse` or refreshes stale session records, and never emits a global MCP denial that
+     could block unrelated MCP tools).
+   - confirmed `ste-promax` `preMcpToolCall` with missing `cwd` / `workingDirectory` -> exit 2,
+     no `metaToUse`, no fallback to stale session record.
+   - confirmed `ste-promax` `preMcpToolCall` with invalid / relative / nonexistent / file /
+     symlink-or-reparse `cwd` -> exit 2, no `metaToUse`, and no workspace authority from a
+     pre-existing stale session record.
+   - confirmed `ste-promax` `preMcpToolCall` with missing `sessionId` -> exit 2, no `metaToUse`.
+2. Forced record update failure (I/O error or exception during `resolve_session_workspace` /
+   `save_session_record`) on confirmed `ste-promax` `preMcpToolCall` via `main()` and subprocess ->
+   exit 2 with denial JSON, no `metaToUse`, and no authorization of old session workspace.
+3. Foreign MCP server `preMcpToolCall` exits 0 with no output BEFORE state access, test delay,
+   or watchdog timer (even with `STE_COPILOT_WATCHDOG_SEC=0.2` and `STE_COPILOT_TEST_DELAY_SEC=3`
+   or corrupt state root), while confirmed `ste-promax` `preMcpToolCall` still hits the watchdog
+   with exit 2 and denial JSON.
 4. Valid STE `preMcpToolCall` context preserves existing `_meta` fields, sets `ste_session_id`,
    and binds the exact current workspace directory (overwriting any older workspace record).
-5. Normal post-hooks and resume semantics remain intact for non-`preMcpToolCall` hooks.
+5. `sessionStart` binds best-effort when `cwd` is valid and preserves existing `working_directory`
+   when `cwd` is omitted; all other or unknown hook names are pure passthrough (`{}` and exit 0)
+   with no state writes or permission decisions.
 6. Uses owned temporary fake profiles under `C:\\Users\\shyamsridhar\\AppData\\Local\\Temp\\opencode`
    and never reads, copies, or hashes `~/.copilot/config.json`.
 """
 from __future__ import annotations
 
+import datetime
 import io
 import json
 import os
@@ -35,12 +45,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from integrations.copilot import (  # noqa: E402
-    activate_session_scope,
+    bind_session_workspace,
     dispatch_hook,
+    load_session_record,
     main as hook_main,
-    resolve_session_scope,
+    resolve_session_workspace,
 )
-from integrations.copilot.scope import load_session_record  # noqa: E402
 from integrations.mcp.operations import resolve_trusted_workspace  # noqa: E402
 from ste_promax.policy_runtime import PolicyError  # noqa: E402
 
@@ -103,20 +113,29 @@ class CopilotPreMcpMetadataBoundaryTests(unittest.TestCase):
             check=False,
         )
 
-    def test_subprocess_malformed_payload_fails_closed_for_pre_mcp_tool_call(self) -> None:
-        for bad_stdin in ("{not-valid-json", '["array-not-object"]', "42"):
-            proc = self._run_hook_subprocess("preMcpToolCall", bad_stdin)
-            self.assertEqual(proc.returncode, 2, f"Expected exit 2 for stdin={bad_stdin!r}")
-            out = json.loads(proc.stdout.strip().splitlines()[-1])
-            self.assertEqual(out.get("permissionDecision"), "deny")
-            self.assertIn("preMcpToolCall hook failed closed", out.get("permissionDecisionReason", ""))
-            self.assertNotIn("metaToUse", out)
+    def test_subprocess_malformed_or_unidentifiable_payload_grants_no_authority_and_does_not_deny_foreign_mcp(self) -> None:
+        sid = "session-malformed-no-auth-001"
+        bind_session_workspace(sid, working_directory=str(self.stale_workspace))
+        before_rec = load_session_record(sid)
+        assert before_rec is not None
+        before_updated = before_rec["updated_at"]
+
+        for bad_stdin in ("{not-valid-json", '["array-not-object"]', "42", ""):
+            proc = self._run_hook_subprocess(
+                "preMcpToolCall",
+                bad_stdin,
+                extra_env={"STE_COPILOT_WATCHDOG_SEC": "0.2", "STE_COPILOT_TEST_DELAY_SEC": "3.0"},
+            )
+            self.assertEqual(proc.returncode, 0, f"Expected non-interfering exit 0 for stdin={bad_stdin!r}")
+            self.assertEqual(proc.stdout.strip(), "", f"Expected no output (no metaToUse or blanket allow/deny) for stdin={bad_stdin!r}")
+            after_rec = load_session_record(sid)
+            assert after_rec is not None
+            self.assertEqual(after_rec["updated_at"], before_updated)
 
     def test_subprocess_missing_or_invalid_cwd_refuses_and_does_not_authorize_stale_record(self) -> None:
         sid = "session-stale-guard-001"
-        activate_session_scope(
+        bind_session_workspace(
             sid,
-            "tool.skill:ste-promax",
             working_directory=str(self.stale_workspace),
         )
         initial_rec = load_session_record(sid)
@@ -209,15 +228,14 @@ class CopilotPreMcpMetadataBoundaryTests(unittest.TestCase):
             assert after_rec is not None
             self.assertEqual(after_rec["updated_at"], initial_updated_at)
 
-            # Direct resolve_session_scope for preMcpToolCall also refuses rather than falling back
+            # Direct resolve_session_workspace for preMcpToolCall also refuses rather than falling back
             with self.assertRaises(PolicyError):
-                resolve_session_scope(bad_payload, hook_name="preMcpToolCall")
+                resolve_session_workspace(bad_payload, hook_name="preMcpToolCall")
 
     def test_forced_record_update_failure_exits_2_without_meta_or_old_workspace_authority(self) -> None:
         sid = "session-io-failure-002"
-        activate_session_scope(
+        bind_session_workspace(
             sid,
-            "tool.skill:ste-promax",
             working_directory=str(self.stale_workspace),
         )
         payload = {
@@ -256,11 +274,74 @@ class CopilotPreMcpMetadataBoundaryTests(unittest.TestCase):
         self.assertEqual(sub_out.get("permissionDecision"), "deny")
         self.assertNotIn("metaToUse", sub_out)
 
+        # 3. Unrelated MCP server and non-MCP hooks must NOT deny even when state root is corrupt/unwritable
+        proc_unrelated_mcp = self._run_hook_subprocess(
+            "preMcpToolCall",
+            json.dumps({
+                "sessionId": sid,
+                "cwd": str(self.current_workspace),
+                "serverName": "github-mcp-server",
+                "toolName": "get_pull_request",
+            }),
+            extra_env={"STE_SKILLC_STATE_ROOT": str(blocked_state_root)},
+        )
+        self.assertEqual(proc_unrelated_mcp.returncode, 0)
+        self.assertEqual(proc_unrelated_mcp.stdout.strip(), "")
+
+        proc_session_start = self._run_hook_subprocess(
+            "sessionStart",
+            json.dumps({"sessionId": sid, "cwd": str(self.current_workspace)}),
+            extra_env={"STE_SKILLC_STATE_ROOT": str(blocked_state_root)},
+        )
+        self.assertEqual(proc_session_start.returncode, 0)
+        self.assertEqual(proc_session_start.stdout.strip(), "")
+
+    def test_foreign_pre_mcp_skips_delay_and_watchdog_while_confirmed_ste_enforces_watchdog(self) -> None:
+        delay_env = {
+            "STE_COPILOT_WATCHDOG_SEC": "0.2",
+            "STE_COPILOT_TEST_DELAY_SEC": "3.0",
+        }
+        # 1. Foreign MCP server exits 0 promptly with no output before test delay or watchdog
+        start_foreign = datetime.datetime.now(datetime.timezone.utc)
+        proc_foreign = self._run_hook_subprocess(
+            "preMcpToolCall",
+            json.dumps({
+                "sessionId": "session-foreign-fast-001",
+                "cwd": str(self.current_workspace),
+                "serverName": "github-mcp-server",
+                "toolName": "get_pull_request",
+            }),
+            extra_env=delay_env,
+        )
+        elapsed_foreign = (datetime.datetime.now(datetime.timezone.utc) - start_foreign).total_seconds()
+        self.assertEqual(proc_foreign.returncode, 0)
+        self.assertEqual(proc_foreign.stdout.strip(), "")
+        self.assertLess(elapsed_foreign, 1.5)
+        self.assertIsNone(load_session_record("session-foreign-fast-001"))
+
+        # 2. Confirmed STE preMcpToolCall still enforces the internal watchdog (exit 2 + deny)
+        start_ste = datetime.datetime.now(datetime.timezone.utc)
+        proc_ste = self._run_hook_subprocess(
+            "preMcpToolCall",
+            json.dumps({
+                "sessionId": "session-ste-watchdog-001",
+                "cwd": str(self.current_workspace),
+                "serverName": "ste-promax",
+                "toolName": "ste_status",
+            }),
+            extra_env=delay_env,
+        )
+        elapsed_ste = (datetime.datetime.now(datetime.timezone.utc) - start_ste).total_seconds()
+        self.assertEqual(proc_ste.returncode, 2)
+        self.assertLess(elapsed_ste, 2.0)
+        out_ste = json.loads(proc_ste.stdout.strip().splitlines()[-1])
+        self.assertEqual(out_ste.get("permissionDecision"), "deny")
+        self.assertIn("watchdog deadline", out_ste.get("permissionDecisionReason", ""))
+
     def test_non_ste_server_passthrough_and_valid_ste_binding_overwrites_stale_workspace(self) -> None:
         sid = "session-valid-bind-003"
-        activate_session_scope(
+        bind_session_workspace(
             sid,
-            "tool.skill:ste-promax",
             working_directory=str(self.stale_workspace),
         )
         self.assertEqual(resolve_trusted_workspace(session_id=sid), self.stale_workspace.resolve())
@@ -305,19 +386,41 @@ class CopilotPreMcpMetadataBoundaryTests(unittest.TestCase):
         self.assertEqual(resolve_trusted_workspace(session_id=sid), self.current_workspace.resolve())
         self.assertNotEqual(resolve_trusted_workspace(session_id=sid), self.stale_workspace.resolve())
 
-        # 3. Normal postToolUse / session resume semantics preserve existing working_directory when cwd is omitted
-        post_resp, post_code = dispatch_hook(
-            "postToolUse",
+        # 3. Other and unknown hook names are pure passthrough with no state writes or permission decisions
+        untracked_sid = "session-untracked-other-hooks-004"
+        for other_hook in ("postToolUse", "preToolUse", "userPromptSubmitted", "subagentStart", "unknownFutureHook"):
+            other_resp, other_code = dispatch_hook(
+                other_hook,
+                {
+                    "sessionId": untracked_sid,
+                    "cwd": str(self.current_workspace),
+                    "toolName": "view",
+                },
+            )
+            self.assertEqual(other_code, 0)
+            self.assertEqual(other_resp, {})
+            self.assertIsNone(load_session_record(untracked_sid))
+
+            proc_other = self._run_hook_subprocess(
+                other_hook,
+                json.dumps({"sessionId": untracked_sid, "cwd": str(self.current_workspace)}),
+            )
+            self.assertEqual(proc_other.returncode, 0)
+            self.assertEqual(proc_other.stdout.strip(), "")
+            self.assertIsNone(load_session_record(untracked_sid))
+
+        # 4. sessionStart preserves existing working_directory when cwd is omitted
+        start_resp, start_code = dispatch_hook(
+            "sessionStart",
             {
                 "sessionId": sid,
-                "toolName": "view",
             },
         )
-        self.assertEqual(post_code, 0)
-        self.assertEqual(post_resp, {})
-        rec_after_post = load_session_record(sid)
-        assert rec_after_post is not None
-        self.assertEqual(Path(rec_after_post["working_directory"]).resolve(), self.current_workspace.resolve())
+        self.assertEqual(start_code, 0)
+        self.assertEqual(start_resp, {})
+        rec_after_start = load_session_record(sid)
+        assert rec_after_start is not None
+        self.assertEqual(Path(rec_after_start["working_directory"]).resolve(), self.current_workspace.resolve())
 
 
 if __name__ == "__main__":

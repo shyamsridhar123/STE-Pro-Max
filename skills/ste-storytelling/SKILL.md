@@ -1,14 +1,14 @@
 ---
 name: ste-storytelling
-description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with reader control. Uses guarded STE tools and standalone templates. Not for a short prose rewrite or automatic video export."
+description: "Author evidence-linked explanations, decision briefs, research digests, and incident reviews with reader control. Uses native STE or host tools and standalone templates. Not for a short prose rewrite or automatic video export."
 ---
 
 # STE storytelling
 
-Use one reviewed story source and the host's guarded STE tools. A story is a way
+Use one reviewed story source with native STE tools or ordinary host tools. A story is a way
 to organize evidence, not a reason to invent a dramatic arc or stronger conclusion.
-Follow [the automatic policy](../ste-promax/references/automatic-policy.md); do not
-add manual approval steps or bypass a missing runtime.
+See [native checks](../ste-promax/references/automatic-policy.md). This skill adds
+no host-tool restrictions or manual STE approval steps.
 
 ## Author the source
 
@@ -50,8 +50,9 @@ do not invent feedback or call a click evidence of learning.
 Read the [showcase guide](../../examples/showcase/README.md) and use the
 release-brief or retry-lab starter for the appropriate structure. Resolve the
 plugin root from this skill's location, not the user's working directory.
-Adapt the starter with `ste_write_artifact` into a new workspace `artifacts/`
-directory. Use the existing configured policy runtime; no frontend build is required.
+Adapt the starter with `ste_write_artifact` or ordinary authoring tools into a new
+workspace `artifacts/` directory. Native STE checks need the configured runtime;
+ordinary authoring does not. No frontend build is required.
 Never overwrite the installed plugin or execute untrusted source markup.
 
 Use [the shared low-friction workflow](../ste-promax/references/low-friction-workflow.md).

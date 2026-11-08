@@ -6,7 +6,7 @@ consequential actions.
 ## One request, one useful result
 
 1. Read the supplied material and reuse context already in the conversation.
-   A short rewrite needs no output file or new interview. Automatic prose
+   A short rewrite needs no output file or new interview. Advisory prose
    diagnostics do not establish factual truth.
 2. Honor the requested output. Otherwise choose prose for a finding, a diagram
    for relationships/order, a chart for quantities, or a story for an explanation
@@ -14,7 +14,7 @@ consequential actions.
 3. Pick the audience, title, and layout from context. State a material assumption
    briefly; ask only when the answer changes the facts, conclusion, or safe scope.
 4. Read the relevant [dependency-free starter](../../../examples/showcase/README.md).
-   Author the explanation with guarded `ste_write_artifact` in a fresh workspace
+   Author with `ste_write_artifact` or ordinary host tools in a fresh workspace
    `artifacts/` directory. Keep original facts, qualifications, units, and citations.
    Do not ask the user to write JSON or choose internal schema details.
 5. Keep styles, scripts, and SVG inline. Adapt only the needed interaction,
@@ -30,9 +30,10 @@ testing its behavior.
 ## Setup without surprises
 
 The host's native plugin manager owns install, update, disable, and uninstall.
-Version 0.6.0 needs the configured SkillC runtime and supported host
-adapter. Reuse them without manual STE approval prompts. If missing, report that
-specific gap rather than writing unchecked output or silently installing packages.
+Native STE tools need the configured SkillC runtime and supported host adapter.
+Reuse them without manual STE approval prompts. Ordinary host tools remain
+available if the runtime is missing; identify which checks ran and do not silently
+install packages. No session switch or tool-access change is needed.
 
 `ste_status` checks policy availability; `doctor --json` checks the native renderer.
 The developer quickstart is not a replacement for host plugin installation.
@@ -53,4 +54,4 @@ a guarantee that the entire assistant session is offline.
   that overwrites the source.
 
 Successful defaults remove repetitive choices, not these boundaries.
-See [automatic execution policy](automatic-policy.md) for tool routing and host limits.
+See [native checks](automatic-policy.md) for validation and host permissions.

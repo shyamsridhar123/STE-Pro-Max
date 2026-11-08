@@ -8,7 +8,6 @@ with Python `-I -B` isolated execution.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -52,7 +51,7 @@ def resolve_bundle_root() -> Path:
 BUNDLE_ROOT: Path = resolve_bundle_root()
 
 from integrations.mcp import operations  # noqa: E402
-from ste_promax import gate, writing  # noqa: E402
+from ste_promax import gate  # noqa: E402
 from ste_promax.policy_runtime import (  # noqa: E402
     ERROR_INVALID_INPUT,
     ERROR_POLICY_REFUSAL,
@@ -94,121 +93,6 @@ def _require_explicit_host_workspace(workspace_root: str | Path | None) -> Path:
             code=ERROR_INVALID_INPUT,
         )
     return operations.resolve_trusted_workspace(candidate)
-
-
-def _handle_preflight_turn(
-    *,
-    prompt_text: str | None = None,
-    profile: str = "relaxed",
-    workspace_root: str | Path | None = None,
-) -> dict[str, Any]:
-    """Run turn preflight for an active STE session without blocking read-only prose help if runtime is missing."""
-    try:
-        ws = _require_explicit_host_workspace(workspace_root)
-        status = gate.get_policy_status()
-        prompt_str = prompt_text if isinstance(prompt_text, str) else ""
-        prompt_sha = hashlib.sha256(prompt_str.encode("utf-8")).hexdigest()
-        return {
-            "ok": True,
-            "result": {
-                "schema": "ste-promax.opencode-turn-preflight.v1",
-                "status": "preflight_ok" if status.get("available", False) else "degraded_readonly_only",
-                "policy_available": bool(status.get("available", False)),
-                "policy_mode": status.get("mode", "unavailable"),
-                "policy_error": status.get("error"),
-                "bundle_root": str(BUNDLE_ROOT),
-                "workspace_root": str(ws),
-                "profile": profile if profile in writing.LIMITS else "relaxed",
-                "prompt_sha256": prompt_sha,
-                "readonly_help_permitted": True,
-                "effectful_tools_permitted": bool(status.get("available", False)),
-            },
-        }
-    except Exception as exc:
-        return operations._format_error_response(exc)
-
-
-def _handle_postprocess_prose(
-    *,
-    text: str,
-    profile: str = "relaxed",
-    assistant_message_id: str | None = None,
-    ordinal: int = 0,
-    workspace_root: str | Path | None = None,
-) -> dict[str, Any]:
-    """Postprocess streamed assistant text (`session.text.ended`) via real `ste.prose` / `writing.check_text`.
-
-    Streamed text has already been displayed by `session.text.ended`; this records honest
-    post-delivery diagnostics and never claims pre-display interception. If the SkillC
-    runtime is missing, read-only prose turns degrade gracefully without failing the turn.
-    """
-    try:
-        ws = _require_explicit_host_workspace(workspace_root)
-        if not isinstance(text, str) or not text.strip():
-            return {
-                "ok": True,
-                "result": {
-                    "schema": "ste-promax.opencode-prose-postprocess.v1",
-                    "status": "skipped_empty",
-                    "delivery_timing": "post_stream_advisory",
-                    "pre_display_guaranteed": False,
-                },
-            }
-        status = gate.get_policy_status()
-        if not status.get("available", False):
-            report = writing.check_text(text, profile if profile in writing.LIMITS else "relaxed")
-            digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-            return {
-                "ok": True,
-                "result": {
-                    "schema": "ste-promax.opencode-prose-postprocess.v1",
-                    "status": "checked_without_skillc_backend",
-                    "delivery_timing": "post_stream_advisory",
-                    "pre_display_guaranteed": False,
-                    "assistant_message_id": assistant_message_id,
-                    "ordinal": ordinal,
-                    "text_sha256": digest,
-                    "profile": report.get("profile"),
-                    "sentence_count": report.get("sentence_count", 0),
-                    "finding_count": len(report.get("findings", [])),
-                    "findings": list(report.get("findings", []))[:5],
-                    "limitations": list(report.get("limitations", [])),
-                    "policy_receipt": None,
-                    "policy_error": status.get("error"),
-                },
-            }
-
-        guarded = operations.dispatch_host_operation(
-            "ste_check_prose",
-            {
-                "text": text,
-                "profile": profile if profile in writing.LIMITS else "relaxed",
-            },
-            workspace_root=ws,
-        )
-        if not guarded.get("ok", False):
-            return guarded
-        res = guarded["result"]
-        return {
-            "ok": True,
-            "result": {
-                "schema": "ste-promax.opencode-prose-postprocess.v1",
-                "status": "checked",
-                "delivery_timing": "post_stream_advisory",
-                "pre_display_guaranteed": False,
-                "assistant_message_id": assistant_message_id,
-                "ordinal": ordinal,
-                "text_sha256": res.get("text_sha256"),
-                "profile": res.get("profile"),
-                "sentence_count": res.get("sentence_count", 0),
-                "finding_count": len(res.get("findings", [])),
-                "findings": list(res.get("findings", []))[:5],
-                "limitations": list(res.get("limitations", [])),
-                "policy_receipt": res.get("policy_receipt"),
-            },
-        }
-    except Exception as exc:
-        return operations._format_error_response(exc)
 
 
 def dispatch_operation(
@@ -257,22 +141,6 @@ def dispatch_operation(
 
         raw_workspace_root = cli_workspace_root if cli_workspace_root is not None else request.get("workspace_root")
         ws = _require_explicit_host_workspace(raw_workspace_root)
-
-        if op == "ste_preflight_turn":
-            return _handle_preflight_turn(
-                prompt_text=args.get("prompt_text"),
-                profile=str(args.get("profile") or "relaxed"),
-                workspace_root=ws,
-            )
-
-        if op == "ste_postprocess_prose":
-            return _handle_postprocess_prose(
-                text=str(args.get("text") or ""),
-                profile=str(args.get("profile") or "relaxed"),
-                assistant_message_id=args.get("assistant_message_id"),
-                ordinal=int(args.get("ordinal") or 0),
-                workspace_root=ws,
-            )
 
         res = operations.dispatch_host_operation(
             op,

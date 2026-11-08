@@ -67,8 +67,9 @@ copy. Never write to installed assets or reuse a previous artifact directory
 without permission to replace its contents.
 
 The ordinary authoring path does not invoke the frontend builder or require npm,
-React, or a server. The v0.6.0 STE policy runtime must already be configured;
-use guarded tools rather than downloading dependencies or bypassing checks. When composing
+React, or a server. Native STE tools need the configured SkillC runtime; ordinary
+host tools remain available. Report which checks ran and do not silently download
+dependencies. When composing
 from runtime assets rather than a standalone starter, inline the reviewed math
 runtime before the studio runtime. Keep their license notices.
 

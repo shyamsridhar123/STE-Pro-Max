@@ -1,3 +1,3 @@
 """STE-Pro Max: flexible prose checks and native visual explanations."""
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"

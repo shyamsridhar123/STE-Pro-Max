@@ -8,8 +8,9 @@ description: "Create original line-art SVG figures and reader-controlled HTML ex
 Make a mechanism understandable through original figures, not decorative motion.
 This fourth native STE skill is included in **v0.5.0**.
 The published skill targets host-native authoring in Copilot CLI, Claude Code,
-and Codex. The v0.6.0 automatic-policy adapters target Copilot CLI and
-OpenCode; follow [their policy](../ste-promax/references/automatic-policy.md).
+and Codex. Native STE tool adapters target Copilot CLI and OpenCode; see
+[their checks](../ste-promax/references/automatic-policy.md). They do not restrict
+ordinary host tools.
 This file is not evidence of installation or runtime verification.
 
 ## Start with the explanation
@@ -43,13 +44,13 @@ Read the selected template and its source before editing:
   builds a concept as a small working object. Read
   [mechanism figures](references/mechanism-figures.md) before adapting it.
 
-Use `ste_write_artifact` and supported inspection tools to adapt HTML/SVG into a
+Use `ste_write_artifact` or ordinary authoring tools to adapt HTML/SVG into a
 fresh `artifacts/` subdirectory in the user's workspace. Preserve the supplied
 source and a normalized source copy beside the result. Never edit the plugin
 cache, overwrite source files, or execute source-provided HTML/scripts.
 
-The standalone output requires no npm, React, server, or provider key. Authoring
-in v0.6.0 requires the configured SkillC runtime.
+The standalone output requires no npm, React, server, or provider key. Native STE
+checks require the configured SkillC runtime; ordinary host-tool authoring does not.
 Use inline/local assets with no external traffic.
 Do not install missing tooling or publish output as a workaround. If a bundled
 asset is absent, report that specific gap rather than inventing a shipped feature.
